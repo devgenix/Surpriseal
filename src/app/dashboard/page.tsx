@@ -2,49 +2,63 @@
 
 import { useAuth } from "@/context/AuthContext";
 import MomentCard from "@/components/dashboard/MomentCard";
-import { Plus, ListFilter, ArrowDownAZ } from "lucide-react";
+import { Plus, ListFilter, ArrowDownAZ, Loader2 } from "lucide-react";
 import Link from "next/link";
+import { useState, useEffect } from "react";
+import { db } from "@/lib/firebase";
+import { collection, query, where, onSnapshot, orderBy } from "firebase/firestore";
 
-// Mock Data updated to match new design needs
-const moments = [
-  {
-    id: "1",
-    recipient: "Sarah",
-    occasion: "Birthday",
-    status: "Published" as const,
-    views: 42,
-    expiryDate: "Dec 31, 2024",
-    updatedAt: "2 hours ago",
-    imageUrl: "https://images.unsplash.com/photo-1513201099705-a9746e1e201f?q=80&w=2897&auto=format&fit=crop",
-  },
-  {
-    id: "2",
-    recipient: "Team",
-    occasion: "Work",
-    status: "Draft" as const,
-    views: 0,
-    expiryDate: "-",
-    updatedAt: "Created yesterday",
-  },
-  {
-    id: "3",
-    recipient: "Mom & Dad",
-    occasion: "Anniversary",
-    status: "Published" as const,
-    views: 128,
-    expiryDate: "Jan 15, 2025",
-    updatedAt: "1 week ago",
-    imageUrl: "https://images.unsplash.com/photo-1518199266791-5375a83190b7?q=80&w=2940&auto=format&fit=crop",
-  }
-];
+
+
+
 
 export default function DashboardPage() {
-  const { user, loading } = useAuth();
+  const { user, loading: loadingAuth } = useAuth();
+  const [moments, setMoments] = useState<any[]>([]);
+  const [loadingMoments, setLoadingMoments] = useState(true);
 
-  if (loading) return null; // Handled by layout spinner
+  useEffect(() => {
+    if (!user || !db) return;
+
+    const q = query(
+      collection(db, "drafts"),
+      where("userId", "==", user.uid),
+      orderBy("updatedAt", "desc")
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const momentsData = snapshot.docs.map((doc) => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          recipient: data.recipient || "Someone",
+          occasion: data.occasion || "Celebration",
+          status: (data.status?.charAt(0).toUpperCase() + data.status?.slice(1)) || "Draft",
+          views: data.views || 0,
+          updatedAt: data.updatedAt ? new Date(data.updatedAt.toDate()).toLocaleDateString() : "Just now",
+          imageUrl: data.imageUrl,
+          expiryDate: data.expiryDate ? data.expiryDate.toDate().toLocaleDateString() : "-",
+        };
+      });
+      setMoments(momentsData);
+      setLoadingMoments(false);
+    }, (error) => {
+      console.error("Firestore error:", error);
+      setLoadingMoments(false);
+    });
+
+    return () => unsubscribe();
+  }, [user]);
+
+  if (loadingAuth || loadingMoments) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   if (!user) return null;
-
-  const hasMoments = moments.length > 0;
 
   return (
     <>
@@ -68,24 +82,23 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {hasMoments ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {moments.map((moment) => (
-            <MomentCard key={moment.id} moment={moment} />
-          ))}
-          
-          {/* Create New Card */}
-          <Link href="/dashboard/create" className="contents">
-            <button className="group relative flex flex-col items-center justify-center bg-transparent rounded-2xl border-2 border-dashed border-primary/20 hover:border-primary/50 dark:border-white/10 dark:hover:border-primary/50 p-6 min-h-[320px] transition-all duration-300">
-              <div className="size-16 rounded-full bg-primary/5 dark:bg-white/5 group-hover:bg-primary/10 flex items-center justify-center mb-4 transition-colors">
-                <Plus className="w-8 h-8 text-primary group-hover:scale-110 transition-transform duration-300" />
-              </div>
-              <h3 className="text-lg font-bold text-text-main dark:text-white mb-1">Create New</h3>
-              <p className="text-sm text-center text-text-muted dark:text-gray-400 max-w-[200px]">Start a fresh surprise for someone special.</p>
-            </button>
-          </Link>
-        </div>
-      ) : (
+        {moments.map((moment) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {/* Create New Card - Now ALWAYS First */}
+              <Link href="/dashboard/create" className="contents">
+                <button className="group relative flex flex-col items-center justify-center bg-transparent rounded-2xl border-2 border-dashed border-primary/20 hover:border-primary/50 dark:border-white/10 dark:hover:border-primary/50 p-6 min-h-[320px] transition-all duration-300">
+                  <div className="size-16 rounded-full bg-primary/5 dark:bg-white/5 group-hover:bg-primary/10 flex items-center justify-center mb-4 transition-colors">
+                    <Plus className="w-8 h-8 text-primary group-hover:scale-110 transition-transform duration-300" />
+                  </div>
+                  <h3 className="text-lg font-bold text-text-main dark:text-white mb-1">Create New</h3>
+                  <p className="text-sm text-center text-text-muted dark:text-gray-400 max-w-[200px]">Start a fresh surprise for someone special.</p>
+                </button>
+              </Link>
+              <MomentCard key={moment.id} moment={moment} />
+          </div>
+        ))}
+
+      {moments.length === 0 && (
         /* Empty State */
         <div className="mt-12 flex flex-col items-center justify-center py-16 px-4 bg-white dark:bg-surface-dark rounded-3xl border border-dashed border-gray-200 dark:border-white/10">
           <div className="relative w-full max-w-[280px] aspect-square mb-8">

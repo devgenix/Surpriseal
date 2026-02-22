@@ -1,8 +1,15 @@
 export type Currency = "NGN" | "USD";
 
-export const PRICES: Record<Currency, number> = {
+export const BASE_PRICES: Record<Currency, number> = {
   NGN: 2500,
   USD: 4,
+};
+
+export const PRICES = BASE_PRICES;
+
+export const PREMIUM_PRICES: Record<Currency, number> = {
+  NGN: 5000,
+  USD: 8,
 };
 
 export const CURRENCY_SYMBOLS: Record<Currency, string> = {
@@ -10,9 +17,8 @@ export const CURRENCY_SYMBOLS: Record<Currency, string> = {
   USD: "$",
 };
 
-export function formatPrice(currency: Currency): string {
+export function formatPrice(amount: number, currency: Currency): string {
   const symbol = CURRENCY_SYMBOLS[currency];
-  const amount = PRICES[currency];
   return `${symbol}${amount.toLocaleString()}`;
 }
 

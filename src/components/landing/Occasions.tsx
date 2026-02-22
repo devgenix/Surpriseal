@@ -1,5 +1,9 @@
+"use client";
+
 import Link from "next/link";
 import Container from "@/components/ui/Container";
+import { motion, useAnimationControls } from "framer-motion";
+import { useEffect, useState, useRef } from "react";
 
 const occasions = [
   {
@@ -65,8 +69,30 @@ const occasions = [
 ];
 
 export default function Occasions() {
+  const controls = useAnimationControls();
+  const [isPaused, setIsPaused] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // For the infinite marquee effect, we use a duplicated list
+  const duplicatedOccasions = [...occasions, ...occasions];
+
+  useEffect(() => {
+    if (!isPaused) {
+      controls.start({
+        x: [0, -100 * occasions.length + "%"],
+        transition: {
+          duration: occasions.length * 6, // Adjusted speed for smooth infinite feel
+          ease: "linear",
+          repeat: Infinity,
+        },
+      });
+    } else {
+      controls.stop();
+    }
+  }, [isPaused, controls]);
+
   return (
-    <section className="bg-[#1b110e] py-24 overflow-hidden relative">
+    <section className="bg-[#1b110e] py-16 md:py-24 overflow-hidden relative">
       {/* Decorative elements */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
         <div className="absolute top-[10%] left-[-5%] w-96 h-96 bg-primary/5 rounded-full blur-3xl"></div>
@@ -74,38 +100,72 @@ export default function Occasions() {
       </div>
       
       <Container className="relative z-10">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
+        <div className="text-center mb-12 md:mb-16">
+          <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 px-4 md:px-0">
             Use Surpriseal for <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-300 via-primary/80 to-orange-200">all occasions</span>
           </h2>
-          <p className="text-white/60 text-lg max-w-2xl mx-auto">
+          <p className="text-white/60 text-base md:text-lg max-w-2xl mx-auto px-4 md:px-0">
             From milestones to just-becauses, create a digital journey that captures the heart of every moment.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        {/* Desktop View: Grid */}
+        <div className="hidden md:grid grid-cols-5 gap-4">
           {occasions.map((occasion, index) => (
-            <div
-              key={index}
-              className={`${occasion.bgColor} rounded-2xl p-6 flex flex-col items-center text-center transition-all hover:scale-[1.03] hover:shadow-2xl hover:shadow-black/20 duration-500 group border border-white/10`}
-            >
-              <div className="text-4xl mb-6 transform transition-transform group-hover:scale-125 duration-500 drop-shadow-sm grayscale-[0.2] group-hover:grayscale-0">
-                {occasion.icon}
-              </div>
-              <h3 className="text-lg font-bold text-[#1b110e] mb-3 leading-tight tracking-tight">{occasion.title}</h3>
-              <p className="text-[#97604e] text-xs leading-relaxed mb-6 flex-grow font-medium">
-                {occasion.description}
-              </p>
-              <Link
-                href="/dashboard/create"
-                className="w-full bg-[#1b110e] text-white text-[13px] font-bold py-3 rounded-xl hover:bg-primary transition-all shadow-md active:scale-95"
-              >
-                Start a Surprise
-              </Link>
-            </div>
+            <OccasionCard key={index} occasion={occasion} />
           ))}
+        </div>
+
+        {/* Mobile View: Infinite Marquee */}
+        <div className="md:hidden outline-none">
+          <div 
+            className="flex gap-4 overflow-visible"
+            onMouseEnter={() => setIsPaused(true)}
+            onMouseLeave={() => setIsPaused(false)}
+            onTouchStart={() => setIsPaused(true)}
+            onTouchEnd={() => setIsPaused(false)}
+          >
+            <motion.div
+              className="flex gap-4 cursor-grab active:cursor-grabbing"
+              animate={controls}
+              drag="x"
+              dragConstraints={{ left: -3000, right: 0 }} // Large enough boundary
+              onDragStart={() => setIsPaused(true)}
+              onDragEnd={() => setIsPaused(false)}
+              style={{ width: "fit-content" }}
+            >
+              {duplicatedOccasions.map((occasion, index) => (
+                <div key={index} className="w-[280px] flex-shrink-0">
+                  <OccasionCard occasion={occasion} />
+                </div>
+              ))}
+            </motion.div>
+          </div>
         </div>
       </Container>
     </section>
   );
 }
+
+function OccasionCard({ occasion }: { occasion: typeof occasions[0] }) {
+  return (
+    <div
+      className={`${occasion.bgColor} rounded-2xl p-6 flex flex-col items-center text-center transition-all md:hover:scale-[1.03] md:hover:shadow-2xl md:hover:shadow-black/20 duration-500 group border border-white/10 h-full`}
+    >
+      <div className="text-4xl mb-4 md:mb-6 transform transition-transform group-hover:scale-125 duration-500 drop-shadow-sm grayscale-[0.2] group-hover:grayscale-0">
+        {occasion.icon}
+      </div>
+      <h3 className="text-lg font-bold text-[#1b110e] mb-3 leading-tight tracking-tight">{occasion.title}</h3>
+      <p className="text-[#97604e] text-[11px] leading-relaxed mb-6 flex-grow font-medium">
+        {occasion.description}
+      </p>
+      <Link
+        href="/dashboard/create"
+        className="w-full bg-[#1b110e] text-white text-[13px] font-bold py-3 rounded-xl hover:bg-primary transition-all shadow-md active:scale-95"
+      >
+        Start a Surprise
+      </Link>
+    </div>
+  );
+}
+

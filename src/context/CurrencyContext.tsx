@@ -19,7 +19,7 @@ interface CurrencyContextValue {
 const CurrencyContext = createContext<CurrencyContextValue>({
   currency: "USD",
   price: PRICES.USD,
-  formattedPrice: formatPrice("USD"),
+  formattedPrice: formatPrice(PRICES.USD, "USD"),
   isLoading: true,
 });
 
@@ -58,7 +58,7 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
       value={{
         currency,
         price: PRICES[currency],
-        formattedPrice: formatPrice(currency),
+        formattedPrice: formatPrice(PRICES[currency], currency),
         isLoading,
       }}
     >
