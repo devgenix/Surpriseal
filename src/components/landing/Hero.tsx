@@ -3,22 +3,31 @@ import Container from "@/components/ui/Container";
 
 export default function Hero() {
   return (
-    <section className="relative py-16 lg:py-24 bg-[#fcf9f8]">
-      <Container>
+    <section className="relative py-16 lg:py-24 bg-[#fcf9f8] overflow-hidden">
+      {/* Floating Emojis/Icons for emotional appeal */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-[15%] left-[5%] animate-bounce duration-[3000ms] opacity-20 text-4xl">❤️</div>
+        <div className="absolute top-[60%] left-[8%] animate-pulse opacity-20 text-4xl">✨</div>
+        <div className="absolute top-[20%] right-[10%] animate-bounce duration-[4000ms] opacity-20 text-4xl">🥳</div>
+        <div className="absolute bottom-[15%] right-[5%] animate-pulse opacity-20 text-4xl">🎁</div>
+      </div>
+
+      <Container className="relative z-10">
         <div className="grid gap-12 lg:grid-cols-2 lg:gap-8 items-center">
           {/* Left: Copy */}
-          <div className="max-w-2xl">
-            <h1 className="text-4xl font-extrabold tracking-tight text-[#1b110e] sm:text-5xl lg:text-6xl mb-6 leading-[1.15]">
-              Create the Moment They&apos;ll{" "}
-              <span className="text-primary underline decoration-primary/30 underline-offset-4 decoration-4">
-                Never Forget
+          <div className="max-w-2xl text-center lg:text-left">
+            <h1 className="text-4xl font-extrabold tracking-tight text-[#1b110e] sm:text-5xl lg:text-7xl mb-6 leading-[1.1]">
+              The Most Meaningful Way to{" "}
+              <span className="text-primary relative inline-block">
+                Celebrate
+                <svg className="absolute -bottom-2 left-0 w-full" viewBox="0 0 200 8" fill="none">
+                  <path d="M1 5.5C40 2 120 2 199 5.5" stroke="#e64c19" strokeWidth="3" strokeLinecap="round"/>
+                </svg>
               </span>
             </h1>
 
-            <p className="text-lg text-[#97604e] mb-8 max-w-lg leading-relaxed">
-              Turn birthdays and anniversaries into a structured digital journey. Design
-              a unique path of memories, messages, and gifts for a premium surprise
-              experience.
+            <p className="text-xl text-[#97604e] mb-8 max-w-lg leading-relaxed mx-auto lg:mx-0 font-medium">
+              Create a digital journey of memories and surprises they&apos;ll cherish forever. Simple to build, impossible to forget.
             </p>
 
             {/* CTAs */}

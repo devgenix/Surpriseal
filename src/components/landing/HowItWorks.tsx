@@ -86,19 +86,30 @@ export default function HowItWorks() {
         </div>
 
         {/* Steps grid */}
-        <div className="grid gap-8 md:grid-cols-3">
-          {steps.map((step) => (
+        <div className="grid gap-12 md:grid-cols-3 relative">
+          {/* Connecting Journey Line */}
+          <div className="hidden md:block absolute top-16 left-[20%] right-[20%] h-0.5 border-t-2 border-dashed border-primary/20 pointer-events-none z-0"></div>
+
+          {steps.map((step, idx) => (
             <div
               key={step.number}
-              className="group relative flex flex-col items-center text-center p-8 rounded-2xl bg-[#fcf9f8] border border-[#f3eae7] transition-all hover:shadow-[0_10px_40px_-10px_rgba(27,17,14,0.08)] hover:border-primary/20 hover:-translate-y-1"
+              className="group relative flex flex-col items-center text-center p-8 rounded-2xl bg-[#fcf9f8] border border-[#f3eae7] transition-all hover:shadow-[0_20px_50px_-15px_rgba(27,17,14,0.1)] hover:border-primary/30 hover:-translate-y-2 z-10"
             >
               <div
-                className={`mb-6 flex h-16 w-16 items-center justify-center rounded-full ${step.iconBg} ${step.iconColor} ${step.hoverBg} ${step.hoverText} transition-colors`}
+                className={`mb-8 flex h-20 w-20 items-center justify-center rounded-2xl ${step.iconBg} ${step.iconColor} ${step.hoverBg} ${step.hoverText} transition-all duration-500 shadow-sm group-hover:shadow-lg group-hover:rotate-6`}
               >
                 {step.icon}
               </div>
-              <h4 className="text-xl font-bold text-[#1b110e] mb-3">{step.title}</h4>
-              <p className="text-[#97604e]">{step.description}</p>
+              <div className="absolute -top-4 -left-4 w-10 h-10 rounded-full bg-white border-4 border-[#fcf9f8] shadow-sm flex items-center justify-center text-primary font-black text-sm">
+                {step.number}
+              </div>
+              <h4 className="text-xl font-bold text-[#1b110e] mb-3 tracking-tight">{step.title}</h4>
+              <p className="text-[#97604e] leading-relaxed font-medium text-sm">{step.description}</p>
+              
+              {/* Optional: Indicator for the last step */}
+              {idx === steps.length - 1 && (
+                <div className="mt-6 text-primary animate-pulse text-2xl">✨</div>
+              )}
             </div>
           ))}
         </div>
