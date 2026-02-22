@@ -22,7 +22,7 @@ export default function CallToAction() {
           5 minutes to set up.
         </p>
         <Link
-          href="/create"
+          href="/dashboard/create"
           className="inline-block bg-primary hover:bg-primary/90 text-white font-bold text-lg py-4 px-10 rounded-xl shadow-[0_0_30px_rgba(230,76,25,0.4)] transition-all hover:scale-105"
         >
           Start a Surprise

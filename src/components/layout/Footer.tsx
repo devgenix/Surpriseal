@@ -5,9 +5,10 @@ export default function Footer() {
   return (
     <footer className="bg-white border-t border-[#f3eae7] pt-16 pb-8">
       <Container>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
+        {/* Top Section */}
+        <div className="flex flex-col gap-8 mb-12 md:flex-row md:justify-between">
           {/* Brand */}
-          <div className="col-span-2 md:col-span-1">
+          <div className="max-w-sm">
             <Link href="/" className="flex items-center gap-2 mb-4">
               <div className="flex h-6 w-6 items-center justify-center rounded bg-primary text-white">
                 <svg
@@ -24,55 +25,6 @@ export default function Footer() {
             <p className="text-sm text-[#97604e]">
               Crafting digital happiness, one click at a time.
             </p>
-          </div>
-
-          {/* Product */}
-          <div>
-            <h4 className="font-bold text-[#1b110e] mb-4">Product</h4>
-            <ul className="space-y-2 text-sm text-[#97604e]">
-              <li>
-                <Link href="#how-it-works" className="hover:text-primary transition-colors">
-                  How it works
-                </Link>
-              </li>
-              <li>
-                <Link href="#features" className="hover:text-primary transition-colors">
-                  Features
-                </Link>
-              </li>
-              <li>
-                <Link href="#pricing" className="hover:text-primary transition-colors">
-                  Pricing
-                </Link>
-              </li>
-              <li>
-                <Link href="#examples" className="hover:text-primary transition-colors">
-                  Examples
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          {/* Company */}
-          <div>
-            <h4 className="font-bold text-[#1b110e] mb-4">Company</h4>
-            <ul className="space-y-2 text-sm text-[#97604e]">
-              <li>
-                <Link href="/about" className="hover:text-primary transition-colors">
-                  About Us
-                </Link>
-              </li>
-              <li>
-                <Link href="/blog" className="hover:text-primary transition-colors">
-                  Blog
-                </Link>
-              </li>
-              <li>
-                <Link href="/contact" className="hover:text-primary transition-colors">
-                  Contact
-                </Link>
-              </li>
-            </ul>
           </div>
 
           {/* Legal */}

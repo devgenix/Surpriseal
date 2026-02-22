@@ -1,145 +1,112 @@
 "use client";
 
-import { Button, Avatar, Dropdown } from "antd";
-import { Plus, User, LogOut } from "lucide-react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
-import Container from "@/components/ui/Container";
 import MomentCard from "@/components/dashboard/MomentCard";
+import { Plus, ListFilter, ArrowDownAZ } from "lucide-react";
+import Link from "next/link";
 
-// Mock Data
+// Mock Data updated to match new design needs
 const moments = [
   {
     id: "1",
     recipient: "Sarah",
     occasion: "Birthday",
     status: "Published" as const,
-    views: 24,
+    views: 42,
     expiryDate: "Dec 31, 2024",
+    updatedAt: "2 hours ago",
     imageUrl: "https://images.unsplash.com/photo-1513201099705-a9746e1e201f?q=80&w=2897&auto=format&fit=crop",
   },
   {
     id: "2",
-    recipient: "Michael",
-    occasion: "Anniversary",
+    recipient: "Team",
+    occasion: "Work",
     status: "Draft" as const,
     views: 0,
     expiryDate: "-",
+    updatedAt: "Created yesterday",
+  },
+  {
+    id: "3",
+    recipient: "Mom & Dad",
+    occasion: "Anniversary",
+    status: "Published" as const,
+    views: 128,
+    expiryDate: "Jan 15, 2025",
+    updatedAt: "1 week ago",
+    imageUrl: "https://images.unsplash.com/photo-1518199266791-5375a83190b7?q=80&w=2940&auto=format&fit=crop",
   }
 ];
 
 export default function DashboardPage() {
-  const { user, loading, logout } = useAuth();
-  const router = useRouter();
+  const { user, loading } = useAuth();
 
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push("/login");
-    }
-  }, [user, loading, router]);
-
-  const handleLogout = async () => {
-    try {
-      await logout();
-      router.push("/");
-    } catch (error) {
-      console.error("Logout failed", error);
-    }
-  };
-
-  // Empty state check
-  const hasMoments = moments.length > 0;
-
-  if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-      </div>
-    );
-  }
-
+  if (loading) return null; // Handled by layout spinner
   if (!user) return null;
 
+  const hasMoments = moments.length > 0;
+
   return (
-    <div className="min-h-screen bg-gray-50/50 pb-20">
-      {/* Dashboard Header */}
-      <header className="sticky top-0 z-40 w-full border-b border-gray-200 bg-white">
-        <Container>
-          <div className="flex h-16 items-center justify-between">
-            <Link href="/" className="flex items-center gap-2">
-              <span className="text-xl font-bold tracking-tight text-primary">
-                Surpriseal
-              </span>
-            </Link>
-
-            <div className="flex items-center gap-4">
-              <Link href="/dashboard/create">
-                <Button type="primary" icon={<Plus className="h-4 w-4" />}>
-                  Create New Moment
-                </Button>
-              </Link>
-              <Dropdown 
-                menu={{ 
-                  items: [
-                    { 
-                      label: 'Sign out', 
-                      key: 'logout', 
-                      icon: <LogOut className="h-4 w-4" />,
-                      onClick: handleLogout
-                    } 
-                  ] 
-                }}
-              >
-                <div className="flex items-center gap-2 cursor-pointer p-1 pr-2 rounded-full hover:bg-gray-100 transition-colors">
-                  <Avatar 
-                    src={user.photoURL} 
-                    icon={!user.photoURL && <User className="h-4 w-4" />} 
-                    className="bg-primary/10 text-primary border border-primary/20" 
-                  />
-                  <span className="hidden sm:inline text-sm font-medium text-gray-700">
-                    {user.displayName || user.email?.split('@')[0]}
-                  </span>
-                </div>
-              </Dropdown>
-            </div>
-          </div>
-        </Container>
-      </header>
-
-      {/* Main Content */}
-      <Container className="py-12">
-        <div className="mb-8 flex items-end justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Your Moments</h1>
-            <p className="text-sm text-gray-500 mt-1">Manage and track your special surprises</p>
-          </div>
+    <>
+      {/* Page Header */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
+        <div className="flex flex-col gap-2">
+          <h1 className="text-text-main dark:text-white text-3xl md:text-4xl font-extrabold tracking-tight">Your Moments</h1>
+          <p className="text-text-muted dark:text-gray-400 text-base md:text-lg">Manage and track your celebration pages.</p>
         </div>
 
-        {hasMoments ? (
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {moments.map((moment) => (
-              <MomentCard key={moment.id} moment={moment} />
-            ))}
-          </div>
-        ) : (
-          <div className="flex min-h-[400px] flex-col items-center justify-center rounded-3xl border border-gray-100 bg-white p-12 text-center shadow-sm">
-            <div className="flex h-24 w-24 items-center justify-center rounded-full bg-primary/5 mb-6 animate-pulse-slow">
-              <Plus className="h-10 w-10 text-primary" />
+        {/* Filter/Sort Controls */}
+        <div className="flex items-center gap-3">
+          <button className="flex items-center gap-2 h-10 px-4 rounded-lg bg-white dark:bg-surface-dark border border-[#f3eae7] dark:border-white/10 text-text-main dark:text-white text-sm font-semibold hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
+            <ArrowDownAZ className="w-[18px] h-[18px]" />
+            Newest First
+          </button>
+          <button className="flex items-center gap-2 h-10 px-4 rounded-lg bg-white dark:bg-surface-dark border border-[#f3eae7] dark:border-white/10 text-text-main dark:text-white text-sm font-semibold hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
+            <ListFilter className="w-[18px] h-[18px]" />
+            All Status
+          </button>
+        </div>
+      </div>
+
+      {hasMoments ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {moments.map((moment) => (
+            <MomentCard key={moment.id} moment={moment} />
+          ))}
+          
+          {/* Create New Card */}
+          <Link href="/dashboard/create" className="contents">
+            <button className="group relative flex flex-col items-center justify-center bg-transparent rounded-2xl border-2 border-dashed border-primary/20 hover:border-primary/50 dark:border-white/10 dark:hover:border-primary/50 p-6 min-h-[320px] transition-all duration-300">
+              <div className="size-16 rounded-full bg-primary/5 dark:bg-white/5 group-hover:bg-primary/10 flex items-center justify-center mb-4 transition-colors">
+                <Plus className="w-8 h-8 text-primary group-hover:scale-110 transition-transform duration-300" />
+              </div>
+              <h3 className="text-lg font-bold text-text-main dark:text-white mb-1">Create New</h3>
+              <p className="text-sm text-center text-text-muted dark:text-gray-400 max-w-[200px]">Start a fresh surprise for someone special.</p>
+            </button>
+          </Link>
+        </div>
+      ) : (
+        /* Empty State */
+        <div className="mt-12 flex flex-col items-center justify-center py-16 px-4 bg-white dark:bg-surface-dark rounded-3xl border border-dashed border-gray-200 dark:border-white/10">
+          <div className="relative w-full max-w-[280px] aspect-square mb-8">
+            <div className="absolute inset-0 bg-gradient-to-tr from-primary/20 to-accent-pink/20 rounded-full blur-3xl opacity-60"></div>
+            <div className="relative z-10 w-full h-full flex items-center justify-center">
+               <div className="bg-primary/10 rounded-full w-48 h-48 flex items-center justify-center">
+                  <Plus className="w-24 h-24 text-primary opacity-20" />
+               </div>
             </div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-2">No moments yet</h3>
-            <p className="text-gray-500 max-w-sm mb-10 text-lg">
-              Create your first surprise moment and make someone's day unforgettable.
-            </p>
-            <Link href="/dashboard/create">
-              <Button type="primary" size="large" className="h-14 px-8 text-lg font-semibold shadow-lg shadow-primary/20 rounded-full">
-                Create Your First Moment
-              </Button>
-            </Link>
           </div>
-        )}
-      </Container>
-    </div>
+          <h2 className="text-2xl md:text-3xl font-extrabold text-text-main dark:text-white text-center mb-3">No moments yet?</h2>
+          <p className="text-text-muted dark:text-gray-400 text-center max-w-md mb-8 text-lg leading-relaxed">
+            Create memories that last. Build your first digital surprise page in minutes and make someone's day unforgettable.
+          </p>
+          <Link href="/dashboard/create">
+            <button className="h-12 px-8 flex items-center justify-center rounded-xl bg-primary hover:bg-primary/90 text-white font-bold text-base shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all transform hover:-translate-y-1">
+              Create First Moment
+            </button>
+          </Link>
+        </div>
+      )}
+    </>
   );
 }

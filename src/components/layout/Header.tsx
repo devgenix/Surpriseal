@@ -5,16 +5,9 @@ import { usePathname } from "next/navigation";
 import Container from "@/components/ui/Container";
 import { useAuth } from "@/context/AuthContext";
 
-const navLinks = [
-  { href: "/#how-it-works", label: "How it works" },
-  { href: "/#examples", label: "Examples" },
-  { href: "/pricing", label: "Pricing" },
-];
-
 export default function Header() {
   const pathname = usePathname();
   const { user, loading } = useAuth();
-  const isHomepage = pathname === "/";
 
   return (
     <header className="sticky top-0 z-50 w-full backdrop-blur-md bg-[#fcf9f8]/80 border-b border-[#f3eae7]">
@@ -35,29 +28,6 @@ export default function Header() {
             Supriseal
           </span>
         </Link>
-
-        {/* Nav - Hide on Homepage */}
-        <nav className={`hidden md:flex items-center gap-8 ${isHomepage ? 'md:hidden' : ''}`}>
-          {navLinks.map(({ href, label }) => {
-            const isActive =
-              href === "/pricing"
-                ? pathname === "/pricing"
-                : false;
-            return (
-              <Link
-                key={href}
-                href={href}
-                className={`text-sm font-semibold transition-colors ${
-                  isActive
-                    ? "text-primary border-b-2 border-primary pb-0.5"
-                    : "text-[#1b110e] hover:text-primary"
-                }`}
-              >
-                {label}
-              </Link>
-            );
-          })}
-        </nav>
 
         {/* Actions */}
         <div className="flex items-center gap-4">

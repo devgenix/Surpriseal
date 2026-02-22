@@ -4,6 +4,9 @@ import { useAuth } from "@/context/AuthContext";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect } from "react";
 
+import DashboardHeader from "@/components/layout/DashboardHeader";
+import DashboardFooter from "@/components/layout/DashboardFooter";
+
 export default function DashboardLayout({
   children,
 }: {
@@ -22,7 +25,7 @@ export default function DashboardLayout({
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#fcf9f8]">
+      <div className="flex min-h-screen items-center justify-center bg-background-light dark:bg-background-dark">
         <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
       </div>
     );
@@ -30,5 +33,13 @@ export default function DashboardLayout({
 
   if (!user) return null;
 
-  return <>{children}</>;
+  return (
+    <div className="bg-background-light dark:bg-background-dark text-text-main font-display antialiased min-h-screen flex flex-col transition-colors duration-200">
+      <DashboardHeader />
+      <main className="flex-1 w-full max-w-[1280px] mx-auto px-6 py-10">
+        {children}
+      </main>
+      <DashboardFooter />
+    </div>
+  );
 }

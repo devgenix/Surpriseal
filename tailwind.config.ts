@@ -52,11 +52,24 @@ const config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        "primary-light": "#ff8a65",
+        "primary-pale": "#fff3e0",
+        "accent-purple": "#8e44ad",
+        "accent-pink": "#e91e63",
+        "background-light": "#fcf9f8",
+        "background-dark": "#211511",
+        "surface-light": "#ffffff",
+        "surface-dark": "#2d1f1b",
+        "text-main": "#1b110e",
+        "text-muted": "#97604e",
       },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+        xl: "1.5rem",
+        "2xl": "2rem",
+        full: "9999px",
       },
       keyframes: {
         "accordion-down": {
@@ -74,7 +87,12 @@ const config = {
       },
       fontFamily: {
         sans: ["var(--font-plus-jakarta-sans)", "sans-serif"],
+        display: ["var(--font-plus-jakarta-sans)", "sans-serif"],
       },
+      boxShadow: {
+        'soft': '0 4px 20px -2px rgba(230, 76, 25, 0.08)',
+        'soft-hover': '0 10px 25px -5px rgba(230, 76, 25, 0.15)',
+      }
     },
   },
   plugins: [require("tailwindcss-animate")],

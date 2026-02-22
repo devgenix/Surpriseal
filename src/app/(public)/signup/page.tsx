@@ -4,13 +4,20 @@ import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import AuthLayout from "@/components/auth/AuthLayout";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function SignupPage() {
-  const { signInWithGoogle, signUpWithEmail } = useAuth();
+  const { user, loading: authLoading, signInWithGoogle, signUpWithEmail } = useAuth();
   const router = useRouter();
   const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
   const redirectPath = searchParams?.get('redirect') || "/dashboard";
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (!authLoading && user) {
+      router.push(redirectPath);
+    }
+  }, [user, authLoading, router, redirectPath]);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
