@@ -2,8 +2,13 @@
 
 import Link from "next/link";
 import Container from "@/components/ui/Container";
-import { motion, useAnimationControls } from "framer-motion";
-import { useEffect, useState, useRef } from "react";
+import { 
+  motion, 
+  useMotionValue, 
+  useAnimationFrame, 
+  useTransform 
+} from "framer-motion";
+import { useState, useRef, useEffect } from "react";
 
 const occasions = [
   {
@@ -69,27 +74,36 @@ const occasions = [
 ];
 
 export default function Occasions() {
-  const controls = useAnimationControls();
   const [isPaused, setIsPaused] = useState(false);
+  const baseX = useMotionValue(0);
   const containerRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
 
-  // For the infinite marquee effect, we use a duplicated list
-  const duplicatedOccasions = [...occasions, ...occasions];
+  // Speed factor: lower is slower
+  const speed = 0.5;
 
-  useEffect(() => {
-    if (!isPaused) {
-      controls.start({
-        x: [0, -100 * occasions.length + "%"],
-        transition: {
-          duration: occasions.length * 6, // Adjusted speed for smooth infinite feel
-          ease: "linear",
-          repeat: Infinity,
-        },
-      });
-    } else {
-      controls.stop();
+  useAnimationFrame((t, delta) => {
+    if (!isPaused && contentRef.current) {
+      // Delta is usually ~16.6ms at 60fps
+      // Move baseX by a small amount based on delta and speed
+      const moveBy = speed * (delta / 16);
+      let nextValue = baseX.get() - moveBy;
+      
+      // Calculate wrap point: half of the total content width
+      const fullWidth = contentRef.current.scrollWidth;
+      const halfWidth = fullWidth / 2;
+
+      // Ensure it loops perfectly
+      if (nextValue <= -halfWidth) {
+        nextValue += halfWidth;
+      }
+      
+      baseX.set(nextValue);
     }
-  }, [isPaused, controls]);
+  });
+
+  // Duplicate the list for seamless looping
+  const duplicatedOccasions = [...occasions, ...occasions];
 
   return (
     <section className="bg-[#1b110e] py-16 md:py-24 overflow-hidden relative">
@@ -117,7 +131,7 @@ export default function Occasions() {
         </div>
 
         {/* Mobile View: Infinite Marquee */}
-        <div className="md:hidden outline-none">
+        <div className="md:hidden outline-none" ref={containerRef}>
           <div 
             className="flex gap-4 overflow-visible"
             onMouseEnter={() => setIsPaused(true)}
@@ -126,13 +140,12 @@ export default function Occasions() {
             onTouchEnd={() => setIsPaused(false)}
           >
             <motion.div
+              ref={contentRef}
               className="flex gap-4 cursor-grab active:cursor-grabbing"
-              animate={controls}
+              style={{ x: baseX, width: "fit-content" }}
               drag="x"
-              dragConstraints={{ left: -3000, right: 0 }} // Large enough boundary
               onDragStart={() => setIsPaused(true)}
               onDragEnd={() => setIsPaused(false)}
-              style={{ width: "fit-content" }}
             >
               {duplicatedOccasions.map((occasion, index) => (
                 <div key={index} className="w-[280px] flex-shrink-0">
