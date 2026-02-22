@@ -146,7 +146,7 @@ export default function PricingPage() {
                     href="/create"
                     className="w-full py-4 rounded-xl bg-primary hover:bg-primary/90 text-white text-base font-bold shadow-lg shadow-primary/25 transition-all hover:-translate-y-0.5 flex items-center justify-center gap-2"
                   >
-                    Get Started Now
+                    Start a Surprise
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       viewBox="0 0 20 20"

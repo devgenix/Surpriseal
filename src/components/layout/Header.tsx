@@ -12,6 +12,7 @@ const navLinks = [
 
 export default function Header() {
   const pathname = usePathname();
+  const isHomepage = pathname === "/";
 
   return (
     <header className="sticky top-0 z-50 w-full backdrop-blur-md bg-[#fcf9f8]/80 border-b border-[#f3eae7]">
@@ -33,8 +34,8 @@ export default function Header() {
           </span>
         </Link>
 
-        {/* Nav */}
-        <nav className="hidden md:flex items-center gap-8">
+        {/* Nav - Hide on Homepage */}
+        <nav className={`hidden md:flex items-center gap-8 ${isHomepage ? 'md:hidden' : ''}`}>
           {navLinks.map(({ href, label }) => {
             const isActive =
               href === "/pricing"
@@ -68,7 +69,7 @@ export default function Header() {
             href="/create"
             className="flex items-center justify-center rounded-xl bg-primary px-5 py-2.5 text-sm font-bold text-white transition-all hover:scale-105 active:scale-95 shadow-[0_4px_20px_-2px_rgba(230,76,25,0.2)] hover:shadow-[0_8px_25px_-2px_rgba(230,76,25,0.35)]"
           >
-            Create Your Moment
+            Start a Surprise
           </Link>
         </div>
       </Container>

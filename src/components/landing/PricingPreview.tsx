@@ -83,11 +83,11 @@ export default function PricingPreview() {
                 href="/dashboard/create"
                 className="w-full max-w-[240px] bg-primary text-white font-bold text-lg py-4 rounded-xl shadow-[0_4px_20px_-2px_rgba(230,76,25,0.15)] hover:bg-primary/90 hover:shadow-[0_8px_30px_-2px_rgba(230,76,25,0.35)] transition-all text-center block"
               >
-                Create Now
+                Start a Surprise
               </Link>
               <Link
                 href="/pricing"
-                className="mt-4 text-sm font-semibold text-primary hover:text-primary/80 transition-colors flex items-center justify-center gap-1"
+                className="mt-4 text-sm text-[#97604e] font-semibold text-primary hover:text-primary/80 transition-colors flex items-center justify-center gap-1"
               >
                 View detailed pricing
                 <svg
@@ -103,9 +103,6 @@ export default function PricingPreview() {
                   />
                 </svg>
               </Link>
-              <p className="mt-4 text-xs text-[#97604e]">
-                100% money-back guarantee if not satisfied.
-              </p>
             </div>
           </div>
         </div>

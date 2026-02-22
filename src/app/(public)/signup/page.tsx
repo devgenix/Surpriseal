@@ -60,6 +60,11 @@ export default function SignupPage() {
       title="Create account"
       subtitle="Start your journey with Supriseal today."
     >
+      <div className="mb-10 text-center">
+        <h1 className="text-3xl font-bold text-[#1b110e] mb-2">Start Something Beautiful</h1>
+        <p className="text-[#97604e]">Start crafting unforgettable digital surprises.</p>
+      </div>
+
       <div className="mb-8">
         <div className="flex rounded-2xl bg-gray-100 p-1.5">
           <div className="w-1/2 rounded-xl bg-white py-2.5 text-center text-sm font-bold text-[#1b110e] shadow-sm">Sign Up</div>

@@ -109,24 +109,6 @@ export default function Features() {
               We&apos;ve thought of every detail so you can focus on the emotion.
             </p>
           </div>
-          <Link
-            href="#features"
-            className="hidden md:flex text-primary font-bold items-center hover:underline"
-          >
-            View all features{" "}
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-              className="ml-1 h-4 w-4"
-            >
-              <path
-                fillRule="evenodd"
-                d="M3 10a.75.75 0 0 1 .75-.75h10.638L10.23 5.29a.75.75 0 1 1 1.04-1.08l5.5 5.25a.75.75 0 0 1 0 1.08l-5.5 5.25a.75.75 0 1 1-1.04-1.08l4.158-3.96H3.75A.75.75 0 0 1 3 10Z"
-                clipRule="evenodd"
-              />
-            </svg>
-          </Link>
         </div>
 
         {/* Grid */}
@@ -153,10 +135,10 @@ export default function Features() {
               Create your first moment in minutes.
             </p>
             <Link
-              href="/create"
+              href="/dashboard/create"
               className="w-full bg-white text-primary font-bold py-3 rounded-xl hover:bg-gray-50 transition-colors text-center"
             >
-              Get Started
+              Start a Surprise
             </Link>
           </div>
         </div>
