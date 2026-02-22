@@ -78,7 +78,7 @@ export default function PricingPage() {
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
 
           {/* LEFT — Sticky Pricing Card */}
-          <div className="md:col-span-7 lg:col-span-8 md:sticky md:top-24">
+          <div className="md:col-span-7 lg:col-span-8 md:sticky md:top-24 max-w-2xl">
               {/* Glow border */}
               <div className="relative group">
                 <div className="absolute -inset-1 bg-gradient-to-r from-primary via-[#ff8c69] to-primary rounded-2xl blur opacity-20 group-hover:opacity-35 transition duration-700" />
