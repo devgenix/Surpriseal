@@ -1,0 +1,37 @@
+import type { Metadata } from 'next'
+import { Plus_Jakarta_Sans } from 'next/font/google'
+import './globals.css'
+import ThemeRegistry from '@/components/ThemeRegistry/ThemeRegistry';
+import { CurrencyProvider } from '@/context/CurrencyContext';
+
+const font = Plus_Jakarta_Sans({ subsets: ['latin'] })
+
+export const metadata: Metadata = {
+  title: 'Supriseal - Create Unforgettable Digital Surprises',
+  description: 'Turn birthdays and anniversaries into a structured digital journey.',
+}
+
+import { AuthProvider } from '@/context/AuthContext';
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <html lang="en">
+      <head>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+      </head>
+      <body className={font.className}>
+        <ThemeRegistry>
+          <AuthProvider>
+            <CurrencyProvider>
+              {children}
+            </CurrencyProvider>
+          </AuthProvider>
+        </ThemeRegistry>
+      </body>
+    </html>
+  )
+}
