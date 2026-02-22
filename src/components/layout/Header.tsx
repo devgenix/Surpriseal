@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Container from "@/components/ui/Container";
+import { useAuth } from "@/context/AuthContext";
 
 const navLinks = [
   { href: "/#how-it-works", label: "How it works" },
@@ -12,6 +13,7 @@ const navLinks = [
 
 export default function Header() {
   const pathname = usePathname();
+  const { user, loading } = useAuth();
   const isHomepage = pathname === "/";
 
   return (
@@ -59,14 +61,25 @@ export default function Header() {
 
         {/* Actions */}
         <div className="flex items-center gap-4">
+          {!loading && (
+            user ? (
+              <Link
+                href="/dashboard"
+                className="hidden md:block text-sm font-semibold text-[#1b110e] hover:text-primary transition-colors"
+              >
+                Dashboard
+              </Link>
+            ) : (
+              <Link
+                href="/login"
+                className="hidden md:block text-sm font-semibold text-[#1b110e] hover:text-primary transition-colors"
+              >
+                Log in
+              </Link>
+            )
+          )}
           <Link
-            href="/login"
-            className="hidden md:block text-sm font-semibold text-[#1b110e] hover:text-primary transition-colors"
-          >
-            Log in
-          </Link>
-          <Link
-            href="/create"
+            href="/dashboard/create"
             className="flex items-center justify-center rounded-xl bg-primary px-5 py-2.5 text-sm font-bold text-white transition-all hover:scale-105 active:scale-95 shadow-[0_4px_20px_-2px_rgba(230,76,25,0.2)] hover:shadow-[0_8px_25px_-2px_rgba(230,76,25,0.35)]"
           >
             Start a Surprise

@@ -143,7 +143,7 @@ export default function PricingPage() {
 
                   {/* CTA */}
                   <Link
-                    href="/create"
+                    href="/dashboard/create"
                     className="w-full py-4 rounded-xl bg-primary hover:bg-primary/90 text-white text-base font-bold shadow-lg shadow-primary/25 transition-all hover:-translate-y-0.5 flex items-center justify-center gap-2"
                   >
                     Start a Surprise
@@ -440,6 +440,44 @@ export default function PricingPage() {
               <p className="text-xs text-[#97604e]">Verified Buyer</p>
             </div>
           </div>
+        </Container>
+      </section>
+
+      {/* Final CTA Section */}
+      <section className="py-24 bg-[#fcf9f8] relative overflow-hidden">
+        {/* Floating Emojis */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-[20%] left-[10%] animate-bounce opacity-10 text-3xl">💝</div>
+          <div className="absolute bottom-[20%] right-[10%] animate-pulse opacity-10 text-3xl">✨</div>
+        </div>
+        
+        <Container className="text-center relative z-10">
+          <h2 className="text-3xl md:text-5xl font-extrabold text-[#1b110e] mb-8 tracking-tight">
+            Ready to make them <span className="text-primary italic">smile?</span>
+          </h2>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+            <Link
+              href="/dashboard/create"
+              className="inline-flex items-center justify-center rounded-xl bg-primary px-10 py-5 text-lg font-bold text-white shadow-[0_4px_20px_-2px_rgba(230,76,25,0.15)] transition-all hover:bg-primary/90 hover:shadow-[0_8px_30px_-2px_rgba(230,76,25,0.35)] hover:-translate-y-1"
+            >
+              Start a Surprise
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                className="ml-2 h-6 w-6"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M3 10a.75.75 0 0 1 .75-.75h10.638L10.23 5.29a.75.75 0 1 1 1.04-1.08l5.5 5.25a.75.75 0 0 1 0 1.08l-5.5 5.25a.75.75 0 1 1-1.04-1.08l4.158-3.96H3.75A.75.75 0 0 1 3 10Z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </Link>
+          </div>
+          <p className="mt-6 text-[#97604e] font-medium text-sm">
+            Join 10,000+ others creating magical moments.
+          </p>
         </Container>
       </section>
     </div>
