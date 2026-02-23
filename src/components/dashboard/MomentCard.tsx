@@ -81,7 +81,7 @@ export default function MomentCard({ moment }: { moment: MomentProps }) {
             >
               <Share2 className="w-5 h-5" />
             </button>
-            <Link href={`/dashboard/create?id=${moment.id}`}>
+            <Link href={`/dashboard/create/${moment.id}/details`}>
               <button className="h-8 px-4 flex items-center justify-center rounded-lg bg-primary/10 hover:bg-primary text-primary hover:text-white text-xs font-bold transition-all">
                 Edit
               </button>

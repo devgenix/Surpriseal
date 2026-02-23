@@ -10,78 +10,7 @@ import {
 } from "framer-motion";
 import { useState, useRef, useEffect } from "react";
 
-const occasions = [
-  {
-    title: "Happy Birthdays",
-    description: "Celebrate special birthdays with heartfelt video messages from friends and family.",
-    icon: "🎂",
-    image: "/images/landing/occasions/birthday.png",
-    bgColor: "bg-[#FFF9F2]",
-  },
-  {
-    title: "Weddings",
-    description: "Create unforgettable wedding Tributes with messages from loved ones near and far.",
-    icon: "👰",
-    image: "/images/landing/occasions/wedding.png",
-    bgColor: "bg-[#FFF5F8]",
-  },
-  {
-    title: "Anniversaries",
-    description: "Honor milestone anniversaries with personalized video collections from colleagues and friends.",
-    icon: "🍾",
-    image: "/images/landing/occasions/anniversary.png",
-    bgColor: "bg-[#F0FFF4]",
-  },
-  {
-    title: "Retirements",
-    description: "Send off retiring colleagues with meaningful video Tributes celebrating their career.",
-    icon: "🎉",
-    image: "/images/landing/occasions/retirement.png",
-    bgColor: "bg-[#F0F7FF]",
-  },
-  {
-    title: "In Memory",
-    description: "Create touching memorial Tributes to honor and remember loved ones who have passed.",
-    icon: "🕯️",
-    image: "/images/landing/occasions/memorial.png",
-    bgColor: "bg-[#F7F2FF]",
-  },
-  {
-    title: "Graduations",
-    description: "Congratulate graduates with inspiring video messages from family and friends.",
-    icon: "🎓",
-    image: "/images/landing/occasions/graduation.png",
-    bgColor: "bg-[#F5F2FF]",
-  },
-  {
-    title: "Teacher Appreciation",
-    description: "Show gratitude to educators with heartfelt video Tributes from students and parents.",
-    icon: "🫶",
-    image: "/images/landing/occasions/retirement.png",
-    bgColor: "bg-[#FFF9F0]",
-  },
-  {
-    title: "Promotions",
-    description: "Celebrate career advancements with congratulatory video messages from teammates.",
-    icon: "⭐",
-    image: "/images/landing/occasions/graduation.png",
-    bgColor: "bg-[#FFFFF0]",
-  },
-  {
-    title: "Get Well Soon",
-    description: "Send healing wishes and support through uplifting video messages during recovery.",
-    icon: "❤️",
-    image: "/images/landing/occasions/memorial.png",
-    bgColor: "bg-[#FFF0F0]",
-  },
-  {
-    title: "New Baby",
-    description: "Welcome new arrivals with warm video congratulations from family and friends.",
-    icon: "🧸",
-    image: "/images/landing/occasions/baby.png",
-    bgColor: "bg-[#F0FBFF]",
-  },
-];
+import { occasions } from "@/lib/constants/occasions";
 
 export default function Occasions() {
   const [isPaused, setIsPaused] = useState(false);
@@ -188,9 +117,6 @@ function OccasionCard({ occasion }: { occasion: typeof occasions[0] }) {
 
       {/* Content */}
       <div className="relative h-full flex flex-col items-center text-center p-6 z-10">
-        <div className="text-4xl mb-4 transform transition-transform group-hover:scale-125 duration-500 drop-shadow-lg">
-          {occasion.icon}
-        </div>
         <h3 className="text-lg font-bold text-white mb-2 leading-tight tracking-tight drop-shadow-md">
           {occasion.title}
         </h3>

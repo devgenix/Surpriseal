@@ -8,7 +8,7 @@ import { PLANS, ADDONS, PlanDefinition, AddonDefinition } from "@/lib/constants/
 import { formatPrice } from "@/lib/currency";
 import { useCurrency } from "@/context/CurrencyContext";
 import { db, auth } from "@/lib/firebase";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, getDoc, doc } from "firebase/firestore";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { Loader2, CheckCircle2, Check, ChevronRight, Info} from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -62,20 +62,35 @@ export default function CreatePage() {
   }, [selectedPlan, selectedAddonIds, selectedPlanId, currency]);
 
   const handleCreate = async () => {
+    console.log(">>> BEGIN handleCreate");
     if (!user) {
       alert("Please sign in to create a surprise!");
       return;
     }
 
+    if (!db) {
+      console.error("Firebase Firestore (db) is NOT initialized.");
+      alert("Firebase connection error. Please check your internet or try again later.");
+      return;
+    }
+
     setLoading(true);
+    console.log("Loading set to true. User UID:", user.uid);
 
     try {
+      // Diagnostic: Test read
+      console.log("Diagnostic: Testing Firestore connection with a small read...");
+      const testPromise = getDoc(doc(db, "drafts", "healthcheck")).catch(e => {
+        console.warn("Diagnostic read failed (this might be normal if rules block it):", e.message);
+        return null;
+      });
+      
       const draftData = {
         userId: user.uid,
         plan: selectedPlanId,
         currency,
         basePrice: selectedPlan.price[currency],
-        selectedAddons: selectedPlanId === "premium" ? ADDONS.map(a => a.id) : selectedAddonIds,
+        selectedAddons: (selectedPlanId === "premium") ? ADDONS.map(a => a.id) : selectedAddonIds,
         totalPrice,
         status: "draft",
         createdAt: serverTimestamp(),
@@ -83,14 +98,28 @@ export default function CreatePage() {
         step: 0,
       };
 
-      const docRef = await addDoc(collection(db!, "drafts"), draftData);
+      console.log("Draft data prepared. Attempting addDoc...");
+      
+      // Use Promise.race to ensure we don't hang forever
+      const addDocPromise = addDoc(collection(db, "drafts"), draftData);
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error("Firestore write timed out after 10 seconds")), 10000)
+      );
+
+      const docRef = await Promise.race([addDocPromise, timeoutPromise]) as any;
+      console.log(">>> SUCCESS: Draft created with ID:", docRef.id);
+      
       setDraftId(docRef.id);
       setLastSaved(new Date());
       
-      router.push(`/create/${docRef.id}/details`);
-    } catch (error) {
-      console.error("Error creating draft:", error);
-    } finally {
+      const nextPath = `/dashboard/create/${docRef.id}/details`;
+      console.log("Navigating to details page:", nextPath);
+      
+      router.push(nextPath);
+      // Note: We don't setLoading(false) here because we want to stay in loading state while navigating
+    } catch (error: any) {
+      console.error(">>> FAILURE in handleCreate:", error);
+      alert(`Error: ${error.message || "Failed to create draft."}\n\nCheck if Firestore is enabled in your Google Cloud Console (project: surpriseal-e31ff) and that your rules allow writing to the 'drafts' collection.`);
       setLoading(false);
     }
   };
