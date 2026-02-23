@@ -72,13 +72,6 @@ export default function SignupPage() {
         <p className="text-[#97604e]">Start crafting unforgettable digital surprises.</p>
       </div>
 
-      <div className="mb-6 md:mb-8">
-        <div className="flex rounded-2xl bg-gray-100 p-1 md:p-1.5">
-          <div className="w-1/2 rounded-xl bg-white py-2 md:py-2.5 text-center text-sm font-bold text-[#1b110e] shadow-sm">Sign Up</div>
-          <Link href={`/login${redirectPath !== '/dashboard' ? `?redirect=${encodeURIComponent(redirectPath)}` : ''}`} className="w-1/2 py-2 md:py-2.5 text-center text-sm font-semibold text-[#97604e] hover:text-[#1b110e] transition-colors">Log In</Link>
-        </div>
-      </div>
-
       <form className="flex flex-col gap-4" onSubmit={handleSignup}>
         <label className="flex flex-col gap-1.5">
           <span className="text-sm font-semibold text-[#1b110e] ml-1">Full Name</span>

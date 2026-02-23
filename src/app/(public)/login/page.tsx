@@ -70,13 +70,6 @@ export default function LoginPage() {
         <p className="text-[#97604e]">Log in to your account to continue.</p>
       </div>
 
-      <div className="mb-8">
-        <div className="flex rounded-2xl bg-gray-100 p-1.5">
-          <Link href={`/signup${redirectPath !== '/dashboard' ? `?redirect=${encodeURIComponent(redirectPath)}` : ''}`} className="w-1/2 py-2.5 text-center text-sm font-semibold text-[#97604e] hover:text-[#1b110e] transition-colors">Sign Up</Link>
-          <div className="w-1/2 rounded-xl bg-white py-2.5 text-center text-sm font-bold text-[#1b110e] shadow-sm">Log In</div>
-        </div>
-      </div>
-
       <form className="flex flex-col gap-4" onSubmit={handleLogin}>
         <label className="flex flex-col gap-1.5">
           <span className="text-sm font-semibold text-[#1b110e] ml-1">Email Address</span>
