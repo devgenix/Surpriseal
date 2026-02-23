@@ -87,7 +87,7 @@ export default function CreatePage() {
       setDraftId(docRef.id);
       setLastSaved(new Date());
       
-      // router.push(`/create/${docRef.id}/details`);
+      router.push(`/create/${docRef.id}/details`);
     } catch (error) {
       console.error("Error creating draft:", error);
     } finally {
@@ -104,9 +104,8 @@ export default function CreatePage() {
   }
 
   return (
-    <Section className="py-10 md:py-16 bg-[#fcf9f8]">
+    <Section className="bg-[#fcf9f8]">
       <Container>
-        <div className="max-w-5xl mx-auto">
           {/* Header */}
           <div className="text-center mb-12">
             <h1 className="text-3xl md:text-5xl font-extrabold mb-4 text-[#1b110e]">
@@ -170,7 +169,7 @@ export default function CreatePage() {
 
               {/* Add-ons Section */}
               <div className={cn(
-                "rounded-lg p-8 transition-all duration-500",
+                "rounded-lg p-6 lg:p-8 transition-all duration-500",
                 selectedPlanId === "premium" 
                   ? "bg-slate-50 border-2 border-slate-200 opacity-60 pointer-events-none" 
                   : "bg-white border-2 border-[#f3eae7] shadow-sm"
@@ -320,7 +319,6 @@ export default function CreatePage() {
               )}
             </div>
           </div>
-        </div>
       </Container>
     </Section>
   );

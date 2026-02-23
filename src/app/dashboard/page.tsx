@@ -1,11 +1,12 @@
 "use client";
 
-import { useAuth } from "@/context/AuthContext";
-import MomentCard from "@/components/dashboard/MomentCard";
-import { Plus, ListFilter, ArrowDownAZ, Loader2 } from "lucide-react";
 import Link from "next/link";
-import { useState, useEffect } from "react";
 import { db } from "@/lib/firebase";
+import { useState, useEffect } from "react";
+import { useAuth } from "@/context/AuthContext";
+import Container from "@/components/ui/Container";
+import MomentCard from "@/components/dashboard/MomentCard";
+import { Plus, ListFilter, ArrowDownAZ, Loader2  } from "lucide-react";
 import { collection, query, where, onSnapshot, orderBy } from "firebase/firestore";
 
 
@@ -61,7 +62,7 @@ export default function DashboardPage() {
   if (!user) return null;
 
   return (
-    <>
+    <Container>
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
         <div className="flex flex-col gap-2">
@@ -98,8 +99,6 @@ export default function DashboardPage() {
           <MomentCard key={moment.id} moment={moment} />
         ))}
       </div>
-
-
-    </>
+    </Container>
   );
 }

@@ -39,7 +39,7 @@ export default function DashboardLayout({
   return (
     <div className="bg-background-light dark:bg-background-dark text-text-main font-display antialiased min-h-screen flex flex-col transition-colors duration-200">
       <DashboardHeader />
-      <main className="flex-1 w-full max-w-[1280px] mx-auto px-6 py-10">
+      <main className="flex-1 w-full max-w-[1280px] mx-auto py-10">
         {children}
       </main>
       <DashboardFooter />
