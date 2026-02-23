@@ -112,31 +112,31 @@ export default function Features() {
         </div>
 
         {/* Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {features.map((feature) => (
             <div
               key={feature.title}
-              className="rounded-2xl p-8 bg-white border border-[#f3eae7] shadow-sm hover:shadow-[0_10px_40px_-10px_rgba(27,17,14,0.08)] transition-shadow"
+              className="group rounded-3xl p-10 bg-white border border-[#f3eae7] shadow-sm hover:shadow-[0_20px_60px_-15px_rgba(27,17,14,0.1)] transition-all duration-500 hover:-translate-y-1"
             >
               <div
-                className={`w-12 h-12 rounded-lg ${feature.iconBg} ${feature.iconColor} flex items-center justify-center mb-6`}
+                className={`w-14 h-14 rounded-2xl ${feature.iconBg} ${feature.iconColor} flex items-center justify-center mb-8 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3 shadow-sm`}
               >
                 {feature.icon}
               </div>
-              <h3 className="text-lg font-bold text-[#1b110e] mb-2">{feature.title}</h3>
-              <p className="text-[#97604e] text-sm">{feature.description}</p>
+              <h3 className="text-xl font-bold text-[#1b110e] mb-4 tracking-tight">{feature.title}</h3>
+              <p className="text-[#97604e] text-sm leading-relaxed font-medium">{feature.description}</p>
             </div>
           ))}
 
           {/* CTA Card */}
-          <div className="rounded-2xl p-8 bg-gradient-to-br from-primary to-orange-400 text-white shadow-[0_4px_20px_-2px_rgba(230,76,25,0.2)] flex flex-col justify-center items-center text-center">
-            <h3 className="text-2xl font-bold mb-2">Ready to start?</h3>
-            <p className="text-white/90 text-sm mb-6">
-              Create your first moment in minutes.
+          <div className="rounded-3xl p-10 bg-gradient-to-br from-primary to-orange-400 text-white shadow-[0_15px_40px_-10px_rgba(230,76,25,0.3)] flex flex-col justify-center items-center text-center transform transition-transform duration-500 hover:scale-[1.02]">
+            <h3 className="text-2xl font-bold mb-3 tracking-tight">Ready to start?</h3>
+            <p className="text-white/90 text-sm mb-8 font-medium">
+              Create your first moment in minutes. Join thousands of creators.
             </p>
             <Link
               href="/dashboard/create"
-              className="w-full bg-white text-primary font-bold py-3 rounded-xl hover:bg-gray-50 transition-colors text-center"
+              className="w-full bg-white text-primary font-bold py-4 rounded-lg hover:bg-gray-50 transition-all shadow-lg active:scale-95 text-center"
             >
               Start a Surprise
             </Link>

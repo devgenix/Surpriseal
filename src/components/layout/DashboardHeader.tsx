@@ -56,7 +56,7 @@ export default function DashboardHeader() {
         <div className="flex items-center gap-6">
           {/* Create Button */}
           <Link href="/dashboard/create">
-            <button className="hidden sm:flex h-10 px-5 items-center justify-center rounded-xl bg-primary hover:bg-primary/90 text-white text-sm font-bold shadow-soft hover:shadow-soft-hover transition-all transform hover:-translate-y-0.5 active:translate-y-0">
+            <button className="hidden sm:flex h-10 px-5 items-center justify-center rounded-lg bg-primary hover:bg-primary/90 text-white text-sm font-bold shadow-soft hover:shadow-soft-hover transition-all transform hover:-translate-y-0.5 active:translate-y-0">
               <PlusCircle className="w-5 h-5 mr-2" />
               Create New Moment
             </button>

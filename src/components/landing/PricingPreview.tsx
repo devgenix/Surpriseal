@@ -81,7 +81,7 @@ export default function PricingPreview() {
               </span>
               <Link
                 href="/dashboard/create"
-                className="w-full max-w-[240px] bg-primary text-white font-bold text-lg py-4 rounded-xl shadow-[0_4px_20px_-2px_rgba(230,76,25,0.15)] hover:bg-primary/90 hover:shadow-[0_8px_30px_-2px_rgba(230,76,25,0.35)] transition-all text-center block"
+                className="w-full max-w-[240px] bg-primary text-white font-bold text-lg py-4 rounded-lg shadow-[0_4px_20px_-2px_rgba(230,76,25,0.15)] hover:bg-primary/90 hover:shadow-[0_8px_30px_-2px_rgba(230,76,25,0.35)] transition-all text-center block"
               >
                 Start a Surprise
               </Link>

@@ -50,7 +50,7 @@ export default function Header() {
           )}
           <Link
             href="/dashboard/create"
-            className="flex items-center justify-center rounded-xl bg-primary px-4 py-2 md:px-5 md:py-2.5 text-xs md:text-sm font-bold text-white transition-all hover:scale-105 active:scale-95 shadow-[0_4px_20px_-2px_rgba(230,76,25,0.2)] hover:shadow-[0_8px_25px_-2px_rgba(230,76,25,0.35)]"
+            className="flex items-center justify-center rounded-lg bg-primary px-4 py-2 md:px-5 md:py-2.5 text-xs md:text-sm font-bold text-white transition-all hover:scale-105 active:scale-95 shadow-[0_4px_20px_-2px_rgba(230,76,25,0.2)] hover:shadow-[0_8px_25px_-2px_rgba(230,76,25,0.35)]"
           >
             Start a Surprise
           </Link>

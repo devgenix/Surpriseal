@@ -145,7 +145,7 @@ export default function PricingPage() {
                   {/* CTA */}
                   <Link
                     href="/dashboard/create"
-                    className="w-full py-4 rounded-xl bg-primary hover:bg-primary/90 text-white text-base font-bold shadow-lg shadow-primary/25 transition-all hover:-translate-y-0.5 flex items-center justify-center gap-2"
+                    className="w-full py-4 rounded-lg bg-primary hover:bg-primary/90 text-white text-base font-bold shadow-lg shadow-primary/25 transition-all hover:-translate-y-0.5 flex items-center justify-center gap-2"
                   >
                     Start a Surprise
                     <svg
@@ -166,7 +166,7 @@ export default function PricingPage() {
           </div>
 
           {/* RIGHT — Add-ons (natural page scroll, left card stays sticky) */}
-          <div className="md:col-span-5 lg:col-span-4">
+          <div className="md:col-span-5 lg:col-span-4 max-w-xl">
             <div className="space-y-6">
 
               <div className="px-1">
@@ -382,14 +382,18 @@ export default function PricingPage() {
               {/* Social proof */}
               <div className="flex flex-col items-center text-center gap-3 opacity-70">
                 <div className="flex -space-x-2">
-                  {["bg-rose-300", "bg-orange-300", "bg-amber-300"].map(
-                    (bg, i) => (
-                      <div
-                        key={i}
-                        className={`h-8 w-8 rounded-full ${bg} ring-2 ring-white`}
-                      />
-                    )
-                  )}
+                  {[
+                    "/images/landing/avatars/avatar-3.png",
+                    "/images/landing/avatars/avatar-1.png",
+                    "/images/landing/avatars/avatar-2.png"
+                  ].map((src, i) => (
+                    <div
+                      key={i}
+                      className="h-8 w-8 rounded-full border-2 border-white shadow-sm overflow-hidden"
+                    >
+                      <img src={src} alt={`User ${i + 1}`} className="w-full h-full object-cover" />
+                    </div>
+                  ))}
                   <div className="h-8 w-8 rounded-full ring-2 ring-white bg-primary/10 flex items-center justify-center text-[10px] font-bold text-primary">
                     +2k
                   </div>

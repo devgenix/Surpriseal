@@ -4,6 +4,7 @@ import Features from "@/components/landing/Features";
 import Occasions from "@/components/landing/Occasions";
 import PricingPreview from "@/components/landing/PricingPreview";
 import Testimonials from "@/components/landing/Testimonials";
+import FAQ from "@/components/landing/FAQ";
 import CallToAction from "@/components/landing/CallToAction";
 
 export default function Home() {
@@ -15,6 +16,7 @@ export default function Home() {
       <Occasions />
       <PricingPreview />
       <Testimonials />
+      <FAQ />
       <CallToAction />
     </>
   );

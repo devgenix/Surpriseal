@@ -6,61 +6,24 @@ const steps = [
     title: "Customize the Journey",
     description:
       "Design a unique path for your loved one. Choose themes, colors, and the flow of the reveal.",
-    iconBg: "bg-[#fff0eb]",
-    iconColor: "text-primary",
-    hoverBg: "group-hover:bg-primary",
-    hoverText: "group-hover:text-white",
-    icon: (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 24 24"
-        fill="currentColor"
-        className="h-7 w-7"
-      >
-        <path d="M21.731 2.269a2.625 2.625 0 0 0-3.712 0l-1.157 1.157 3.712 3.712 1.157-1.157a2.625 2.625 0 0 0 0-3.712ZM19.513 8.199l-3.712-3.712-8.4 8.4a5.25 5.25 0 0 0-1.32 2.214l-.8 2.685a.75.75 0 0 0 .933.933l2.685-.8a5.25 5.25 0 0 0 2.214-1.32l8.4-8.4Z" />
-        <path d="M5.25 5.25a3 3 0 0 0-3 3v10.5a3 3 0 0 0 3 3h10.5a3 3 0 0 0 3-3V13.5a.75.75 0 0 0-1.5 0v5.25a1.5 1.5 0 0 1-1.5 1.5H5.25a1.5 1.5 0 0 1-1.5-1.5V8.25a1.5 1.5 0 0 1 1.5-1.5h5.25a.75.75 0 0 0 0-1.5H5.25Z" />
-      </svg>
-    ),
+    image: "/images/landing/step-design.png",
+    color: "from-orange-50 to-orange-100",
   },
   {
     number: "2",
     title: "Add Precious Memories",
     description:
       "Upload meaningful photos, video messages, and heartfelt notes to build anticipation.",
-    iconBg: "bg-purple-100",
-    iconColor: "text-purple-600",
-    hoverBg: "group-hover:bg-purple-600",
-    hoverText: "group-hover:text-white",
-    icon: (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 24 24"
-        fill="currentColor"
-        className="h-7 w-7"
-      >
-        <path d="m11.645 20.91-.007-.003-.022-.012a15.247 15.247 0 0 1-.383-.218 25.18 25.18 0 0 1-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0 1 12 5.052 5.5 5.5 0 0 1 16.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 0 1-4.244 3.17 15.247 15.247 0 0 1-.383.219l-.022.012-.007.004-.003.001a.752.752 0 0 1-.704 0l-.003-.001Z" />
-      </svg>
-    ),
+    image: "/images/landing/step-memories.png",
+    color: "from-purple-50 to-purple-100",
   },
   {
     number: "3",
-    title: "Send the Link",
+    title: "Share the Surprise",
     description:
-      "Share the surprise with a simple link. They unlock the experience on any device, anywhere.",
-    iconBg: "bg-green-100",
-    iconColor: "text-green-600",
-    hoverBg: "group-hover:bg-green-600",
-    hoverText: "group-hover:text-white",
-    icon: (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 24 24"
-        fill="currentColor"
-        className="h-7 w-7"
-      >
-        <path d="M3.478 2.405a.75.75 0 0 0-.926.94l2.432 7.905H13.5a.75.75 0 0 1 0 1.5H4.984l-2.432 7.905a.75.75 0 0 0 .926.94 60.519 60.519 0 0 0 18.445-8.986.75.75 0 0 0 0-1.218A60.517 60.517 0 0 0 3.478 2.405Z" />
-      </svg>
-    ),
+      "Share the surprise with them and watch their reaction. They unlock the experience on any device, anywhere.",
+    image: "/images/landing/step-send.png",
+    color: "from-green-50 to-green-100",
   },
 ];
 
@@ -93,23 +56,22 @@ export default function HowItWorks() {
           {steps.map((step, idx) => (
             <div
               key={step.number}
-              className="group relative flex flex-col items-center text-center p-8 rounded-2xl bg-[#fcf9f8] border border-[#f3eae7] transition-all hover:shadow-[0_20px_50px_-15px_rgba(27,17,14,0.1)] hover:border-primary/30 hover:-translate-y-2 z-10"
+              className="group relative flex flex-col items-center text-center p-8 rounded-3xl bg-[#fcf9f8] border border-[#f3eae7] transition-all hover:shadow-[0_20px_50px_-15px_rgba(27,17,14,0.1)] hover:border-primary/30 hover:-translate-y-2 z-10"
             >
               <div
-                className={`mb-8 flex h-20 w-20 items-center justify-center rounded-2xl ${step.iconBg} ${step.iconColor} ${step.hoverBg} ${step.hoverText} transition-all duration-500 shadow-sm group-hover:shadow-lg group-hover:rotate-6`}
+                className={`mb-8 flex h-48 w-full items-center justify-center rounded-2xl overflow-hidden bg-gradient-to-br ${step.color} shadow-inner group-hover:shadow-lg transition-all duration-500`}
               >
-                {step.icon}
+                <img 
+                  src={step.image} 
+                  alt={step.title} 
+                  className="w-full h-full object-cover transform transition-transform duration-700 group-hover:scale-110"
+                />
               </div>
-              <div className="absolute -top-4 -left-4 w-10 h-10 rounded-full bg-white border-4 border-[#fcf9f8] shadow-sm flex items-center justify-center text-primary font-black text-sm">
+              <div className="absolute top-6 left-6 w-10 h-10 rounded-full bg-white border-4 border-[#fcf9f8] shadow-md flex items-center justify-center text-primary font-black text-sm z-20">
                 {step.number}
               </div>
               <h4 className="text-xl font-bold text-[#1b110e] mb-3 tracking-tight">{step.title}</h4>
               <p className="text-[#97604e] leading-relaxed font-medium text-sm">{step.description}</p>
-              
-              {/* Optional: Indicator for the last step */}
-              {idx === steps.length - 1 && (
-                <div className="mt-6 text-primary animate-pulse text-2xl">✨</div>
-              )}
             </div>
           ))}
         </div>

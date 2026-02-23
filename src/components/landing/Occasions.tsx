@@ -15,60 +15,70 @@ const occasions = [
     title: "Happy Birthdays",
     description: "Celebrate special birthdays with heartfelt video messages from friends and family.",
     icon: "🎂",
+    image: "/images/landing/occasions/birthday.png",
     bgColor: "bg-[#FFF9F2]",
   },
   {
     title: "Weddings",
     description: "Create unforgettable wedding Tributes with messages from loved ones near and far.",
     icon: "👰",
+    image: "/images/landing/occasions/wedding.png",
     bgColor: "bg-[#FFF5F8]",
   },
   {
     title: "Anniversaries",
     description: "Honor milestone anniversaries with personalized video collections from colleagues and friends.",
     icon: "🍾",
+    image: "/images/landing/occasions/anniversary.png",
     bgColor: "bg-[#F0FFF4]",
   },
   {
     title: "Retirements",
     description: "Send off retiring colleagues with meaningful video Tributes celebrating their career.",
     icon: "🎉",
+    image: "/images/landing/occasions/retirement.png",
     bgColor: "bg-[#F0F7FF]",
   },
   {
-    title: "In Memory or Funeral",
+    title: "In Memory",
     description: "Create touching memorial Tributes to honor and remember loved ones who have passed.",
     icon: "🕯️",
+    image: "/images/landing/occasions/memorial.png",
     bgColor: "bg-[#F7F2FF]",
   },
   {
     title: "Graduations",
-    description: "Congratulate graduates with inspiring video messages from family, friends, and mentors.",
+    description: "Congratulate graduates with inspiring video messages from family and friends.",
     icon: "🎓",
+    image: "/images/landing/occasions/graduation.png",
     bgColor: "bg-[#F5F2FF]",
   },
   {
     title: "Teacher Appreciation",
     description: "Show gratitude to educators with heartfelt video Tributes from students and parents.",
     icon: "🫶",
+    image: "/images/landing/occasions/retirement.png",
     bgColor: "bg-[#FFF9F0]",
   },
   {
     title: "Promotions",
     description: "Celebrate career advancements with congratulatory video messages from teammates.",
     icon: "⭐",
+    image: "/images/landing/occasions/graduation.png",
     bgColor: "bg-[#FFFFF0]",
   },
   {
     title: "Get Well Soon",
     description: "Send healing wishes and support through uplifting video messages during recovery.",
     icon: "❤️",
+    image: "/images/landing/occasions/memorial.png",
     bgColor: "bg-[#FFF0F0]",
   },
   {
     title: "New Baby",
     description: "Welcome new arrivals with warm video congratulations from family and friends.",
     icon: "🧸",
+    image: "/images/landing/occasions/baby.png",
     bgColor: "bg-[#F0FBFF]",
   },
 ];
@@ -163,21 +173,39 @@ export default function Occasions() {
 function OccasionCard({ occasion }: { occasion: typeof occasions[0] }) {
   return (
     <div
-      className={`${occasion.bgColor} rounded-2xl p-6 flex flex-col items-center text-center transition-all md:hover:scale-[1.03] md:hover:shadow-2xl md:hover:shadow-black/20 duration-500 group border border-white/10 h-full`}
+      className="relative overflow-hidden rounded-lg transition-all md:hover:scale-[1.03] md:hover:shadow-2xl md:hover:shadow-black/40 duration-500 group border border-white/10 h-[320px]"
     >
-      <div className="text-4xl mb-4 md:mb-6 transform transition-transform group-hover:scale-125 duration-500 drop-shadow-sm grayscale-[0.2] group-hover:grayscale-0">
-        {occasion.icon}
+      {/* Background Image */}
+      <div className="absolute inset-0">
+        <img 
+          src={occasion.image} 
+          alt={occasion.title} 
+          className="w-full h-full object-cover grayscale-[0.3] group-hover:grayscale-0 transition-all duration-700 group-hover:scale-110"
+        />
+        <div className={`absolute inset-0 opacity-20 group-hover:opacity-40 transition-opacity duration-500 ${occasion.bgColor.replace('bg-', 'bg-')}`} />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 to-black/40" />
       </div>
-      <h3 className="text-lg font-bold text-[#1b110e] mb-3 leading-tight tracking-tight">{occasion.title}</h3>
-      <p className="text-[#97604e] text-[11px] leading-relaxed mb-6 flex-grow font-medium">
-        {occasion.description}
-      </p>
-      <Link
-        href="/dashboard/create"
-        className="w-full bg-[#1b110e] text-white text-[13px] font-bold py-3 rounded-xl hover:bg-primary transition-all shadow-md active:scale-95"
-      >
-        Start a Surprise
-      </Link>
+
+      {/* Content */}
+      <div className="relative h-full flex flex-col items-center text-center p-6 z-10">
+        <div className="text-4xl mb-4 transform transition-transform group-hover:scale-125 duration-500 drop-shadow-lg">
+          {occasion.icon}
+        </div>
+        <h3 className="text-lg font-bold text-white mb-2 leading-tight tracking-tight drop-shadow-md">
+          {occasion.title}
+        </h3>
+        <p className="text-white/80 text-[11px] leading-relaxed mb-6 font-medium drop-shadow-sm line-clamp-3">
+          {occasion.description}
+        </p>
+        <div className="mt-auto w-full">
+          <Link
+            href="/dashboard/create"
+            className="inline-block w-full bg-white/20 backdrop-blur-md text-white text-[13px] font-bold py-2.5 rounded-lg border border-white/30 hover:bg-white hover:text-[#1b110e] transition-all shadow-lg active:scale-95"
+          >
+            Start a Surprise
+          </Link>
+        </div>
+      </div>
     </div>
   );
 }
