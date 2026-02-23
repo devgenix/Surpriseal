@@ -23,7 +23,7 @@ export default function DashboardHeader() {
     <header className="sticky top-0 z-50 w-full bg-surface-light/80 dark:bg-surface-dark/90 backdrop-blur-md border-b border-[#f3eae7] dark:border-white/10 px-6 py-4 transition-colors duration-200">
       <div className="max-w-[1280px] mx-auto flex items-center justify-between">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-3 text-text-main dark:text-white group cursor-pointer">
+        <Link href="/dashboard" className="flex items-center gap-3 text-text-main dark:text-white group cursor-pointer">
           <div className="size-8 text-primary flex items-center justify-center bg-primary/10 rounded-lg">
             <span className="material-symbols-outlined text-[24px]">celebration</span>
           </div>

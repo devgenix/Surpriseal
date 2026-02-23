@@ -99,28 +99,7 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      {moments.length === 0 && (
-        /* Empty State */
-        <div className="mt-12 flex flex-col items-center justify-center py-16 px-4 bg-white dark:bg-surface-dark rounded-3xl border border-dashed border-gray-200 dark:border-white/10">
-          <div className="relative w-full max-w-[280px] aspect-square mb-8">
-            <div className="absolute inset-0 bg-gradient-to-tr from-primary/20 to-accent-pink/20 rounded-full blur-3xl opacity-60"></div>
-            <div className="relative z-10 w-full h-full flex items-center justify-center">
-               <div className="bg-primary/10 rounded-full w-48 h-48 flex items-center justify-center">
-                  <Plus className="w-24 h-24 text-primary opacity-20" />
-               </div>
-            </div>
-          </div>
-          <h2 className="text-2xl md:text-3xl font-extrabold text-text-main dark:text-white text-center mb-3">No moments yet?</h2>
-          <p className="text-text-muted dark:text-gray-400 text-center max-w-md mb-8 text-lg leading-relaxed">
-            Create memories that last. Build your first digital surprise page in minutes and make someone's day unforgettable.
-          </p>
-          <Link href="/dashboard/create">
-            <button className="h-12 px-8 flex items-center justify-center rounded-xl bg-primary hover:bg-primary/90 text-white font-bold text-base shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all transform hover:-translate-y-1">
-              Create First Moment
-            </button>
-          </Link>
-        </div>
-      )}
+
     </>
   );
 }

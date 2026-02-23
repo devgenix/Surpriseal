@@ -46,10 +46,10 @@ export default function PricingPage() {
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-primary/5 rounded-full blur-3xl -z-10" />
 
       {/* Hero */}
-      <Container className="py-16 md:py-24 text-center z-10 relative flex flex-col items-center">
-        <h1 className="text-4xl md:text-6xl font-black text-[#1b110e] leading-[1.1] mb-6 tracking-tight">
+      <Container className="py-12 md:py-24 text-center z-10 relative flex flex-col items-center">
+        <h1 className="text-3xl md:text-6xl font-black text-[#1b110e] leading-[1.1] mb-6 tracking-tight px-4 md:px-0">
           Simple, Intentional{" "}
-          <br />
+          <br className="hidden md:block" />
           <span className="text-primary relative inline-block">
             Pricing
             <svg
@@ -68,7 +68,7 @@ export default function PricingPage() {
           </span>
         </h1>
 
-        <p className="text-lg text-[#97604e] max-w-xl mx-auto leading-relaxed">
+        <p className="text-base md:text-lg text-[#97604e] max-w-xl mx-auto leading-relaxed px-6 md:px-0">
           One perfect package to craft unforgettable digital memories. No hidden
           fees, just pure joy delivered beautifully.
         </p>
@@ -84,32 +84,32 @@ export default function PricingPage() {
               <div className="relative group">
                 <div className="absolute -inset-1 bg-gradient-to-r from-primary via-[#ff8c69] to-primary rounded-2xl blur opacity-20 group-hover:opacity-35 transition duration-700" />
 
-                <div className="relative bg-white rounded-2xl p-8 md:p-10 border border-[#f3eae7] shadow-[0_20px_40px_-10px_rgba(230,76,25,0.1)] flex flex-col h-full">
+                <div className="relative bg-white rounded-2xl p-6 md:p-10 border border-[#f3eae7] shadow-[0_20px_40px_-10px_rgba(230,76,25,0.1)] flex flex-col h-full">
                   {/* Card header */}
                   <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
                     <div>
-                      <h2 className="text-2xl font-bold text-[#1b110e]">
+                      <h2 className="text-xl md:text-2xl font-bold text-[#1b110e]">
                         Supriseal Moment
                       </h2>
-                      <p className="text-[#97604e] text-sm mt-1">
+                      <p className="text-[#97604e] text-xs md:text-sm mt-1">
                         Everything you need for one amazing reveal.
                       </p>
                     </div>
                   </div>
 
                   {/* Price */}
-                  <div className="flex items-baseline gap-3 mb-8 border-b border-[#f3eae7] pb-8">
-                    <span className="text-sm text-[#97604e] font-medium">
+                  <div className="flex items-baseline flex-wrap gap-2 md:gap-3 mb-8 border-b border-[#f3eae7] pb-8">
+                    <span className="text-xs md:text-sm text-[#97604e] font-medium">
                       starts from
                     </span>
                     <span
-                      className={`text-5xl font-black text-[#1b110e] tracking-tight transition-opacity duration-300 ${
+                      className={`text-4xl md:text-5xl font-black text-[#1b110e] tracking-tight transition-opacity duration-300 ${
                         isLoading ? "opacity-0" : "opacity-100"
                       }`}
                     >
                       {formattedPrice}
                     </span>
-                    <span className="text-sm text-[#97604e] ml-1">
+                    <span className="text-xs md:text-sm text-[#97604e]">
                       per celebration
                     </span>
                   </div>

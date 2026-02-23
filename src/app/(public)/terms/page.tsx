@@ -2,10 +2,10 @@ import Container from "@/components/ui/Container";
 
 export default function TermsPage() {
   return (
-    <div className="py-20 bg-[#fcf9f8]">
+    <div className="py-12 md:py-20 bg-[#fcf9f8]">
       <Container>
-        <div className="max-w-3xl mx-auto bg-white p-8 md:p-12 rounded-3xl border border-[#f3eae7] shadow-sm">
-          <h1 className="text-4xl font-bold text-[#1b110e] mb-8 leading-tight">Terms of Service</h1>
+        <div className="max-w-3xl mx-auto bg-white p-6 md:p-12 rounded-3xl border border-[#f3eae7] shadow-sm">
+          <h1 className="text-3xl md:text-4xl font-bold text-[#1b110e] mb-8 leading-tight">Terms of Service</h1>
           
           <div className="prose prose-stone prose-lg text-[#97604e]">
             <p className="mb-6 font-medium text-[#1b110e]">Last Updated: February 22, 2026</p>

@@ -84,13 +84,13 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
 
       {/* Right Pane: Authentication Form */}
       <div className="flex w-full lg:w-7/12 xl:w-1/2 flex-col bg-[#f8f6f6] overflow-y-auto">
-        <div className="flex flex-1 flex-col justify-center items-center p-6 sm:p-12 lg:p-24 relative">
-          <div className="w-full max-w-[480px]">
+        <div className="flex flex-1 flex-col justify-center items-center p-6 sm:p-12 lg:py-24 lg:px-24 relative">
+          <div className="w-full max-w-[480px] py-4 md:py-0">
              {children}
           </div>
           
           {/* Agreement Text at Bottom */}
-          <div className="mt-8 text-center text-xs text-[#97604e] max-w-[320px]">
+          <div className="mt-6 md:mt-8 text-center text-xs text-[#97604e] max-w-[280px] sm:max-w-[320px] leading-relaxed">
             By signing in you agree to our{" "}
             <Link href="/terms" className="underline hover:text-[#1b110e] transition-colors">Terms of Service</Link>
             {" "}and{" "}
