@@ -75,18 +75,16 @@ export default function CreatePage() {
   }
 
   return (
-    <Section className="py-20 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <Section className="py-10 md:py-20 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <Container>
         <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-12">
-            <h1 className="text-4xl md:text-5xl font-extrabold mb-4 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+          <div className="text-center mb-8 md:mb-12">
+            <h1 className="text-3xl md:text-5xl font-extrabold mb-4 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent px-4">
               Start Your Surprise
             </h1>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+            <p className="text-muted-foreground text-base md:text-lg max-w-2xl mx-auto px-6">
               Choose the perfect plan for your digital gift. All plans include core surprise features.
             </p>
-            
-
           </div>
 
           <div className="grid md:grid-cols-2 gap-8 items-stretch">

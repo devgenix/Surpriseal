@@ -82,21 +82,22 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {/* Create New Card - Always First */}
+        <Link href="/dashboard/create" className="contents">
+          <button className="group relative flex flex-col items-center justify-center bg-transparent rounded-2xl border-2 border-dashed border-primary/20 hover:border-primary/50 dark:border-white/10 dark:hover:border-primary/50 p-6 min-h-[320px] transition-all duration-300">
+            <div className="size-16 rounded-full bg-primary/5 dark:bg-white/5 group-hover:bg-primary/10 flex items-center justify-center mb-4 transition-colors">
+              <Plus className="w-8 h-8 text-primary group-hover:scale-110 transition-transform duration-300" />
+            </div>
+            <h3 className="text-lg font-bold text-text-main dark:text-white mb-1">Create New</h3>
+            <p className="text-sm text-center text-text-muted dark:text-gray-400 max-w-[200px]">Start a fresh surprise for someone special.</p>
+          </button>
+        </Link>
+
         {moments.map((moment) => (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {/* Create New Card - Now ALWAYS First */}
-              <Link href="/dashboard/create" className="contents">
-                <button className="group relative flex flex-col items-center justify-center bg-transparent rounded-2xl border-2 border-dashed border-primary/20 hover:border-primary/50 dark:border-white/10 dark:hover:border-primary/50 p-6 min-h-[320px] transition-all duration-300">
-                  <div className="size-16 rounded-full bg-primary/5 dark:bg-white/5 group-hover:bg-primary/10 flex items-center justify-center mb-4 transition-colors">
-                    <Plus className="w-8 h-8 text-primary group-hover:scale-110 transition-transform duration-300" />
-                  </div>
-                  <h3 className="text-lg font-bold text-text-main dark:text-white mb-1">Create New</h3>
-                  <p className="text-sm text-center text-text-muted dark:text-gray-400 max-w-[200px]">Start a fresh surprise for someone special.</p>
-                </button>
-              </Link>
-              <MomentCard key={moment.id} moment={moment} />
-          </div>
+          <MomentCard key={moment.id} moment={moment} />
         ))}
+      </div>
 
       {moments.length === 0 && (
         /* Empty State */

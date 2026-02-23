@@ -3,7 +3,7 @@ import Container from "@/components/ui/Container";
 
 export default function Hero() {
   return (
-    <section className="relative py-16 lg:py-24 bg-[#fcf9f8] overflow-hidden">
+    <section className="relative py-12 lg:py-24 bg-[#fcf9f8] overflow-hidden">
       {/* Floating Emojis/Icons for emotional appeal */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-[15%] left-[5%] animate-bounce duration-[3000ms] opacity-20 text-4xl">❤️</div>
@@ -16,7 +16,7 @@ export default function Hero() {
         <div className="grid gap-12 lg:grid-cols-2 lg:gap-8 items-center">
           {/* Left: Copy */}
           <div className="max-w-2xl text-center lg:text-left">
-            <h1 className="text-4xl font-extrabold tracking-tight text-[#1b110e] sm:text-5xl lg:text-7xl mb-6 leading-[1.1]">
+            <h1 className="text-3xl font-extrabold tracking-tight text-[#1b110e] sm:text-5xl lg:text-7xl mb-6 leading-[1.15] px-2 sm:px-0">
               The Most Meaningful Way to{" "}
               <span className="text-primary relative inline-block">
                 Celebrate
@@ -26,7 +26,7 @@ export default function Hero() {
               </span>
             </h1>
 
-            <p className="text-xl text-[#97604e] mb-8 max-w-lg leading-relaxed mx-auto lg:mx-0 font-medium">
+            <p className="text-lg sm:text-xl text-[#97604e] mb-8 max-w-lg leading-relaxed mx-auto lg:mx-0 font-medium px-4 sm:px-0">
               Create a digital journey of memories and surprises they&apos;ll cherish forever. Simple to build, impossible to forget.
             </p>
 
