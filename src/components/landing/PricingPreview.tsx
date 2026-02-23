@@ -4,12 +4,10 @@ import Link from "next/link";
 import { useCurrency } from "@/context/CurrencyContext";
 import Container from "@/components/ui/Container";
 
-const perks = [
-  "Unlimited photos & videos",
-  "Full access to all premium themes",
-  "Password protection included",
-  "Lifetime archive access",
-];
+import { PLANS } from "@/lib/constants/pricing";
+
+const basePlan = PLANS.find((p) => p.id === "base")!;
+const perks = basePlan.features.map((f) => f.title);
 
 export default function PricingPreview() {
   const { formattedPrice, isLoading } = useCurrency();

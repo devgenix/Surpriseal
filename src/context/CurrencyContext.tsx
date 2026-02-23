@@ -7,7 +7,10 @@ import {
   useState,
   ReactNode,
 } from "react";
-import { Currency, formatPrice, PRICES } from "@/lib/currency";
+import { Currency, formatPrice } from "@/lib/currency";
+import { PLANS } from "@/lib/constants/pricing";
+
+const basePlan = PLANS.find(p => p.id === "base")!;
 
 interface CurrencyContextValue {
   currency: Currency;
@@ -18,8 +21,8 @@ interface CurrencyContextValue {
 
 const CurrencyContext = createContext<CurrencyContextValue>({
   currency: "USD",
-  price: PRICES.USD,
-  formattedPrice: formatPrice(PRICES.USD, "USD"),
+  price: basePlan.price.USD,
+  formattedPrice: formatPrice(basePlan.price.USD, "USD"),
   isLoading: true,
 });
 
@@ -57,8 +60,8 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
     <CurrencyContext.Provider
       value={{
         currency,
-        price: PRICES[currency],
-        formattedPrice: formatPrice(PRICES[currency], currency),
+        price: basePlan.price[currency],
+        formattedPrice: formatPrice(basePlan.price[currency], currency),
         isLoading,
       }}
     >

@@ -1,36 +1,24 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { ADDON_PRICES } from "@/lib/currency";
+import { Sparkles } from "lucide-react";
+import { cn } from "@/lib/utils";
 import Container from "@/components/ui/Container";
 import { useCurrency } from "@/context/CurrencyContext";
 import CallToAction from "@/components/landing/CallToAction";
+import { PLANS, ADDONS } from "@/lib/constants/pricing";
+import { formatPrice } from "@/lib/currency";
 
-const features = [
-  {
-    title: "Structured reveal timeline",
-    desc: "Build anticipation step-by-step.",
-  },
-  {
-    title: "Interactive celebration page",
-    desc: "Confetti, animations, and love.",
-  },
-  {
-    title: "Photo & Video gallery",
-    desc: "Upload up to 20 cherished memories.",
-  },
-  {
-    title: "Background music selection",
-    desc: "Set the perfect mood.",
-  },
-  {
-    title: "30-day hosting included",
-    desc: "Live for a full month.",
-  },
-];
+const basePlan = PLANS.find(p => p.id === "base")!;
+const premiumPlan = PLANS.find(p => p.id === "premium")!;
+const addons = ADDONS;
 
 export default function PricingPage() {
   const { formattedPrice, currency, isLoading } = useCurrency();
+  const [selectedPlanId, setSelectedPlanId] = useState<"base" | "premium">("base");
+
+  const currentPlan = selectedPlanId === "base" ? basePlan : premiumPlan;
 
   return (
     <div className="relative">
@@ -68,10 +56,33 @@ export default function PricingPage() {
           </span>
         </h1>
 
-        <p className="text-base md:text-lg text-[#97604e] max-w-xl mx-auto leading-relaxed px-6 md:px-0">
+        <p className="text-base md:text-lg text-[#97604e] max-w-xl mx-auto leading-relaxed px-6 md:px-0 mb-12">
           One perfect package to craft unforgettable digital memories. No hidden
           fees, just pure joy delivered beautifully.
         </p>
+
+        {/* Plan Toggle */}
+        <div className="flex p-1 bg-[#f3eae7] rounded-xl mb-8">
+          <button
+            onClick={() => setSelectedPlanId("base")}
+            className={cn(
+              "px-6 py-2 rounded-lg text-sm font-bold transition-all",
+              selectedPlanId === "base" ? "bg-white text-[#1b110e] shadow-sm" : "text-[#97604e] hover:text-[#1b110e]"
+            )}
+          >
+            Base Plan
+          </button>
+          <button
+            onClick={() => setSelectedPlanId("premium")}
+            className={cn(
+              "px-6 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2",
+              selectedPlanId === "premium" ? "bg-white text-[#1b110e] shadow-sm" : "text-[#97604e] hover:text-[#1b110e]"
+            )}
+          >
+            Premium Upgrade
+            <Sparkles className="h-3.5 w-3.5 text-primary" />
+          </button>
+        </div>
       </Container>
 
       {/* Pricing + Add-ons Grid */}
@@ -82,17 +93,24 @@ export default function PricingPage() {
           <div className="md:col-span-7 lg:col-span-8 md:sticky md:top-24 max-w-2xl">
               {/* Glow border */}
               <div className="relative group">
-                <div className="absolute -inset-1 bg-gradient-to-r from-primary via-[#ff8c69] to-primary rounded-2xl blur opacity-20 group-hover:opacity-35 transition duration-700" />
+                {selectedPlanId === "premium" && (
+                  <div className="absolute -inset-1 bg-gradient-to-r from-primary via-[#ff8c69] to-primary rounded-2xl blur opacity-30 animate-pulse duration-3000" />
+                )}
+                <div className={cn(
+                  "absolute -inset-1 rounded-2xl blur opacity-20 group-hover:opacity-35 transition duration-700",
+                  selectedPlanId === "premium" ? "bg-primary" : "bg-[#f3eae7]"
+                )} />
 
-                <div className="relative bg-white rounded-2xl p-6 md:p-10 border border-[#f3eae7] shadow-[0_20px_40px_-10px_rgba(230,76,25,0.1)] flex flex-col h-full">
+                <div className="relative bg-white rounded-2xl p-6 md:p-10 border border-[#f3eae7] shadow-[0_20px_40px_-10px_rgba(230,76,25,0.1)] flex flex-col h-full animate-in fade-in zoom-in-95 duration-500">
                   {/* Card header */}
                   <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
                     <div>
-                      <h2 className="text-xl md:text-2xl font-bold text-[#1b110e]">
-                        Supriseal Moment
+                      <h2 className="text-xl md:text-2xl font-bold text-[#1b110e] flex items-center gap-2">
+                        {currentPlan.title}
+                        {selectedPlanId === "premium" && <Sparkles className="h-5 w-5 text-primary" />}
                       </h2>
                       <p className="text-[#97604e] text-xs md:text-sm mt-1">
-                        Everything you need for one amazing reveal.
+                        {currentPlan.description}
                       </p>
                     </div>
                   </div>
@@ -100,14 +118,14 @@ export default function PricingPage() {
                   {/* Price */}
                   <div className="flex items-baseline flex-wrap gap-2 md:gap-3 mb-8 border-b border-[#f3eae7] pb-8">
                     <span className="text-xs md:text-sm text-[#97604e] font-medium">
-                      starts from
+                      {selectedPlanId === "base" ? "starts from" : "all-inclusive for"}
                     </span>
                     <span
                       className={`text-4xl md:text-5xl font-black text-[#1b110e] tracking-tight transition-opacity duration-300 ${
                         isLoading ? "opacity-0" : "opacity-100"
                       }`}
                     >
-                      {formattedPrice}
+                      {formatPrice(currentPlan.price[currency], currency)}
                     </span>
                     <span className="text-xs md:text-sm text-[#97604e]">
                       per celebration
@@ -116,9 +134,12 @@ export default function PricingPage() {
 
                   {/* Features */}
                   <div className="flex-grow space-y-5 mb-10">
-                    {features.map((f) => (
+                    {currentPlan.features.map((f) => (
                       <div key={f.title} className="flex items-start gap-4">
-                        <div className="flex-shrink-0 h-6 w-6 rounded-full bg-green-100 flex items-center justify-center text-green-600">
+                        <div className={cn(
+                          "flex-shrink-0 h-6 w-6 rounded-full flex items-center justify-center transition-colors",
+                          selectedPlanId === "premium" ? "bg-primary/10 text-primary" : "bg-green-100 text-green-600"
+                        )}>
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
                             viewBox="0 0 20 20"
@@ -136,7 +157,7 @@ export default function PricingPage() {
                           <p className="font-bold text-[#1b110e] text-sm">
                             {f.title}
                           </p>
-                          <p className="text-xs text-[#97604e] mt-0.5">{f.desc}</p>
+                          {f.desc && <p className="text-xs text-[#97604e] mt-0.5">{f.desc}</p>}
                         </div>
                       </div>
                     ))}
@@ -147,7 +168,7 @@ export default function PricingPage() {
                     href="/dashboard/create"
                     className="w-full py-4 rounded-lg bg-primary hover:bg-primary/90 text-white text-base font-bold shadow-lg shadow-primary/25 transition-all hover:-translate-y-0.5 flex items-center justify-center gap-2"
                   >
-                    Start a Surprise
+                    {selectedPlanId === "base" ? "Start with Base" : "Get the Premium Pass"}
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       viewBox="0 0 20 20"
@@ -166,7 +187,10 @@ export default function PricingPage() {
           </div>
 
           {/* RIGHT — Add-ons (natural page scroll, left card stays sticky) */}
-          <div className="md:col-span-5 lg:col-span-4 max-w-xl">
+          <div className={cn(
+            "md:col-span-5 lg:col-span-4 max-w-xl transition-all duration-500",
+            selectedPlanId === "premium" ? "opacity-40 grayscale-[0.5] pointer-events-none" : "opacity-100"
+          )}>
             <div className="space-y-6">
 
               <div className="px-1">
@@ -174,8 +198,9 @@ export default function PricingPage() {
                   Enhance your surprise
                 </h3>
                 <p className="text-sm text-[#97604e]">
-                  Customize your experience with these optional extras at
-                  checkout.
+                  {selectedPlanId === "premium" 
+                    ? "All add-ons below are included with your Premium Upgrade."
+                    : "Customize your experience with these optional extras at checkout."}
                 </p>
               </div>
 
@@ -198,23 +223,22 @@ export default function PricingPage() {
                   </div>
                   <div>
                     <h4 className="font-bold text-[#1b110e] text-sm">
-                      Extended Hosting
+                      {addons[0].title}
                     </h4>
                     <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded">
-                      + 1 Year
+                      {addons[0].badge}
                     </span>
                   </div>
                 </div>
                 <p className="text-xs text-[#97604e] mb-3 leading-relaxed">
-                  Keep the celebration page live for a full year so they can
-                  revisit the memory anytime.
+                  {addons[0].description}
                 </p>
                 <div className="flex items-center justify-between border-t border-dashed border-[#e7d6d0] pt-3">
                   <span className="text-xs font-semibold text-[#97604e]">
                     Add for only
                   </span>
                   <span className="text-sm font-bold text-[#1b110e]">
-                    {ADDON_PRICES.extendedHosting[currency]}
+                    {formatPrice(addons[0].price[currency], currency)}
                   </span>
                 </div>
               </div>
@@ -238,23 +262,22 @@ export default function PricingPage() {
                   </div>
                   <div>
                     <h4 className="font-bold text-[#1b110e] text-sm">
-                      Extra Media Storage
+                      {addons[1].title}
                     </h4>
                     <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded">
-                      Unlimited
+                      {addons[1].badge}
                     </span>
                   </div>
                 </div>
                 <p className="text-xs text-[#97604e] mb-3 leading-relaxed">
-                  Upload as many photos and videos as you want. Don&apos;t leave
-                  any memory behind.
+                  {addons[1].description}
                 </p>
                 <div className="flex items-center justify-between border-t border-dashed border-[#e7d6d0] pt-3">
                   <span className="text-xs font-semibold text-[#97604e]">
                     Add for only
                   </span>
                   <span className="text-sm font-bold text-[#1b110e]">
-                    {ADDON_PRICES.extraMedia[currency]}
+                    {formatPrice(addons[1].price[currency], currency)}
                   </span>
                 </div>
               </div>
@@ -278,23 +301,22 @@ export default function PricingPage() {
                   </div>
                   <div>
                     <h4 className="font-bold text-[#1b110e] text-sm">
-                      Custom URL
+                      {addons[2].title}
                     </h4>
                     <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded">
-                      Personalized
+                      {addons[2].badge}
                     </span>
                   </div>
                 </div>
                 <p className="text-xs text-[#97604e] mb-3 leading-relaxed">
-                  Create a special link like surpriseal.com/our-anniversary for a
-                  personal touch.
+                  {addons[2].description}
                 </p>
                 <div className="flex items-center justify-between border-t border-dashed border-[#e7d6d0] pt-3">
                   <span className="text-xs font-semibold text-[#97604e]">
                     Add for only
                   </span>
                   <span className="text-sm font-bold text-[#1b110e]">
-                    {ADDON_PRICES.customUrl[currency]}
+                    {formatPrice(addons[2].price[currency], currency)}
                   </span>
                 </div>
               </div>
@@ -318,23 +340,22 @@ export default function PricingPage() {
                   </div>
                   <div>
                     <h4 className="font-bold text-[#1b110e] text-sm">
-                      Remove Branding
+                      {addons[3].title}
                     </h4>
                     <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded">
-                      White Label
+                      {addons[3].badge}
                     </span>
                   </div>
                 </div>
                 <p className="text-xs text-[#97604e] mb-3 leading-relaxed">
-                  Remove "Powered by Supriseal" from your celebration page for a
-                  truly custom feel.
+                  {addons[3].description}
                 </p>
                 <div className="flex items-center justify-between border-t border-dashed border-[#e7d6d0] pt-3">
                   <span className="text-xs font-semibold text-[#97604e]">
                     Add for only
                   </span>
                   <span className="text-sm font-bold text-[#1b110e]">
-                    {ADDON_PRICES.removeBranding[currency]}
+                    {formatPrice(addons[3].price[currency], currency)}
                   </span>
                 </div>
               </div>
@@ -358,23 +379,22 @@ export default function PricingPage() {
                   </div>
                   <div>
                     <h4 className="font-bold text-[#1b110e] text-sm">
-                      Scheduled Reveal
+                      {addons[4].title}
                     </h4>
                     <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded">
-                      Perfect Timing
+                      {addons[4].badge}
                     </span>
                   </div>
                 </div>
                 <p className="text-xs text-[#97604e] mb-3 leading-relaxed">
-                  Set a precise date and time for the final surprise to unlock
-                  automatically.
+                  {addons[4].description}
                 </p>
                 <div className="flex items-center justify-between border-t border-dashed border-[#e7d6d0] pt-3">
                   <span className="text-xs font-semibold text-[#97604e]">
                     Add for only
                   </span>
                   <span className="text-sm font-bold text-[#1b110e]">
-                    {ADDON_PRICES.scheduledReveal[currency]}
+                    {formatPrice(addons[4].price[currency], currency)}
                   </span>
                 </div>
               </div>
