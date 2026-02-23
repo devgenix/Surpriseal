@@ -26,7 +26,10 @@ export default function DashboardLayout({
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background-light dark:bg-background-dark">
-        <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+          <p className="text-text-muted animate-pulse font-medium">Authenticating...</p>
+        </div>
       </div>
     );
   }
