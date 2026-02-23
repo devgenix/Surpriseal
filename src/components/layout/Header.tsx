@@ -14,15 +14,8 @@ export default function Header() {
       <Container className="flex h-16 md:h-20 items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2">
-          <div className="flex h-7 w-7 md:h-8 md:w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-              className="h-4 w-4 md:h-5 md:w-5"
-            >
-              <path d="M12 2a7 7 0 0 1 7 7c0 2.02-.85 3.85-2.22 5.15l.01.02L12 20l-4.79-5.83A7 7 0 0 1 12 2Zm0 2a5 5 0 0 0-5 5 5 5 0 0 0 1.17 3.24L12 17.2l3.83-4.96A5 5 0 0 0 17 9a5 5 0 0 0-5-5Zm0 3a2 2 0 1 1 0 4 2 2 0 0 1 0-4Z" />
-            </svg>
+          <div className="size-10 text-primary flex items-center justify-center bg-primary/10 rounded-md">
+            <span className="material-symbols-outlined text-[24px]">celebration</span>
           </div>
           <span className="text-lg md:text-xl font-bold tracking-tight text-[#1b110e]">
             Supriseal

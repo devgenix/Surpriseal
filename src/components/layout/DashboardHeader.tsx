@@ -21,10 +21,10 @@ export default function DashboardHeader() {
 
   return (
     <header className="sticky top-0 z-50 w-full bg-surface-light/80 dark:bg-surface-dark/90 backdrop-blur-md border-b border-[#f3eae7] dark:border-white/10 px-6 py-4 transition-colors duration-200">
-      <div className="max-w-[1280px] mx-auto flex items-center justify-between">
+      <div className="max-w-7xl mx-auto flex items-center justify-between">
         {/* Logo */}
         <Link href="/dashboard" className="flex items-center gap-3 text-text-main dark:text-white group cursor-pointer">
-          <div className="size-8 text-primary flex items-center justify-center bg-primary/10 rounded-lg">
+          <div className="size-10 text-primary flex items-center justify-center bg-primary/10 rounded-md">
             <span className="material-symbols-outlined text-[24px]">celebration</span>
           </div>
           <h2 className="text-xl font-bold tracking-tight">Supriseal</h2>
@@ -66,6 +66,12 @@ export default function DashboardHeader() {
           <Dropdown
             menu={{
               items: [
+                {
+                  label: 'Profile',
+                  key: 'profile',
+                  icon: <User className="h-4 w-4" />,
+                  onClick: () => router.push("/dashboard/profile")
+                },
                 {
                   label: 'Sign out',
                   key: 'logout',

@@ -6,6 +6,7 @@ import { useEffect } from "react";
 
 import DashboardHeader from "@/components/layout/DashboardHeader";
 import DashboardFooter from "@/components/layout/DashboardFooter";
+import { cn } from "@/lib/utils";
 
 export default function DashboardLayout({
   children,
@@ -23,6 +24,8 @@ export default function DashboardLayout({
     }
   }, [user, loading, router, pathname]);
 
+  const isCreationFlow = pathname.startsWith("/dashboard/create");
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background-light dark:bg-background-dark">
@@ -38,11 +41,14 @@ export default function DashboardLayout({
 
   return (
     <div className="bg-background-light dark:bg-background-dark text-text-main font-display antialiased min-h-screen flex flex-col transition-colors duration-200">
-      <DashboardHeader />
-      <main className="flex-1 w-full max-w-[1280px] mx-auto py-10">
+      {!isCreationFlow && <DashboardHeader />}
+      <main className={cn(
+        "flex-1 w-full mx-auto",
+        !isCreationFlow ? "py-10 px-4 pb-24" : "h-screen"
+      )}>
         {children}
       </main>
-      <DashboardFooter />
+      {!isCreationFlow && <DashboardFooter />}
     </div>
   );
 }

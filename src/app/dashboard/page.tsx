@@ -17,6 +17,8 @@ export default function DashboardPage() {
   const { user, loading: loadingAuth } = useAuth();
   const [moments, setMoments] = useState<any[]>([]);
   const [loadingMoments, setLoadingMoments] = useState(true);
+  const [sortBy, setSortBy] = useState<"newest" | "oldest" | "alphabetical" | "views">("newest");
+  const [filterStatus, setFilterStatus] = useState<"all" | "Draft" | "Published">("all");
 
   useEffect(() => {
     if (!user || !db) return;
@@ -32,10 +34,11 @@ export default function DashboardPage() {
         const data = doc.data();
         return {
           id: doc.id,
-          recipient: data.recipient || "Someone",
-          occasion: data.occasion || "Celebration",
+          recipient: data.recipientName || "Someone",
+          occasion: data.occasionId || "Celebration",
           status: (data.status?.charAt(0).toUpperCase() + data.status?.slice(1)) || "Draft",
           views: data.views || 0,
+          updatedAtRaw: data.updatedAt?.toDate() || new Date(0),
           updatedAt: data.updatedAt ? new Date(data.updatedAt.toDate()).toLocaleDateString() : "Just now",
           imageUrl: data.imageUrl,
           expiryDate: data.expiryDate ? data.expiryDate.toDate().toLocaleDateString() : "-",
@@ -50,6 +53,16 @@ export default function DashboardPage() {
 
     return () => unsubscribe();
   }, [user]);
+
+  const filteredAndSortedMoments = moments
+    .filter((m) => filterStatus === "all" || m.status === filterStatus)
+    .sort((a, b) => {
+      if (sortBy === "newest") return b.updatedAtRaw - a.updatedAtRaw;
+      if (sortBy === "oldest") return a.updatedAtRaw - b.updatedAtRaw;
+      if (sortBy === "alphabetical") return a.recipient.localeCompare(b.recipient);
+      if (sortBy === "views") return (b.views || 0) - (a.views || 0);
+      return 0;
+    });
 
   if (loadingAuth || loadingMoments) {
     return (
@@ -72,21 +85,33 @@ export default function DashboardPage() {
 
         {/* Filter/Sort Controls */}
         <div className="flex items-center gap-3">
-          <button className="flex items-center gap-2 h-10 px-4 rounded-lg bg-white dark:bg-surface-dark border border-[#f3eae7] dark:border-white/10 text-text-main dark:text-white text-sm font-semibold hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
-            <ArrowDownAZ className="w-[18px] h-[18px]" />
-            Newest First
-          </button>
-          <button className="flex items-center gap-2 h-10 px-4 rounded-lg bg-white dark:bg-surface-dark border border-[#f3eae7] dark:border-white/10 text-text-main dark:text-white text-sm font-semibold hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
-            <ListFilter className="w-[18px] h-[18px]" />
-            All Status
-          </button>
+          <select 
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as any)}
+            className="flex items-center gap-2 h-10 px-4 rounded-lg bg-white dark:bg-surface-dark border border-[#f3eae7] dark:border-white/10 text-text-main dark:text-white text-sm font-semibold hover:bg-gray-50 dark:hover:bg-white/5 transition-colors outline-none cursor-pointer"
+          >
+            <option value="newest">Newest First</option>
+            <option value="oldest">Oldest First</option>
+            <option value="alphabetical">A - Z</option>
+            <option value="views">Most Viewed</option>
+          </select>
+          
+          <select 
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value as any)}
+            className="flex items-center gap-2 h-10 px-4 rounded-lg bg-white dark:bg-surface-dark border border-[#f3eae7] dark:border-white/10 text-text-main dark:text-white text-sm font-semibold hover:bg-gray-50 dark:hover:bg-white/5 transition-colors outline-none cursor-pointer"
+          >
+            <option value="all">All Status</option>
+            <option value="Draft">Drafts</option>
+            <option value="Published">Published</option>
+          </select>
         </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {/* Create New Card - Always First */}
         <Link href="/dashboard/create" className="contents">
-          <button className="group relative flex flex-col items-center justify-center bg-transparent rounded-2xl border-2 border-dashed border-primary/20 hover:border-primary/50 dark:border-white/10 dark:hover:border-primary/50 p-6 min-h-[320px] transition-all duration-300">
+          <button className="group relative flex flex-col items-center justify-center bg-transparent rounded-lg border-2 border-dashed border-primary/20 hover:border-primary/50 dark:border-white/10 dark:hover:border-primary/50 p-6 min-h-[320px] transition-all duration-300">
             <div className="size-16 rounded-full bg-primary/5 dark:bg-white/5 group-hover:bg-primary/10 flex items-center justify-center mb-4 transition-colors">
               <Plus className="w-8 h-8 text-primary group-hover:scale-110 transition-transform duration-300" />
             </div>
@@ -95,7 +120,7 @@ export default function DashboardPage() {
           </button>
         </Link>
 
-        {moments.map((moment) => (
+        {filteredAndSortedMoments.map((moment) => (
           <MomentCard key={moment.id} moment={moment} />
         ))}
       </div>
