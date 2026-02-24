@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import * as admin from "firebase-admin";
 import { adminDb } from "@/lib/firebase-admin";
 
+export const dynamic = "force-dynamic";
+
 export async function POST(req: NextRequest) {
   try {
     const { reference, draftId } = await req.json();
