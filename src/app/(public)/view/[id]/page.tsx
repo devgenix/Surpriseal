@@ -124,6 +124,7 @@ export default function PublicViewPage() {
   }
 
   const recipient = momentData?.recipientName || "Someone Special";
+  const showBranding = momentData?.plan !== "premium" && !momentData?.paidAddons?.includes("removeBranding");
 
   // Align with RevealStudio's previewMoment logic for consistency
   const engineMoment = momentData ? {
@@ -135,6 +136,8 @@ export default function PublicViewPage() {
         : [{ id: "1", type: "scratch", config: { coverColor: "#e64c19", isFullScreen: false } }]
     },
     recipientName: momentData.recipientName || "Someone Special",
+    senderName: momentData.senderName || "",
+    isAnonymous: momentData.isAnonymous || false,
     personalMessage: momentData.personalMessage || "",
     media: momentData.media || []
   } : null;
@@ -175,15 +178,17 @@ export default function PublicViewPage() {
             {/* Pass refined moment to engine */}
             {engineMoment && <RevealEngine moment={engineMoment} />}
             
-            {/* Conversion Footer (Floating) */}
-            <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-[100] w-full max-w-xs transition-transform hover:scale-105 active:scale-95">
-               <button 
-                  onClick={() => router.push("/")}
-                  className="w-full py-4 bg-white/10 backdrop-blur-xl border border-white/20 text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-2xl"
-                >
-                  Create your own 🎁
-                </button>
-            </div>
+            {/* Conversion Footer (Floating) - Only show if branding is not removed */}
+            {showBranding && (
+              <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-[100] w-full max-w-xs transition-transform hover:scale-105 active:scale-95">
+                <button 
+                    onClick={() => router.push("/")}
+                    className="w-full py-4 bg-white/10 backdrop-blur-xl border border-white/20 text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-2xl"
+                  >
+                    Create your own 🎁
+                  </button>
+              </div>
+            )}
           </motion.div>
         )}
 

@@ -9,6 +9,7 @@ import {
   Loader2, 
   ArrowLeft, 
   ArrowRight, 
+  Users,
   Check, 
   PersonStanding, 
   Edit3, 
@@ -84,11 +85,14 @@ export default function CreationDetailsPage() {
   const [unlockDate, setUnlockDate] = useState("");
   const [unlockTime, setUnlockTime] = useState("00:00");
   const [recipientEmail, setRecipientEmail] = useState("");
+  const [senderName, setSenderName] = useState("");
+  const [isAnonymous, setIsAnonymous] = useState(false);
 
   const [checkingSlug, setCheckingSlug] = useState(false);
   const [slugAvailable, setSlugAvailable] = useState<boolean | null>(null);
 
   const debouncedName = useDebounce(recipientName, 1000);
+  const debouncedSenderName = useDebounce(senderName, 1000);
   const debouncedOccasionId = useDebounce(occasionId, 1000);
   const debouncedCustomOccasion = useDebounce(customOccasion, 1000);
   const debouncedUrlSlug = useDebounce(urlSlug, 1000);
@@ -129,6 +133,8 @@ export default function CreationDetailsPage() {
         setUnlockTime(data.unlockTime || "00:00"); 
         setUnlockDate(data.unlockDate || "");
         setRecipientEmail(data.recipientEmail || "");
+        setSenderName(data.senderName || "");
+        setIsAnonymous(data.isAnonymous || false);
         setLoading(false);
         
         // Initial sync to context
@@ -190,7 +196,9 @@ export default function CreationDetailsPage() {
     urlSlug,
     unlockDate,
     unlockTime,
-    recipientEmail
+    recipientEmail,
+    senderName,
+    isAnonymous
   });
 
   useEffect(() => {
@@ -201,9 +209,11 @@ export default function CreationDetailsPage() {
       urlSlug,
       unlockDate,
       unlockTime,
-      recipientEmail
+      recipientEmail,
+      senderName,
+      isAnonymous
     };
-  }, [recipientName, occasionId, customOccasion, urlSlug, unlockDate, unlockTime, recipientEmail]);
+  }, [recipientName, occasionId, customOccasion, urlSlug, unlockDate, unlockTime, recipientEmail, senderName, isAnonymous]);
 
   const onSaveAction = useCallback(async () => {
     await saveDraft(stateRef.current);
@@ -436,6 +446,44 @@ export default function CreationDetailsPage() {
                 />
               </div>
             )}
+
+            {/* Sender Name & Anonymity */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-primary/5 rounded-xl border border-primary/10">
+              <div className="flex flex-col gap-2.5">
+                <label className="text-sm font-bold text-[#1b110e] dark:text-white ml-1">Your Name (Sender)</label>
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <Users className="text-[#97604e] group-focus-within:text-primary transition-colors h-5 w-5" />
+                  </div>
+                  <input 
+                    value={senderName}
+                    onChange={(e) => setSenderName(e.target.value)}
+                    className="w-full h-14 pl-12 pr-4 bg-surface border border-border rounded-lg text-text-main placeholder:text-text-muted/50 focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all outline-none" 
+                    placeholder="e.g. John Doe"
+                    type="text"
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-col justify-center">
+                <label className="text-sm font-bold text-[#1b110e] dark:text-white ml-1 mb-2.5">Anonymity</label>
+                <div 
+                  onClick={() => setIsAnonymous(!isAnonymous)}
+                  className="flex items-center gap-3 p-3 rounded-lg border border-border bg-surface hover:bg-white transition-all cursor-pointer group"
+                >
+                  <div className={cn(
+                    "size-6 rounded-md border-2 flex items-center justify-center transition-all",
+                    isAnonymous ? "bg-primary border-primary" : "border-border group-hover:border-primary/50"
+                  )}>
+                    {isAnonymous && <Check size={14} className="text-white" />}
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-xs font-bold text-text-main">Stay Anonymous</span>
+                    <span className="text-[10px] text-text-muted">Show "a thoughtful person" instead of your name</span>
+                  </div>
+                </div>
+              </div>
+            </div>
 
             {/* Custom Link Section */}
             <div className="flex flex-col gap-3">

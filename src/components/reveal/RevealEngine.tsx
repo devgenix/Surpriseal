@@ -196,12 +196,10 @@ export default function RevealEngine({ moment, isPreview = false }: RevealEngine
                <span className="text-6xl animate-bounce">🎁</span>
             </motion.div>
             <h1 className="text-4xl font-black text-white uppercase tracking-tighter mb-2">
-              {moment.occasionId 
-                ? `A ${moment.occasionId.split('_').map((word: string) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')} Surprise` 
-                : "A Special Surprise"}
+              A Surprise For {moment.recipientName || "Someone Special"}
             </h1>
-            <p className="text-white/60 font-bold uppercase tracking-widest text-xs">
-              Created for {moment.recipientName || "Someone Special"}
+            <p className="text-white/60 font-bold uppercase tracking-widest text-[10px]">
+              Created by {moment.isAnonymous ? "a thoughtful person" : (moment.senderName || "a thoughtful person")}
             </p>
             <motion.div 
               animate={{ opacity: [0.4, 1, 0.4] }}
