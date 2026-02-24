@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { PLANS, ADDONS } from "@/lib/constants/pricing";
 import { formatPrice } from "@/lib/currency";
+import { calculateMomentPrice } from "@/lib/pricing-utils";
 import { useCurrency } from "@/context/CurrencyContext";
 import { db, auth } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp, getDoc, doc, updateDoc } from "firebase/firestore";
@@ -105,15 +106,8 @@ export default function ConfigureStep({ draftId: initialDraftId }: ConfigureStep
   };
 
   const totalPrice = useMemo(() => {
-    let total = selectedPlan.price[currency];
-    if (selectedPlanId === "base") {
-      selectedAddonIds.forEach(id => {
-        const addon = ADDONS.find(a => a.id === id);
-        if (addon) total += addon.price[currency];
-      });
-    }
-    return total;
-  }, [selectedPlan, selectedAddonIds, selectedPlanId, currency]);
+    return calculateMomentPrice(selectedPlanId, selectedAddonIds, currency);
+  }, [selectedPlanId, selectedAddonIds, currency]);
 
   // Sync with sidebar via context
   useEffect(() => {
@@ -144,7 +138,7 @@ export default function ConfigureStep({ draftId: initialDraftId }: ConfigureStep
         currency,
         basePrice: selectedPlan.price[currency],
         selectedAddons: (selectedPlanId === "premium") ? ADDONS.map(a => a.id) : selectedAddonIds,
-        totalPrice,
+        totalPrice, // We still save it for quick display, but UI will recalculate if currency changes
         status: "draft",
         lastStepId: "recipient",
         completedSteps: Array.from(new Set([...(momentData?.completedSteps || []), "configure"])),

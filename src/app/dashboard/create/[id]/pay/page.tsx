@@ -18,6 +18,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useCreation } from "@/context/CreationContext";
 import { formatPrice } from "@/lib/currency";
+import { calculateMomentPrice, calculateBalanceDue } from "@/lib/pricing-utils";
 import { useCurrency } from "@/context/CurrencyContext";
 import { ADDONS } from "@/lib/constants/pricing";
 import Script from "next/script";
@@ -157,9 +158,14 @@ export default function CreationPayPage() {
     );
   }
 
-  const totalPrice = momentData?.totalPrice || 0;
+  const totalPrice = calculateMomentPrice(
+    momentData?.plan || "base",
+    momentData?.selectedAddons || [],
+    currency
+  );
+  
   const paidAmount = momentData?.paidAmount || 0;
-  const amountToPay = Math.max(0, totalPrice - paidAmount);
+  const amountToPay = calculateBalanceDue(totalPrice, paidAmount);
 
   return (
     <div className="flex-1 w-full max-w-4xl mx-auto px-4 lg:px-0 py-10">
