@@ -97,7 +97,7 @@ function CreationLayoutInner({ children }: { children: React.ReactNode }) {
   const handleBack = () => router.back();
 
   return (
-    <div className="flex h-screen w-full bg-[#fcf9f8] dark:bg-[#211511] overflow-hidden font-display">
+    <div className="flex h-[100dvh] w-full bg-[#fcf9f8] dark:bg-[#211511] overflow-hidden font-display">
       <CreationSidebar
         currentStepId={currentStep.id}
         steps={steps}

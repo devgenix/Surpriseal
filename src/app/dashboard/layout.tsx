@@ -40,7 +40,7 @@ export default function DashboardLayout({
   if (!user) return null;
 
   return (
-    <div className="bg-background-light dark:bg-background-dark text-text-main font-display antialiased min-h-screen flex flex-col transition-colors duration-200">
+    <div className="bg-background-light dark:bg-background-dark text-text-main font-display antialiased min-h-[100dvh] flex flex-col transition-colors duration-200">
       {!isCreationFlow && <DashboardHeader />}
       <main className={cn(
         "flex-1 w-full mx-auto",

@@ -9,6 +9,13 @@ const font = Plus_Jakarta_Sans({ subsets: ['latin'] })
 export const metadata: Metadata = {
   title: 'Supriseal - Create Unforgettable Digital Surprises',
   description: 'Turn birthdays and anniversaries into a structured digital journey.',
+  viewport: 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0, viewport-fit=cover',
+  themeColor: '#e64c19',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Supriseal',
+  },
 }
 
 import { AuthProvider } from '@/context/AuthContext';
