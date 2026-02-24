@@ -49,86 +49,93 @@ export default function RevealEngine({ moment, isPreview = false }: RevealEngine
 
   const currentScene = scenes[currentSceneIndex];
 
-  // Sound Management
+  // Consolidated Audio Management
   useEffect(() => {
     const sceneMusic = currentScene?.config?.musicUrl;
     const projectMusic = style.musicUrl;
     const musicUrl = sceneMusic || projectMusic || "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3";
     
-    // Check if we already have this music loaded
+    // Config for segment
+    const config = currentScene?.config || {};
+    const start = config.audioStart || 0;
+    const duration = config.audioDuration || 0;
+
+    // Check if we already have this music loaded AND we are just updating the segment
     if (soundRef.current && lastMusicUrlRef.current === musicUrl) {
+      const sound = soundRef.current;
+      if (duration > 0) {
+        sound.seek(start);
+        if (!sound.playing() && !isPreview) sound.play();
+      } else if (currentSceneIndex === -1) {
+        sound.seek(0);
+      }
       return;
     }
 
+    // New Music Instance Required
     lastMusicUrlRef.current = musicUrl;
+    
+    // Cleanup previous completely before starting new one
+    if (soundRef.current) {
+      soundRef.current.stop();
+      soundRef.current.unload();
+      soundRef.current = null;
+    }
 
-    // Create new sound instance
     const sound = new Howl({
       src: [musicUrl],
       loop: true,
       volume: 0.5,
-      autoplay: !isPreview, // Autoplay if not in preview (preview handles it manually)
+      autoplay: false, // EXPLICIT skip autoplay to prevent start-from-zero race
       mute: isMuted,
-      html5: true,
+      html5: false, // Use Web Audio API for better seek/cleanup precision
       onplayerror: function() {
         sound.once('unlock', function() {
           sound.play();
         });
+      },
+      onload: () => {
+        // Once loaded, seek and play explicitly
+        if (duration > 0) {
+          sound.seek(start);
+        } else if (currentSceneIndex === -1) {
+          sound.seek(0);
+        }
+        
+        if (!isPreview) {
+          sound.play();
+        }
       }
     });
 
     soundRef.current = sound;
 
-    // If in preview, we definitely want to try playing immediately 
-    if (isPreview) {
-      sound.play();
+    // Segment looping logic
+    let loopInterval: NodeJS.Timeout | null = null;
+    if (duration > 0) {
+      loopInterval = setInterval(() => {
+        const currentPos = sound.seek();
+        if (currentPos >= (start + duration)) {
+          sound.seek(start);
+        }
+      }, 100);
     }
 
     return () => {
       sound.stop();
       sound.unload();
+      if (loopInterval) clearInterval(loopInterval);
       if (soundRef.current === sound) {
         soundRef.current = null;
       }
     };
-  }, [style.musicUrl, currentScene?.config?.musicUrl, isPreview]);
+  }, [style.musicUrl, currentScene?.config?.musicUrl, isPreview, currentSceneIndex]);
 
   useEffect(() => {
     if (soundRef.current) {
       soundRef.current.mute(isMuted);
     }
   }, [isMuted]);
-
-
-
-  // Audio Segment Logic (Per Scene)
-  useEffect(() => {
-    if (!soundRef.current || !currentScene) return;
-
-    const config = currentScene.config;
-    const start = config.audioStart || 0;
-    const duration = config.audioDuration || 0;
-
-    if (duration > 0) {
-      // Seek to start position
-      soundRef.current.seek(start);
-      
-      const checkLoop = setInterval(() => {
-        if (!soundRef.current) return;
-        const currentPos = soundRef.current.seek();
-        
-        // Loop back if we exceed the duration
-        if (currentPos >= (start + duration)) {
-          soundRef.current.seek(start);
-        }
-      }, 100);
-
-      return () => clearInterval(checkLoop);
-    } else {
-      // Reset to 0 for splash/intro
-      soundRef.current.seek(0);
-    }
-  }, [currentSceneIndex, scenes, !!soundRef.current]);
 
   const nextScene = useCallback(() => {
     // Start music on first interaction

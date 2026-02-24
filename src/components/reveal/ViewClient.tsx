@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { db } from "@/lib/firebase";
 import { doc, updateDoc, increment } from "firebase/firestore";
@@ -91,8 +91,8 @@ export default function ViewClient({ initialMomentData, momentId }: ViewClientPr
   const recipient = initialMomentData.recipientName || "Someone Special";
   const showBranding = initialMomentData.plan !== "premium" && !initialMomentData.paidAddons?.includes("removeBranding");
 
-  // Refine moment for the engine
-  const engineMoment = {
+  // Refine moment for the engine - memoized to prevent re-renders when other state changes
+  const engineMoment = useMemo(() => ({
     ...initialMomentData,
     styleConfig: {
       ...initialMomentData.styleConfig,
@@ -105,7 +105,7 @@ export default function ViewClient({ initialMomentData, momentId }: ViewClientPr
     isAnonymous: initialMomentData.isAnonymous || false,
     personalMessage: initialMomentData.personalMessage || "",
     media: initialMomentData.media || []
-  };
+  }), [initialMomentData]);
 
   return (
     <div className="h-screen w-full bg-black overflow-hidden relative font-display">
