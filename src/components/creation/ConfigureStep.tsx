@@ -27,7 +27,7 @@ interface ConfigureStepProps {
 
 export default function ConfigureStep({ draftId: initialDraftId }: ConfigureStepProps) {
   const router = useRouter();
-  const { setMomentData, setOnContinue, setSaving, setCanContinue } = useCreation();
+  const { momentData, setMomentData, setOnContinue, setSaving, setCanContinue } = useCreation();
   const [user, setUser] = useState<User | null>(null);
   const [loadingAuth, setLoadingAuth] = useState(true);
   const { currency } = useCurrency();
@@ -57,6 +57,7 @@ export default function ConfigureStep({ draftId: initialDraftId }: ConfigureStep
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
           const data = docSnap.data();
+          setMomentData(data); // Full sync to context
           setSelectedPlanId(data.plan || "base");
           setSelectedAddonIds(data.selectedAddons || []);
           setFetchingDraft(false); // Only set to false after setting state
@@ -77,6 +78,12 @@ export default function ConfigureStep({ draftId: initialDraftId }: ConfigureStep
 
   const toggleAddon = (addonId: string) => {
     if (selectedPlanId === "premium") return; // All included in premium
+    
+    // Lock paid addons for published moments
+    const isPublished = momentData?.status === "Published";
+    const isPaid = momentData?.paidAddons?.includes(addonId);
+    if (isPublished && isPaid) return;
+
     setSelectedAddonIds(prev => 
       prev.includes(addonId) 
         ? prev.filter(id => id !== addonId) 
@@ -99,11 +106,12 @@ export default function ConfigureStep({ draftId: initialDraftId }: ConfigureStep
   useEffect(() => {
     if (fetchingDraft) return; // Wait for initial fetch to complete
     
-    setMomentData({
+    setMomentData(prev => ({
+      ...prev,
       plan: selectedPlanId,
       selectedAddons: (selectedPlanId === "premium") ? ADDONS.map(a => a.id) : selectedAddonIds,
       totalPrice
-    });
+    }));
   }, [selectedPlanId, selectedAddonIds, totalPrice, setMomentData, fetchingDraft]);
 
   const handleContinue = useCallback(async () => {
@@ -125,6 +133,8 @@ export default function ConfigureStep({ draftId: initialDraftId }: ConfigureStep
         selectedAddons: (selectedPlanId === "premium") ? ADDONS.map(a => a.id) : selectedAddonIds,
         totalPrice,
         status: "draft",
+        lastStepId: "recipient",
+        completedSteps: Array.from(new Set([...(momentData?.completedSteps || []), "configure"])),
         updatedAt: serverTimestamp(),
       };
 
@@ -138,7 +148,6 @@ export default function ConfigureStep({ draftId: initialDraftId }: ConfigureStep
         const docRef = await addDoc(collection(db, "drafts"), {
           ...draftData,
           createdAt: serverTimestamp(),
-          step: 0,
         });
         finalDraftId = docRef.id;
       }
@@ -170,7 +179,7 @@ export default function ConfigureStep({ draftId: initialDraftId }: ConfigureStep
   return (
     <div className="flex flex-col h-full">
       {/* Content Container */}
-      <div className="flex-1 w-full max-w-4xl mx-auto px-6 py-10 pb-32">
+      <div className="flex-1 w-full max-w-4xl px-4 lg:px-0 mx-auto py-10">
         {/* Header */}
         <div className="mb-12 text-center sm:text-left">
           <h1 className="text-3xl sm:text-5xl font-extrabold mb-4 text-[#1b110e] dark:text-white tracking-tight leading-tight">
@@ -192,6 +201,14 @@ export default function ConfigureStep({ draftId: initialDraftId }: ConfigureStep
                   : "border-[#f3eae7] dark:border-[#3a2d29] hover:border-primary/30 bg-white/50 dark:bg-white/5"
               )}
               onClick={() => {
+                const isPublished = momentData?.status === "Published";
+                const currentPlan = momentData?.plan;
+                
+                // Prevent downgrade if published
+                if (isPublished && currentPlan === "premium" && plan.id === "base") {
+                  return;
+                }
+
                 setSelectedPlanId(plan.id as "base" | "premium");
                 if (plan.id === "premium") setSelectedAddonIds([]); 
               }}
@@ -254,10 +271,13 @@ export default function ConfigureStep({ draftId: initialDraftId }: ConfigureStep
                   key={addon.id}
                   onClick={() => toggleAddon(addon.id)}
                   className={cn(
-                    "p-4 rounded-lg border-2 transition-all cursor-pointer flex items-start gap-4",
+                    "p-4 rounded-lg border-2 transition-all flex items-start gap-4",
                     isSelected 
                       ? "border-primary/40 bg-primary/5" 
-                      : "border-[#f3eae7] dark:border-[#3a2d29] hover:border-primary/20 bg-white dark:bg-transparent"
+                      : "border-[#f3eae7] dark:border-[#3a2d29] hover:border-primary/20 bg-white dark:bg-transparent",
+                    momentData?.status === "Published" && momentData?.paidAddons?.includes(addon.id)
+                      ? "opacity-80 cursor-not-allowed select-none"
+                      : "cursor-pointer"
                   )}
                 >
                   <div className={cn(

@@ -28,9 +28,7 @@ import { Button } from "@/components/ui/button";
 const STEPS = [
   { id: "configure", title: "Configure", icon: Settings, status: "Upcoming" },
   { id: "recipient", title: "Recipient Info", icon: PersonStanding, status: "Upcoming" },
-  { id: "message", title: "Personal Message", icon: Edit3, status: "Upcoming" },
-  { id: "media", title: "Memory Lane", icon: ImageIcon, status: "Upcoming" },
-  { id: "reveal", title: "The Reveal", icon: PartyPopper, status: "Upcoming" },
+  { id: "content", title: "Surprise content", icon: Edit3, status: "Upcoming" },
   { id: "pay", title: "Review & Pay", icon: CreditCard, status: "Upcoming" },
 ];
 
@@ -53,17 +51,39 @@ function CreationLayoutInner({ children }: { children: React.ReactNode }) {
 
   // Determine current step and statuses
   const getSteps = () => {
+    const completedSteps = momentData?.completedSteps || [];
+    const paidAddons = momentData?.paidAddons || [];
+    const selectedAddons = momentData?.selectedAddons || [];
+    const hasUnpaidAddons = selectedAddons.some((id: string) => !paidAddons.includes(id));
+
     return STEPS.map(step => {
       let status = "Upcoming";
       
-      if (pathname === "/dashboard/create" || (pathname.startsWith("/dashboard/create/") && !pathname.includes("/", 18))) {
-        if (step.id === "configure") status = "In Progress";
-      } else if (pathname.includes("/details")) {
-        if (step.id === "configure") status = "Completed";
-        if (step.id === "recipient") status = "In Progress";
-      } else if (pathname.includes("/message")) {
-        if (["configure", "recipient"].includes(step.id)) status = "Completed";
-        if (step.id === "message") status = "In Progress";
+      const isCurrent = (
+        (step.id === "configure" && (pathname === "/dashboard/create" || (pathname.startsWith("/dashboard/create/") && !pathname.includes("/", 18)))) ||
+        (step.id === "recipient" && pathname.includes("/details")) ||
+        (step.id === "content" && pathname.includes("/content")) ||
+        (step.id === "reveal" && pathname.includes("/reveal")) ||
+        (step.id === "pay" && pathname.includes("/pay"))
+      );
+
+      if (isCurrent) {
+        status = "In Progress";
+      } else if (step.id === "pay") {
+        status = (momentData?.isPaid && !hasUnpaidAddons) ? "Completed" : "Upcoming";
+      } else if (completedSteps.includes(step.id) || momentData?.status === "Published") {
+        status = "Completed";
+      } else {
+        // Fallback for linear flow logic (pre-completion tracking compatibility)
+        if (pathname.includes("/details")) {
+          if (step.id === "configure") status = "Completed";
+        } else if (pathname.includes("/content")) {
+          if (["configure", "recipient"].includes(step.id)) status = "Completed";
+        } else if (pathname.includes("/reveal")) {
+          if (["configure", "recipient", "content"].includes(step.id)) status = "Completed";
+        } else if (pathname.includes("/pay")) {
+           if (["configure", "recipient", "content", "reveal"].includes(step.id)) status = "Completed";
+        }
       }
       
       return { ...step, status };
@@ -79,14 +99,7 @@ function CreationLayoutInner({ children }: { children: React.ReactNode }) {
   const draftId = pathname.split("/")[3];
 
   const handleBack = () => {
-    if (isConfigureStep) {
-      router.push("/dashboard");
-    } else {
-      // Go back based on current step
-      if (currentStep.id === "recipient") router.push(`/dashboard/create/${draftId}`);
-      if (currentStep.id === "message") router.push(`/dashboard/create/${draftId}/details`);
-      // Add more as needed
-    }
+    router.back();
   };
 
   return (
@@ -110,7 +123,7 @@ function CreationLayoutInner({ children }: { children: React.ReactNode }) {
               className="flex items-center gap-2 text-[#97604e] hover:text-primary transition-colors text-sm font-bold"
             >
               <ArrowLeft size={16} />
-              <span className="hidden sm:inline">{isConfigureStep ? "Back to Dashboard" : "Back"}</span>
+              <span className="hidden sm:inline">Back</span>
             </button>
             
             <div className="h-6 w-px bg-[#e7d6d0] hidden sm:block" />
@@ -120,7 +133,7 @@ function CreationLayoutInner({ children }: { children: React.ReactNode }) {
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
             {/* Save Status */}
             {!isConfigureStep && (
               <div className="flex items-center gap-3 mr-2">
@@ -137,7 +150,7 @@ function CreationLayoutInner({ children }: { children: React.ReactNode }) {
                 ) : lastSaved ? (
                   <div className="flex items-center gap-2 text-green-600">
                     <CheckCircle2 size={14} />
-                    <span className="text-[10px] font-bold uppercase tracking-widest">Saved {lastSaved.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                    <span className="text-[10px] font-bold uppercase tracking-widest">Last saved {lastSaved.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                   </div>
                 ) : null}
                 
@@ -145,10 +158,9 @@ function CreationLayoutInner({ children }: { children: React.ReactNode }) {
                   <button 
                     onClick={() => onSave()}
                     disabled={saving}
-                    className="p-2 text-[#97604e] hover:text-primary transition-colors disabled:opacity-50"
-                    title="Save Draft"
+                    className="flex items-center gap-2 p-2.5 bg-primary/5 hover:bg-primary/10 text-primary border border-primary/20 rounded-sm transition-all disabled:opacity-50 group"
                   >
-                    <Save size={18} />
+                    <Save size={20} className="group-hover:scale-110 transition-transform" />
                   </button>
                 )}
               </div>
@@ -157,7 +169,7 @@ function CreationLayoutInner({ children }: { children: React.ReactNode }) {
             {/* Mobile Nav Toggle */}
             <button 
               onClick={() => setSidebarOpen(true)}
-              className="lg:hidden p-2.5 bg-[#fdf1ec] border border-primary/10 rounded-lg text-primary"
+              className="lg:hidden p-2.5 bg-[#fdf1ec] border border-primary/10 rounded-sm text-primary"
             >
               <Menu size={20} />
             </button>
@@ -170,7 +182,7 @@ function CreationLayoutInner({ children }: { children: React.ReactNode }) {
         </div>
 
         {/* Centralized Footer */}
-        <footer className="shrink-0 z-40 bg-white/95 dark:bg-[#211511]/95 backdrop-blur-md border-t border-[#e7d6d0] py-5 px-8">
+        <footer className="shrink-0 z-40 bg-white/95 dark:bg-[#211511]/95 backdrop-blur-md border-t border-[#e7d6d0] py-5 px-4 lg:px-0">
           <div className="max-w-4xl mx-auto flex items-center justify-between gap-6">
             <div className="flex flex-col flex-1 max-w-[200px]">
               <div className="flex justify-between items-center mb-1.5">
@@ -189,26 +201,30 @@ function CreationLayoutInner({ children }: { children: React.ReactNode }) {
 
             <div className="flex items-center gap-6">
               <div className="hidden sm:flex flex-col items-end">
-                <span className="text-[10px] text-[#97604e] font-bold uppercase tracking-tighter">Total Price</span>
+                <span className="text-[10px] text-[#97604e] font-bold uppercase tracking-tighter">
+                  {(momentData?.paidAmount || 0) > 0 ? "Balance Due" : "Total Price"}
+                </span>
                 <span className="text-2xl font-black text-[#1b110e] dark:text-white tabular-nums">
-                  {formatPrice(momentData?.totalPrice || 0, currency)}
+                  {formatPrice(Math.max(0, (momentData?.totalPrice || 0) - (momentData?.paidAmount || 0)), currency)}
                 </span>
               </div>
 
-              <Button 
-                onClick={() => onContinue && onContinue()}
-                disabled={!onContinue || !canContinue || saving}
-                className="h-12 px-8 rounded-xl bg-primary hover:bg-primary-dark text-white font-bold shadow-lg shadow-primary/20 transform active:scale-[0.98] transition-all flex items-center gap-2 min-w-[140px]"
-              >
-                {saving ? (
-                  <Loader2 className="animate-spin h-5 w-5" />
-                ) : (
-                  <>
-                    Continue
-                    <ArrowRight size={18} />
-                  </>
-                )}
-              </Button>
+              {!(pathname.endsWith("/pay") && (momentData?.totalPrice || 0) - (momentData?.paidAmount || 0) <= 0) && (
+                <Button 
+                  onClick={() => onContinue && onContinue()}
+                  disabled={!onContinue || !canContinue || saving}
+                  className="h-12 px-8 rounded-lg bg-primary hover:bg-primary-dark text-white font-bold shadow-lg shadow-primary/20 transform active:scale-[0.98] transition-all flex items-center gap-2 min-w-[140px]"
+                >
+                  {saving ? (
+                    <Loader2 className="animate-spin h-5 w-5" />
+                  ) : (
+                    <>
+                      {pathname.endsWith("/pay") ? "Pay Now" : "Continue"}
+                      <ArrowRight size={18} />
+                    </>
+                  )}
+                </Button>
+              )}
             </div>
           </div>
         </footer>

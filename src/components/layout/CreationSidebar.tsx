@@ -59,15 +59,21 @@ export function CreationSidebar({
     )}>
       <div className="flex flex-col h-full">
         {/* Logo */}
-        <div className="p-8 flex items-center gap-3">
+        <Link 
+          href="/dashboard"
+          className="p-8 flex items-center gap-3 hover:opacity-80 transition-opacity"
+        >
           <div className="size-10 text-primary flex items-center justify-center bg-primary/10 rounded-md">
             <span className="material-symbols-outlined text-[24px]">celebration</span>
           </div>
           <h1 className="text-xl font-bold tracking-tight text-[#1b110e] dark:text-white">Supriseal</h1>
-          <button className="lg:hidden ml-auto p-1" onClick={() => setSidebarOpen(false)}>
+          <button className="lg:hidden ml-auto p-1" onClick={(e) => {
+            e.preventDefault();
+            setSidebarOpen(false);
+          }}>
             <X className="h-6 w-6" />
           </button>
-        </div>
+        </Link>
 
         {/* Stepper */}
         <nav className="flex-1 px-6 py-4 overflow-y-auto">
@@ -80,7 +86,8 @@ export function CreationSidebar({
                 <li key={step.id}>
                   <button 
                     onClick={() => {
-                      if (isCompleted || isCurrent) {
+                      const isPublished = momentData?.status === "Published";
+                      if (isCompleted || isCurrent || isPublished) {
                         const pathId = step.id === "configure" ? "" : 
                                      step.id === "recipient" ? "details" : step.id;
                         
@@ -97,18 +104,24 @@ export function CreationSidebar({
                     }}
                     className={cn(
                       "flex items-center gap-4 rounded-xl p-4 transition-all w-full text-left",
-                      isCurrent 
-                        ? "bg-[#fdf1ec] border border-primary/20" 
-                        : isCompleted ? "bg-black/[0.02] hover:bg-black/[0.05]" : "opacity-60 grayscale-[0.2] cursor-not-allowed"
+                        isCurrent 
+                          ? "bg-[#fdf1ec] border border-primary/20" 
+                          : (isCompleted || (momentData?.status === "Published" && step.id !== "pay")) 
+                            ? "bg-black/[0.02] hover:bg-black/[0.05]" 
+                            : step.id === "pay" && momentData?.status === "Published"
+                              ? "bg-primary/5 hover:bg-primary/10 border border-primary/20"
+                              : "opacity-60 grayscale-[0.2] cursor-not-allowed"
                     )}
                   >
                     <div className={cn(
                       "flex h-8 w-8 items-center justify-center rounded-full transition-all",
-                      isCurrent 
-                        ? "bg-primary text-white shadow-sm ring-2 ring-primary ring-offset-2 ring-offset-[#fdf1ec]" 
-                        : isCompleted 
-                          ? "bg-green-500 text-white"
-                          : "border-2 border-[#e7d6d0] bg-white dark:bg-transparent text-[#e7d6d0]"
+                        isCurrent 
+                          ? "bg-primary text-white shadow-sm ring-2 ring-primary ring-offset-2 ring-offset-[#fdf1ec]" 
+                          : (isCompleted || (momentData?.status === "Published" && step.id !== "pay"))
+                            ? "bg-green-500 text-white"
+                            : step.id === "pay" && momentData?.status === "Published"
+                              ? "bg-white border-2 border-primary text-primary shadow-sm"
+                              : "border-2 border-[#e7d6d0] bg-white dark:bg-transparent text-[#e7d6d0]"
                     )}>
                       {isCompleted ? <Check size={16} strokeWidth={3} /> : <step.icon size={18} />}
                     </div>
@@ -134,9 +147,6 @@ export function CreationSidebar({
           <div className="flex flex-col gap-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="size-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
-                  <Sparkles size={16} />
-                </div>
                 <div className="flex flex-col">
                   <span className="text-[10px] font-bold text-[#97604e] uppercase tracking-wider">Active Plan</span>
                   <span className="text-sm font-bold text-[#1b110e] dark:text-white capitalize">{momentData?.plan || "..." } Plan</span>
@@ -197,7 +207,7 @@ export function CreationSidebar({
               <span className="text-sm font-bold text-[#1b110e] dark:text-white truncate">
                 {user?.displayName || "My Account"}
               </span>
-              <span className="text-[10px] font-bold text-[#97604e] uppercase">View Account</span>
+              <span className="text-[10px] font-bold text-[#97604e] uppercase">{user?.email}</span>
             </div>
             <Link 
               href="/dashboard/profile" 

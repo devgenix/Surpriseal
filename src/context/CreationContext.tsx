@@ -1,10 +1,10 @@
 "use client";
 
-import { createContext, useContext, useState, ReactNode, Dispatch, SetStateAction, useMemo } from "react";
+import { createContext, useContext, useState, ReactNode, Dispatch, SetStateAction, useMemo, useCallback } from "react";
 
 interface CreationContextType {
   momentData: any;
-  setMomentData: (data: any) => void;
+  setMomentData: Dispatch<SetStateAction<any>>;
   sidebarOpen: boolean;
   setSidebarOpen: (open: boolean) => void;
   
@@ -23,6 +23,7 @@ interface CreationContextType {
   setOnSave: Dispatch<SetStateAction<(() => Promise<void>) | null>>;
   onContinue: (() => Promise<void>) | null;
   setOnContinue: Dispatch<SetStateAction<(() => Promise<void>) | null>>;
+  completeStep: (stepId: string) => void;
 }
 
 const CreationContext = createContext<CreationContextType | undefined>(undefined);
@@ -39,6 +40,17 @@ export function CreationProvider({ children }: { children: ReactNode }) {
   const [onSave, setOnSave] = useState<(() => Promise<void>) | null>(null);
   const [onContinue, setOnContinue] = useState<(() => Promise<void>) | null>(null);
 
+  const completeStep = useCallback((stepId: string) => {
+    setMomentData((prev: any) => {
+      const currentSteps = prev?.completedSteps || [];
+      if (currentSteps.includes(stepId)) return prev;
+      return {
+        ...prev,
+        completedSteps: [...currentSteps, stepId]
+      };
+    });
+  }, []);
+
   const value = useMemo(() => ({ 
     momentData, setMomentData, 
     sidebarOpen, setSidebarOpen,
@@ -47,10 +59,12 @@ export function CreationProvider({ children }: { children: ReactNode }) {
     lastSaved, setLastSaved,
     canContinue, setCanContinue,
     onSave, setOnSave,
-    onContinue, setOnContinue
+    onContinue, setOnContinue,
+    completeStep
   }), [
     momentData, sidebarOpen, saving, saveError, 
-    lastSaved, canContinue, onSave, onContinue
+    lastSaved, canContinue, onSave, onContinue,
+    completeStep
   ]);
 
   return (

@@ -124,7 +124,7 @@ export default function MomentDetailPage() {
             <Trash2 size={18} />
           </button>
           
-          <Link href={`/dashboard/create/${id}/details`} className="flex-1 sm:flex-none">
+          <Link href={`/dashboard/create/${id}?resume=true`} className="flex-1 sm:flex-none">
             <button className="flex items-center justify-center gap-2 px-6 h-10 w-full rounded-lg bg-[#1b110e] dark:bg-white text-white dark:text-[#1b110e] text-[10px] font-black uppercase tracking-widest hover:opacity-90 transition-all">
               <Edit3 size={14} />
               Edit Moment

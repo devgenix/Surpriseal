@@ -1,4 +1,4 @@
-import { Share2, Eye, Calendar, Cake, Heart, Users, Trash2, Loader2, AlertCircle } from "lucide-react";
+import { Share2, Eye, Calendar, Cake, Heart, Users, Trash2, Loader2, AlertCircle, Edit3 } from "lucide-react";
 import { useState } from "react";
 import { db } from "@/lib/firebase";
 import { doc, deleteDoc } from "firebase/firestore";
@@ -127,17 +127,17 @@ export default function MomentCard({ moment }: { moment: MomentProps }) {
             >
               <Trash2 size={16} />
             </button>
-            {isPublished && (
-              <button 
-                className="p-1.5 rounded-md text-[#97604e] hover:text-primary hover:bg-primary/5 transition-all"
-                title="Share"
-              >
-                <Share2 size={16} />
-              </button>
-            )}
             <Link href={`/dashboard/${moment.id}`}>
               <button className="px-3 py-1.5 rounded-md bg-transparent hover:bg-primary/5 text-primary text-[10px] font-extrabold uppercase tracking-wider transition-all border border-primary/20">
                 View
+              </button>
+            </Link>
+            <Link href={`/dashboard/create/${moment.id}?resume=true`}>
+              <button 
+                className="p-1.5 rounded-md text-[#97604e] hover:text-primary hover:bg-primary/5 transition-all"
+                title="Edit"
+              >
+                <Edit3 size={16} />
               </button>
             </Link>
           </div>

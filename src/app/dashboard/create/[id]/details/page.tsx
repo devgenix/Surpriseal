@@ -7,7 +7,7 @@ import { doc, getDoc, updateDoc, serverTimestamp, collection, query, where, getD
 import { onAuthStateChanged, User } from "firebase/auth";
 import { 
   Loader2, 
-  ArrowLeft,
+  ArrowLeft, 
   ArrowRight, 
   Check, 
   PersonStanding, 
@@ -27,18 +27,23 @@ import {
   Settings,
   ChevronUp,
   Sparkles,
-  Trash2
+  Trash2,
+  Copy
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { occasions } from "@/lib/constants/occasions";
-import { useDebounce } from "@/hooks/useDebounce";
-import { formatPrice } from "@/lib/currency";
-import { useCurrency } from "@/context/CurrencyContext";
-import { ADDONS, PLANS } from "@/lib/constants/pricing";
 import { useCreation } from "@/context/CreationContext";
-import { Clock } from "lucide-react";
+import { useDebounce } from "@/hooks/useDebounce";
+import { useCurrency } from "@/context/CurrencyContext";
+import { PLANS, ADDONS } from "@/lib/constants/pricing";
+import { formatPrice } from "@/lib/currency";
 
+const occasions = [
+  { id: "birthday", title: "Birthday", icon: Cake },
+  { id: "anniversary", title: "Anniversary", icon: Sparkles },
+  { id: "valentine", title: "Valentine's Day", icon: PartyPopper },
+  { id: "appreciation", title: "Appreciation", icon: Smile },
+];
 
 export default function CreationDetailsPage() {
   const router = useRouter();
@@ -47,20 +52,20 @@ export default function CreationDetailsPage() {
   const { currency } = useCurrency();
 
   const { 
+    momentData,
     setMomentData, 
-    setSidebarOpen,
     setSaving,
     setSaveError,
     setLastSaved,
     setCanContinue,
     setOnSave,
     setOnContinue,
-    saving,
-    saveError,
-    lastSaved
   } = useCreation();
+
+  const [localMomentData, setLocalMomentData] = useState<any>(null);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [copied, setCopied] = useState(false);
 
   // Form State
   const [recipientName, setRecipientName] = useState("");
@@ -68,13 +73,19 @@ export default function CreationDetailsPage() {
   const [customOccasion, setCustomOccasion] = useState("");
   const [urlSlug, setUrlSlug] = useState("");
   const [unlockDate, setUnlockDate] = useState("");
+  const [unlockTime, setUnlockTime] = useState("00:00");
   const [recipientEmail, setRecipientEmail] = useState("");
-  
-  // App context from Firestore
-  const [localMomentData, setLocalMomentData] = useState<any>(null);
-  const [slugAvailable, setSlugAvailable] = useState<boolean | null>(null);
+
   const [checkingSlug, setCheckingSlug] = useState(false);
-  const [unlockTime, setUnlockTime] = useState("");
+  const [slugAvailable, setSlugAvailable] = useState<boolean | null>(null);
+
+  const debouncedName = useDebounce(recipientName, 1000);
+  const debouncedOccasionId = useDebounce(occasionId, 1000);
+  const debouncedCustomOccasion = useDebounce(customOccasion, 1000);
+  const debouncedUrlSlug = useDebounce(urlSlug, 1000);
+  const debouncedUnlockDate = useDebounce(unlockDate, 1000);
+  const debouncedUnlockTime = useDebounce(unlockTime, 1000);
+  const debouncedRecipientEmail = useDebounce(recipientEmail, 1000);
 
   // Auth check
   useEffect(() => {
@@ -100,10 +111,13 @@ export default function CreationDetailsPage() {
           setOccasionId(data.occasionId || "");
           setCustomOccasion(data.customOccasion || "");
           setUrlSlug(data.urlSlug || "");
-          setUnlockTime(data.unlockTime || "00:00"); // Add this if missing
+          setUnlockTime(data.unlockTime || "00:00"); 
           setUnlockDate(data.unlockDate || "");
           setRecipientEmail(data.recipientEmail || "");
           setLoading(false);
+          
+          // Initial sync to context
+          setMomentData(data);
         } else {
           router.push("/dashboard");
         }
@@ -112,16 +126,7 @@ export default function CreationDetailsPage() {
       }
     }
     if (user) loadDraft();
-  }, [draftId, user, router]);
-
-  // Debounced Save Logic
-  const debouncedName = useDebounce(recipientName, 1000);
-  const debouncedOccasionId = useDebounce(occasionId, 1000);
-  const debouncedCustomOccasion = useDebounce(customOccasion, 1000);
-  const debouncedUrlSlug = useDebounce(urlSlug, 1000);
-  const debouncedUnlockDate = useDebounce(unlockDate, 1000);
-  const debouncedUnlockTime = useDebounce(unlockTime, 1000);
-  const debouncedRecipientEmail = useDebounce(recipientEmail, 1000);
+  }, [draftId, user, router, setMomentData]);
 
   const saveDraft = useCallback(async (updates: any) => {
     if (!draftId) return;
@@ -170,9 +175,14 @@ export default function CreationDetailsPage() {
   }, [saveDraft]);
 
   const onContinueAction = useCallback(async () => {
-    await saveDraft(stateRef.current);
-    router.push(`/dashboard/create/${draftId}/message`);
-  }, [saveDraft, router, draftId]);
+    const updates = {
+      ...stateRef.current,
+      lastStepId: "content",
+      completedSteps: Array.from(new Set([...(localMomentData?.completedSteps || []), "recipient"]))
+    };
+    await saveDraft(updates);
+    router.push(`/dashboard/create/${draftId}/content`);
+  }, [saveDraft, router, draftId, localMomentData]);
 
   // Register actions with layout
   useEffect(() => {
@@ -194,9 +204,14 @@ export default function CreationDetailsPage() {
   }, [recipientName, occasionId, customOccasion, setCanContinue]);
 
    const toggleAddon = useCallback(async (addonId: string) => {
-    if (!localMomentData || localMomentData.plan === "premium") return;
+    if (!momentData || momentData.plan === "premium") return;
     
-    const currentAddons = localMomentData.selectedAddons || [];
+    // Lock paid addons for published moments
+    const isPublished = momentData?.status === "Published";
+    const isPaid = momentData?.paidAddons?.includes(addonId);
+    if (isPublished && isPaid) return;
+
+    const currentAddons = momentData.selectedAddons || [];
     const isAdding = !currentAddons.includes(addonId);
     
     let newAddons;
@@ -220,20 +235,28 @@ export default function CreationDetailsPage() {
       totalPrice: newTotal
     };
 
-    const updatedData = {
-      ...localMomentData,
+    setLocalMomentData((prev: any) => ({
+      ...prev,
       ...updates
-    };
-
-    setLocalMomentData(updatedData);
-    setMomentData(updatedData); // Sync shared context
+    }));
+    
+    setMomentData((prev: any) => ({
+      ...prev,
+      ...updates
+    }));
     
     await saveDraft(updates);
-  }, [localMomentData, currency, saveDraft, setMomentData]);
+  }, [momentData, currency, saveDraft, setMomentData]);
 
   const isCustomLinkEnabled = useMemo(() => localMomentData?.selectedAddons?.includes("customUrl") || localMomentData?.plan === "premium", [localMomentData]);
   const isScheduledRevealEnabled = useMemo(() => localMomentData?.selectedAddons?.includes("scheduledReveal") || localMomentData?.plan === "premium", [localMomentData]);
-  const selectedAddonIdsForUI = useMemo(() => localMomentData?.selectedAddons || [], [localMomentData]);
+
+  const copyToClipboard = useCallback((text: string) => {
+    const fullUrl = `${window.location.origin}/view/${text}`;
+    navigator.clipboard.writeText(fullUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }, []);
 
   // Debounced Saves for each field
   useEffect(() => {
@@ -294,9 +317,9 @@ export default function CreationDetailsPage() {
         // Check moments (published)
         const qMoments = query(collection(db!, "moments"), where("urlSlug", "==", debouncedUrlSlug));
         const momentSnap = await getDocs(qMoments);
-        const existsInMoments = !momentSnap.empty;
+        const existsInMoments = momentSnap.docs.some(doc => doc.id !== draftId);
 
-        setSlugAvailable(!existsInMoments);
+        setSlugAvailable(!existsInDrafts && !existsInMoments);
       } catch (err) {
         console.error("Error checking slug:", err);
       } finally {
@@ -309,9 +332,11 @@ export default function CreationDetailsPage() {
   useEffect(() => {
     if (localMomentData) {
       setMomentData({
+        ...localMomentData, // Use spread to ensure all fields like paidAmount, paidAddons are carried over
         plan: localMomentData.plan,
         selectedAddons: localMomentData.selectedAddons,
-        totalPrice: localMomentData.totalPrice
+        totalPrice: localMomentData.totalPrice,
+        completedSteps: localMomentData.completedSteps
       });
     }
   }, [localMomentData, setMomentData]);
@@ -325,8 +350,8 @@ export default function CreationDetailsPage() {
   }
 
   return (
-    <div className="flex-1 flex justify-center w-full px-4 pb-32 pt-4">
-        <div className="w-full max-w-[640px] flex flex-col items-center sm:items-start animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="flex-1 w-full max-w-4xl mx-auto px-4 lg:px-0 py-10">
+        <div className="w-full flex flex-col items-center sm:items-start animate-in fade-in slide-in-from-bottom-4 duration-700">
           {/* Header */}
           <div className="mb-10 text-center sm:text-left">
             <h1 className="text-3xl sm:text-4xl font-extrabold text-[#1b110e] dark:text-white mb-3 tracking-tight">
@@ -409,29 +434,53 @@ export default function CreationDetailsPage() {
                     + Add for {formatPrice(ADDONS.find(a => a.id === "customUrl")?.price[currency] || 0, currency)}
                   </button>
                 )}
-                {isCustomLinkEnabled && localMomentData?.plan === "base" && (
+                {isCustomLinkEnabled && momentData?.plan === "base" && (
                   <button 
                     onClick={() => toggleAddon("customUrl")}
-                    className="text-[10px] font-bold text-red-500 hover:text-red-100 bg-red-50/50 px-2 py-1 rounded-full border border-red-200 flex items-center gap-1 uppercase tracking-wider"
+                    disabled={momentData?.status === "Published" && momentData?.paidAddons?.includes("customUrl")}
+                    className={cn(
+                      "text-[10px] font-bold px-2 py-1 rounded-full border flex items-center gap-1 uppercase tracking-wider",
+                      momentData?.status === "Published" && momentData?.paidAddons?.includes("customUrl")
+                        ? "text-[#97604e] bg-[#f9f5f4] border-[#e7d6d0] cursor-not-allowed"
+                        : "text-red-500 hover:bg-red-50/50 border-red-200"
+                    )}
                   >
-                    <Trash2 size={12} />
-                    Remove
+                    {momentData?.status === "Published" && momentData?.paidAddons?.includes("customUrl") ? (
+                      <>
+                        <CheckCircle2 size={12} className="text-green-500" />
+                        Enabled
+                      </>
+                    ) : (
+                      <>
+                        <Trash2 size={12} />
+                        Remove
+                      </>
+                    )}
                   </button>
                 )}
               </div>
 
               {!isCustomLinkEnabled ? (
-                <div className="flex items-center gap-3 p-4 bg-[#f9f5f4] dark:bg-white/5 rounded-lg border border-[#e7d6d0] border-dashed">
-                  <div className="size-8 rounded-full bg-white dark:bg-white/10 flex items-center justify-center text-[#97604e]">
-                    <LinkIcon size={16} />
+                <div className="flex items-center justify-between p-4 bg-[#f9f5f4] dark:bg-white/5 rounded-lg border border-[#e7d6d0] border-dashed">
+                  <div className="flex items-center gap-3">
+                    <div className="size-8 rounded-full bg-white dark:bg-white/10 flex items-center justify-center text-[#97604e]">
+                      <LinkIcon size={16} />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-xs font-bold text-[#1b110e]/70 uppercase tracking-tighter">Your temporary link</span>
+                      <span className="text-sm font-medium text-[#97604e]">supriseal.com/view/{draftId.slice(0, 8)}...</span>
+                    </div>
                   </div>
-                  <div className="flex flex-col">
-                    <span className="text-xs font-bold text-[#1b110e]/70 uppercase tracking-tighter">Your temporary link</span>
-                    <span className="text-sm font-medium text-[#97604e]">supriseal.com/view/{draftId.slice(0, 8)}...</span>
-                  </div>
+                  <button 
+                    onClick={() => copyToClipboard(draftId)}
+                    className="p-2 hover:bg-white rounded-md transition-colors text-primary"
+                    title="Copy Link"
+                  >
+                    {copied ? <CheckCircle2 size={18} /> : <Copy size={18} />}
+                  </button>
                 </div>
               ) : (
-                <div className="flex rounded-lg border border-[#e7d6d0] bg-white dark:bg-white/5 overflow-hidden focus-within:ring-4 focus-within:ring-primary/10 focus-within:border-primary transition-all">
+                <div className="flex rounded-lg border border-[#e7d6d0] bg-white dark:bg-white/5 overflow-hidden focus-within:ring-4 focus-within:ring-primary/10 focus-within:border-primary transition-all pr-1">
                   <div className="bg-[#fcf9f8] dark:bg-white/10 px-4 flex items-center border-r border-[#e7d6d0]">
                     <span className="text-[#97604e] font-bold text-sm whitespace-nowrap">supriseal.com/view/</span>
                   </div>
@@ -442,14 +491,24 @@ export default function CreationDetailsPage() {
                     placeholder="sarahs-big-30"
                     type="text"
                   />
-                  <div className="pr-4 flex items-center">
-                    {checkingSlug ? (
-                      <Loader2 size={16} className="text-primary animate-spin" />
-                    ) : slugAvailable === true ? (
-                      <CheckCircle2 size={16} className="text-green-500" />
-                    ) : slugAvailable === false ? (
-                      <X size={16} className="text-red-500" />
-                    ) : null}
+                  <div className="flex items-center gap-1">
+                    <button 
+                      onClick={() => copyToClipboard(urlSlug || draftId)}
+                      disabled={!urlSlug && !draftId}
+                      className="p-2 hover:bg-primary/5 rounded-md transition-colors text-primary"
+                      title="Copy Link"
+                    >
+                      {copied ? <CheckCircle2 size={18} /> : <Copy size={18} />}
+                    </button>
+                    <div className="pr-3 flex items-center">
+                      {checkingSlug ? (
+                        <Loader2 size={16} className="text-primary animate-spin" />
+                      ) : slugAvailable === true ? (
+                        <CheckCircle2 size={16} className="text-green-500" />
+                      ) : slugAvailable === false ? (
+                        <X size={16} className="text-red-500" />
+                      ) : null}
+                    </div>
                   </div>
                 </div>
               )}
@@ -461,8 +520,8 @@ export default function CreationDetailsPage() {
               )}
             </div>
 
-            {/* Unlock Date Section */}
-            <div className="flex flex-col gap-3">
+            {/* Unlock Date Section  */}
+            {/* <div className="flex flex-col gap-3">
               <div className="flex items-center justify-between mb-1">
                 <label className="text-sm font-bold text-[#1b110e] dark:text-white ml-1">Scheduled Reveal</label>
                 {!isScheduledRevealEnabled && localMomentData?.plan === "base" && (
@@ -473,85 +532,89 @@ export default function CreationDetailsPage() {
                     + Add for {formatPrice(ADDONS.find(a => a.id === "scheduledReveal")?.price[currency] || 0, currency)}
                   </button>
                 )}
-                {isScheduledRevealEnabled && localMomentData?.plan === "base" && (
+                {isScheduledRevealEnabled && momentData?.plan === "base" && (
                   <button 
                     onClick={() => toggleAddon("scheduledReveal")}
-                    className="text-[10px] font-bold text-red-500 hover:text-red-100 bg-red-50/50 px-2 py-1 rounded-full border border-red-200 flex items-center gap-1 uppercase tracking-wider"
+                    disabled={momentData?.status === "Published" && momentData?.paidAddons?.includes("scheduledReveal")}
+                    className={cn(
+                      "text-[10px] font-bold px-2 py-1 rounded-full border flex items-center gap-1 uppercase tracking-wider",
+                      momentData?.status === "Published" && momentData?.paidAddons?.includes("scheduledReveal")
+                        ? "text-[#97604e] bg-[#f9f5f4] border-[#e7d6d0] cursor-not-allowed"
+                        : "text-red-500 hover:bg-red-50/50 border-red-200"
+                    )}
                   >
-                    <Trash2 size={12} />
-                    Remove
+                    {momentData?.status === "Published" && momentData?.paidAddons?.includes("scheduledReveal") ? (
+                      <>
+                        <CheckCircle2 size={12} className="text-green-500" />
+                        Enabled
+                      </>
+                    ) : (
+                      <>
+                        <Trash2 size={12} />
+                        Remove
+                      </>
+                    )}
                   </button>
                 )}
               </div>
 
               {!isScheduledRevealEnabled ? (
-                <div 
-                  onClick={() => toggleAddon("scheduledReveal")}
-                  className="flex items-center gap-4 p-5 bg-white dark:bg-white/5 border-2 border-[#e7d6d0] rounded-lg border-dashed cursor-pointer hover:border-primary/30 group transition-all"
-                >
-                  <div className="p-3 rounded-lg bg-[#fdf1ec] text-primary group-hover:scale-110 transition-transform">
-                    <Calendar size={20} />
+                <div className="flex items-center gap-3 p-4 bg-[#f9f5f4] dark:bg-white/5 rounded-lg border border-[#e7d6d0] border-dashed">
+                  <div className="size-8 rounded-full bg-white dark:bg-white/10 flex items-center justify-center text-[#97604e]">
+                    <Calendar size={16} />
                   </div>
-                  <div>
-                    <h4 className="text-sm font-bold text-[#1b110e]">Unlock on a specific date</h4>
-                    <p className="text-[10px] text-[#97604e] font-medium leading-relaxed mt-0.5">
-                      Set a precise moment for the surprise to go live and notify the recipient automatically.
-                    </p>
+                  <div className="flex flex-col">
+                    <span className="text-xs font-bold text-[#1b110e]/70 uppercase tracking-tighter">Instant Access</span>
+                    <span className="text-sm font-medium text-[#97604e]">The surprise unlocks immediately</span>
                   </div>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-top-2">
-                  <div className="flex flex-col gap-2">
-                    <label className="text-[10px] font-bold text-[#97604e] uppercase ml-1">Reveal Date</label>
-                    <div className="relative group">
-                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                        <Calendar className="text-[#97604e] group-focus-within:text-primary transition-colors h-5 w-5" />
-                      </div>
-                      <input 
-                        value={unlockDate}
-                        onChange={(e) => setUnlockDate(e.target.value)}
-                        className="w-full h-14 pl-12 pr-4 bg-white dark:bg-white/5 border border-[#e7d6d0] rounded-lg text-[#1b110e] dark:text-white focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all outline-none" 
-                        type="date"
-                      />
+                <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2">
+                  <div className="relative group">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                      <Calendar className="text-[#97604e] group-focus-within:text-primary transition-colors h-5 w-5" />
                     </div>
+                    <input 
+                      value={unlockDate}
+                      onChange={(e) => setUnlockDate(e.target.value)}
+                      className="w-full h-14 pl-12 pr-4 bg-white dark:bg-white/5 border border-[#e7d6d0] rounded-lg text-[#1b110e] dark:text-white focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all outline-none" 
+                      type="date"
+                    />
                   </div>
-
-                  <div className="flex flex-col gap-2">
-                    <label className="text-[10px] font-bold text-[#97604e] uppercase ml-1">Reveal Time</label>
-                    <div className="relative group">
-                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                        <Clock className="text-[#97604e] group-focus-within:text-primary transition-colors h-5 w-5" />
-                      </div>
-                      <input 
-                        value={unlockTime}
-                        onChange={(e) => setUnlockTime(e.target.value)}
-                        className="w-full h-14 pl-12 pr-4 bg-white dark:bg-white/5 border border-[#e7d6d0] rounded-lg text-[#1b110e] dark:text-white focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all outline-none" 
-                        type="time"
-                      />
+                  <div className="relative group">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                      <Loader2 className="text-[#97604e] group-focus-within:text-primary transition-colors h-5 w-5" />
                     </div>
-                  </div>
-
-                  <div className="flex flex-col gap-2 md:col-span-2">
-                    <label className="text-[10px] font-bold text-[#97604e] uppercase ml-1">Recipient's Email</label>
-                    <div className="relative group">
-                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                        <Mail className="text-[#97604e] group-focus-within:text-primary transition-colors h-5 w-5" />
-                      </div>
-                      <input 
-                        value={recipientEmail}
-                        onChange={(e) => setRecipientEmail(e.target.value)}
-                        className="w-full h-14 pl-12 pr-4 bg-white dark:bg-white/5 border border-[#e7d6d0] rounded-lg text-[#1b110e] dark:text-white focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all outline-none font-medium" 
-                        placeholder="Recipient's Email"
-                        type="email"
-                      />
-                    </div>
-                    <p className="text-[10px] text-[#97604e] font-medium ml-1">We'll send them the link at the exact time you specified!</p>
+                    <input 
+                      value={unlockTime}
+                      onChange={(e) => setUnlockTime(e.target.value)}
+                      className="w-full h-14 pl-12 pr-4 bg-white dark:bg-white/5 border border-[#e7d6d0] rounded-lg text-[#1b110e] dark:text-white focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all outline-none" 
+                      type="time"
+                    />
                   </div>
                 </div>
               )}
+            </div> */} { /* Commented out for future use */}
+
+            {/* Email Notification Section */}
+            {/* <div className="flex flex-col gap-3">
+              <label className="text-sm font-bold text-[#1b110e] dark:text-white ml-1">Notify Recipient (Optional)</label>
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <Mail className="text-[#97604e] group-focus-within:text-primary transition-colors h-5 w-5" />
+                </div>
+                <input 
+                  value={recipientEmail}
+                  onChange={(e) => setRecipientEmail(e.target.value)}
+                  className="w-full h-14 pl-12 pr-4 bg-white dark:bg-white/5 border border-[#e7d6d0] rounded-lg text-[#1b110e] dark:text-white placeholder:text-[#97604e]/50 focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all outline-none" 
+                  placeholder="recipient@email.com"
+                  type="email"
+                />
+              </div>
+              <p className="text-[10px] text-[#97604e] ml-1 font-medium">We'll send them a beautiful invite when it's time to reveal.</p>
+            </div> */} { /* Commented out for future use */}
           </div>
         </div>
       </div>
-    </div>
   );
 }
