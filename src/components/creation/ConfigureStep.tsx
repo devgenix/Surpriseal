@@ -33,6 +33,7 @@ export default function ConfigureStep({ draftId: initialDraftId }: ConfigureStep
   const { currency } = useCurrency();
   const [fetchingDraft, setFetchingDraft] = useState(!!initialDraftId);
   const [localDraftId, setLocalDraftId] = useState<string | null>(initialDraftId || null);
+  const [collectionName, setCollectionName] = useState<"drafts" | "moments">("drafts");
 
   // Selection states
   const [selectedPlanId, setSelectedPlanId] = useState<"base" | "premium">("base");
@@ -53,17 +54,29 @@ export default function ConfigureStep({ draftId: initialDraftId }: ConfigureStep
     async function fetchDraft() {
       if (!initialDraftId || !db) return;
       try {
-        const docRef = doc(db, "drafts", initialDraftId);
-        const docSnap = await getDoc(docRef);
+        // Try drafts first
+        let docRef = doc(db, "drafts", initialDraftId);
+        let docSnap = await getDoc(docRef);
+        
         if (docSnap.exists()) {
-          const data = docSnap.data();
-          setMomentData(data); // Full sync to context
-          setSelectedPlanId(data.plan || "base");
-          setSelectedAddonIds(data.selectedAddons || []);
-          setFetchingDraft(false); // Only set to false after setting state
+          setCollectionName("drafts");
         } else {
-           setFetchingDraft(false);
+          // Try moments
+          docRef = doc(db, "moments", initialDraftId);
+          docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+            setCollectionName("moments");
+          } else {
+            setFetchingDraft(false);
+            return;
+          }
         }
+
+        const data = docSnap.data();
+        setMomentData(data); // Full sync to context
+        setSelectedPlanId(data.plan || "base");
+        setSelectedAddonIds(data.selectedAddons || []);
+        setFetchingDraft(false); // Only set to false after setting state
       } catch (error) {
         console.error("Error fetching draft:", error);
         setFetchingDraft(false);
@@ -141,8 +154,8 @@ export default function ConfigureStep({ draftId: initialDraftId }: ConfigureStep
       let finalDraftId = localDraftId;
 
       if (finalDraftId) {
-        // Update existing
-        await updateDoc(doc(db, "drafts", finalDraftId), draftData);
+        // Update existing in correct collection
+        await updateDoc(doc(db, collectionName, finalDraftId), draftData);
       } else {
         // Create new
         const docRef = await addDoc(collection(db, "drafts"), {

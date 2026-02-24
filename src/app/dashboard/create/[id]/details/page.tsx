@@ -65,6 +65,7 @@ export default function CreationDetailsPage() {
   const [localMomentData, setLocalMomentData] = useState<any>(null);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [collectionName, setCollectionName] = useState<"drafts" | "moments">("drafts");
   const [copied, setCopied] = useState(false);
 
   // Form State
@@ -101,26 +102,38 @@ export default function CreationDetailsPage() {
     async function loadDraft() {
       if (!draftId || !user) return;
       try {
-        const docRef = doc(db!, "drafts", draftId);
-        const docSnap = await getDoc(docRef);
+        // Try drafts first
+        let docRef = doc(db!, "drafts", draftId);
+        let docSnap = await getDoc(docRef);
+        
         if (docSnap.exists()) {
-          const data = docSnap.data();
-          setLocalMomentData(data);
-          setMomentData(data); // Sync shared context
-          setRecipientName(data.recipientName || "");
-          setOccasionId(data.occasionId || "");
-          setCustomOccasion(data.customOccasion || "");
-          setUrlSlug(data.urlSlug || "");
-          setUnlockTime(data.unlockTime || "00:00"); 
-          setUnlockDate(data.unlockDate || "");
-          setRecipientEmail(data.recipientEmail || "");
-          setLoading(false);
-          
-          // Initial sync to context
-          setMomentData(data);
+          setCollectionName("drafts");
         } else {
-          router.push("/dashboard");
+          // Try moments
+          docRef = doc(db!, "moments", draftId);
+          docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+            setCollectionName("moments");
+          } else {
+            router.push("/dashboard");
+            return;
+          }
         }
+
+        const data = docSnap.data();
+        setLocalMomentData(data);
+        setMomentData(data); // Sync shared context
+        setRecipientName(data.recipientName || "");
+        setOccasionId(data.occasionId || "");
+        setCustomOccasion(data.customOccasion || "");
+        setUrlSlug(data.urlSlug || "");
+        setUnlockTime(data.unlockTime || "00:00"); 
+        setUnlockDate(data.unlockDate || "");
+        setRecipientEmail(data.recipientEmail || "");
+        setLoading(false);
+        
+        // Initial sync to context
+        setMomentData(data);
       } catch (err) {
         console.error("Error loading draft:", err);
       }
@@ -133,7 +146,7 @@ export default function CreationDetailsPage() {
     setSaving(true);
     setSaveError(false);
     try {
-      const docRef = doc(db!, "drafts", draftId);
+      const docRef = doc(db!, collectionName, draftId);
       await updateDoc(docRef, {
         ...updates,
         updatedAt: serverTimestamp(),
@@ -145,7 +158,7 @@ export default function CreationDetailsPage() {
     } finally {
       setSaving(false);
     }
-  }, [draftId, setSaving, setSaveError, setLastSaved]);
+  }, [draftId, setSaving, setSaveError, setLastSaved, collectionName]);
 
   // Use refs to keep actions stable while having access to latest state
   const stateRef = useRef({
