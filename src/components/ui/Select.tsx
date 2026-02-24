@@ -62,12 +62,18 @@ export function Select({
           {/* Leading Icon */}
           <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
             {LeadingIcon ? (
-              <LeadingIcon className={cn("h-5 w-5 transition-colors", isOpen ? "text-primary" : "text-text-muted")} />
+              (() => {
+                const Icon = LeadingIcon as any;
+                return <Icon className={cn("h-5 w-5 transition-colors", isOpen ? "text-primary" : "text-text-muted")} />;
+              })()
             ) : selectedOption?.icon ? (
               typeof selectedOption.icon === "string" ? (
                 <span className="text-lg">{selectedOption.icon}</span>
               ) : (
-                <selectedOption.icon className={cn("h-5 w-5 transition-colors", isOpen ? "text-primary" : "text-text-muted")} />
+                (() => {
+                  const Icon = selectedOption.icon as React.ElementType;
+                  return <Icon className={cn("h-5 w-5 transition-colors", isOpen ? "text-primary" : "text-text-muted")} />;
+                })()
               )
             ) : (
               <ChevronDown className="h-5 w-5 text-text-muted" />
@@ -123,7 +129,10 @@ export function Select({
                       typeof option.icon === "string" ? (
                         <span className="text-xl w-6 flex justify-center">{option.icon}</span>
                       ) : (
-                        <option.icon className="h-4 w-4" />
+                        (() => {
+                          const Icon = option.icon as React.ElementType;
+                          return <Icon className="h-4 w-4" />;
+                        })()
                       )
                     )}
                     <span className="font-semibold text-sm">{option.title}</span>
