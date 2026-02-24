@@ -2,6 +2,7 @@
 
 import { useAuth } from "@/context/AuthContext";
 import { useRouter, usePathname } from "next/navigation";
+import { useTheme } from "@/context/ThemeContext";
 import { useEffect } from "react";
 
 import DashboardHeader from "@/components/layout/DashboardHeader";
@@ -14,6 +15,7 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const { user, loading } = useAuth();
+  const { resolvedTheme } = useTheme();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -40,7 +42,10 @@ export default function DashboardLayout({
   if (!user) return null;
 
   return (
-    <div className="bg-background-light dark:bg-background-dark text-text-main font-display antialiased min-h-[100dvh] flex flex-col transition-colors duration-200">
+    <div className={cn(
+      resolvedTheme === "dark" ? "dark" : "",
+      "bg-background text-foreground font-display antialiased min-h-[100dvh] flex flex-col transition-colors duration-200"
+    )}>
       {!isCreationFlow && <DashboardHeader />}
       <main className={cn(
         "flex-1 w-full mx-auto",

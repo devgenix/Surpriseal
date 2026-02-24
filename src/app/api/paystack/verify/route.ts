@@ -46,12 +46,11 @@ export async function POST(req: NextRequest) {
     // Update the "published" moment or create it
     const momentId = draftId;
     
-    const updatePayload = {
+    const updatePayload: any = {
       ...draftData,
       status: "Published",
       isPaid: true,
       paidAmount: newPaidAmount,
-      paidAddons: admin.firestore.FieldValue.arrayUnion(...selectedAddons),
       publishedAt: admin.firestore.FieldValue.serverTimestamp(),
       lastPaymentDetails: {
         reference,
@@ -60,14 +59,24 @@ export async function POST(req: NextRequest) {
       }
     };
 
+    if (selectedAddons.length > 0) {
+      updatePayload.paidAddons = admin.firestore.FieldValue.arrayUnion(...selectedAddons);
+    }
+
     await adminDb.collection("moments").doc(momentId).set(updatePayload, { merge: true });
-    await draftRef.update({
+
+    const draftUpdate: any = {
       status: "Published",
       isPaid: true,
       paidAmount: newPaidAmount,
-      paidAddons: admin.firestore.FieldValue.arrayUnion(...selectedAddons),
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-    });
+    };
+
+    if (selectedAddons.length > 0) {
+      draftUpdate.paidAddons = admin.firestore.FieldValue.arrayUnion(...selectedAddons);
+    }
+
+    await draftRef.update(draftUpdate);
 
     return NextResponse.json({ success: true, momentId });
   } catch (error) {

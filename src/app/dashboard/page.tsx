@@ -6,7 +6,8 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import Container from "@/components/ui/Container";
 import MomentCard from "@/components/dashboard/MomentCard";
-import { Plus, ListFilter, ArrowDownAZ, Loader2  } from "lucide-react";
+import { Plus, ListFilter, ArrowDownAZ, Loader2, Calendar, LayoutGrid, CheckCircle2, Clock  } from "lucide-react";
+import { Select } from "@/components/ui/Select";
 import { collection, query, where, onSnapshot, orderBy } from "firebase/firestore";
 
 
@@ -84,27 +85,31 @@ export default function DashboardPage() {
         </div>
 
         {/* Filter/Sort Controls */}
-        <div className="flex items-center gap-3">
-          <select 
+        <div className="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
+          <Select
+            options={[
+              { id: "newest", title: "Newest First", icon: Clock },
+              { id: "oldest", title: "Oldest First", icon: Calendar },
+              { id: "alphabetical", title: "A - Z", icon: ArrowDownAZ },
+              { id: "views", title: "Most Viewed", icon: LayoutGrid },
+            ]}
             value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as any)}
-            className="flex items-center gap-2 h-10 px-4 rounded-lg bg-white dark:bg-surface-dark border border-[#f3eae7] dark:border-white/10 text-text-main dark:text-white text-sm font-semibold hover:bg-gray-50 dark:hover:bg-white/5 transition-colors outline-none cursor-pointer"
-          >
-            <option value="newest">Newest First</option>
-            <option value="oldest">Oldest First</option>
-            <option value="alphabetical">A - Z</option>
-            <option value="views">Most Viewed</option>
-          </select>
+            onChange={(val) => setSortBy(val as any)}
+            className="w-full sm:w-48"
+            icon={ListFilter}
+          />
           
-          <select 
+          <Select
+            options={[
+              { id: "all", title: "All Status", icon: LayoutGrid },
+              { id: "Draft", title: "Drafts", icon: Clock },
+              { id: "Published", title: "Published", icon: CheckCircle2 },
+            ]}
             value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value as any)}
-            className="flex items-center gap-2 h-10 px-4 rounded-lg bg-white dark:bg-surface-dark border border-[#f3eae7] dark:border-white/10 text-text-main dark:text-white text-sm font-semibold hover:bg-gray-50 dark:hover:bg-white/5 transition-colors outline-none cursor-pointer"
-          >
-            <option value="all">All Status</option>
-            <option value="Draft">Drafts</option>
-            <option value="Published">Published</option>
-          </select>
+            onChange={(val) => setFilterStatus(val as any)}
+            className="w-full sm:w-48"
+            icon={CheckCircle2}
+          />
         </div>
       </div>
 

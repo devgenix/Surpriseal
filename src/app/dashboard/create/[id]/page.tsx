@@ -44,6 +44,7 @@ export default function EditRedirectPage() {
             const stepPaths: Record<string, string> = {
               "recipient": "details",
               "content": "content",
+              "style": "style",
               "pay": "pay"
             };
 

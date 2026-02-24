@@ -189,10 +189,10 @@ export default function ConfigureStep({ draftId: initialDraftId }: ConfigureStep
       <div className="flex-1 w-full max-w-4xl px-4 lg:px-0 mx-auto py-10">
         {/* Header */}
         <div className="mb-12 text-center sm:text-left">
-          <h1 className="text-3xl sm:text-5xl font-extrabold mb-4 text-[#1b110e] dark:text-white tracking-tight leading-tight">
+          <h1 className="text-3xl sm:text-5xl font-extrabold mb-4 text-text-main tracking-tight leading-tight">
             Design Your <span className="text-primary italic">Surprise</span>
           </h1>
-          <p className="text-[#97604e] text-lg font-medium">
+          <p className="text-text-muted text-lg font-medium">
             Choose your foundation and add the perfect finishing touches.
           </p>
         </div>
@@ -204,8 +204,8 @@ export default function ConfigureStep({ draftId: initialDraftId }: ConfigureStep
               className={cn(
                 "relative cursor-pointer transition-all duration-300 overflow-hidden group border-2",
                 selectedPlanId === plan.id 
-                  ? "border-primary shadow-xl shadow-primary/5 bg-white dark:bg-[#2a1d19]" 
-                  : "border-[#f3eae7] dark:border-[#3a2d29] hover:border-primary/30 bg-white/50 dark:bg-white/5"
+                  ? "border-primary shadow-xl shadow-primary/5 bg-surface" 
+                  : "border-border hover:border-primary/30 bg-surface/50"
               )}
               onClick={() => {
                 const isPublished = momentData?.status === "Published";
@@ -226,20 +226,20 @@ export default function ConfigureStep({ draftId: initialDraftId }: ConfigureStep
                 </div>
               )}
               <CardHeader className="pb-4">
-                <CardTitle className="text-2xl font-bold dark:text-white">{plan.title}</CardTitle>
-                <CardDescription className="text-[#97604e] font-medium leading-relaxed">
+                <CardTitle className="text-2xl font-bold text-text-main">{plan.title}</CardTitle>
+                <CardDescription className="text-text-muted font-medium leading-relaxed">
                   {plan.description}
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="mb-6">
-                  <span className="text-3xl font-extrabold text-[#1b110e] dark:text-white">
+                  <span className="text-3xl font-extrabold text-text-main">
                     {formatPrice(plan.price[currency], currency)}
                   </span>
                 </div>
                 <ul className="space-y-3">
                   {plan.features.slice(0, 5).map((feature, i) => (
-                    <li key={i} className="flex items-start gap-3 text-sm text-[#1b110e]/80 dark:text-white/80">
+                    <li key={i} className="flex items-start gap-3 text-sm text-text-main/80">
                       <div className="h-5 w-5 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center flex-shrink-0 mt-0.5">
                         <Check className="h-3 w-3 text-green-600" />
                       </div>
@@ -256,14 +256,14 @@ export default function ConfigureStep({ draftId: initialDraftId }: ConfigureStep
         <div className={cn(
           "rounded-xl p-6 lg:p-8 transition-all duration-500",
           selectedPlanId === "premium" 
-            ? "bg-slate-50 dark:bg-white/5 border-2 border-slate-200 dark:border-white/10 opacity-60 pointer-events-none" 
-            : "bg-white dark:bg-[#2a1d19] border-2 border-[#f3eae7] dark:border-[#3a2d29] shadow-sm"
+            ? "bg-surface/50 border-2 border-border opacity-60 pointer-events-none" 
+            : "bg-surface border-2 border-border shadow-sm"
         )}>
           <div className="mb-8">
-            <h2 className="text-xl md:text-2xl font-bold text-[#1b110e] dark:text-white">
+            <h2 className="text-xl md:text-2xl font-bold text-text-main">
               Enhance with Add-ons
             </h2>
-            <p className="text-[#97604e] text-sm mt-1 font-medium">
+            <p className="text-text-muted text-sm mt-1 font-medium">
               {selectedPlanId === "premium" 
                 ? "All add-ons are automatically included in Premium." 
                 : "Customise your surprise with special extras."}
@@ -274,14 +274,14 @@ export default function ConfigureStep({ draftId: initialDraftId }: ConfigureStep
             {ADDONS.map((addon) => {
               const isSelected = selectedAddonIds.includes(addon.id) || selectedPlanId === "premium";
               return (
-                <div
-                  key={addon.id}
-                  onClick={() => toggleAddon(addon.id)}
-                  className={cn(
-                    "p-4 rounded-lg border-2 transition-all flex items-start gap-4",
-                    isSelected 
-                      ? "border-primary/40 bg-primary/5" 
-                      : "border-[#f3eae7] dark:border-[#3a2d29] hover:border-primary/20 bg-white dark:bg-transparent",
+                  <div
+                    key={addon.id}
+                    onClick={() => toggleAddon(addon.id)}
+                    className={cn(
+                      "p-4 rounded-lg border-2 transition-all flex items-start gap-4",
+                      isSelected 
+                        ? "border-primary/40 bg-primary/5" 
+                        : "border-border hover:border-primary/20 bg-surface",
                     momentData?.status === "Published" && momentData?.paidAddons?.includes(addon.id)
                       ? "opacity-80 cursor-not-allowed select-none"
                       : "cursor-pointer"
@@ -289,18 +289,18 @@ export default function ConfigureStep({ draftId: initialDraftId }: ConfigureStep
                 >
                   <div className={cn(
                     "h-5 w-5 rounded border-2 flex items-center justify-center transition-colors mt-0.5",
-                    isSelected ? "bg-primary border-primary" : "border-[#e7d6d0] dark:border-[#4a3d39]"
+                    isSelected ? "bg-primary border-primary" : "border-border"
                   )}>
                     {isSelected && <Check className="h-3 w-3 text-white" strokeWidth={4} />}
                   </div>
                   <div className="flex-grow">
                     <div className="flex items-center justify-between mb-0.5">
-                      <span className="font-bold text-[#1b110e] dark:text-white text-sm">{addon.title}</span>
+                      <span className="font-bold text-text-main text-sm">{addon.title}</span>
                       <span className="text-xs font-bold text-primary">
                         +{formatPrice(addon.price[currency], currency)}
                       </span>
                     </div>
-                    <p className="text-xs text-[#97604e] leading-snug font-medium">{addon.description}</p>
+                    <p className="text-xs text-text-muted leading-snug font-medium">{addon.description}</p>
                   </div>
                 </div>
               );

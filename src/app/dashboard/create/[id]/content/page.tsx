@@ -14,8 +14,10 @@ import {
   Type,
   ImageIcon,
   Video,
+  Music,
   AlertCircle,
-  Upload
+  Upload,
+  Music2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCreation } from "@/context/CreationContext";
@@ -45,9 +47,11 @@ export default function CreationContentPage() {
   // Form State
   const [personalMessage, setPersonalMessage] = useState("");
   const [media, setMedia] = useState<any[]>([]);
+  const [music, setMusic] = useState<any[]>([]);
   const [recipientName, setRecipientName] = useState("");
   const [uploadingFiles, setUploadingFiles] = useState<Record<string, number>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const musicInputRef = useRef<HTMLInputElement>(null);
 
   // Auth check
   useEffect(() => {
@@ -85,6 +89,7 @@ export default function CreationContentPage() {
         setMomentData(data);
         setPersonalMessage(data.personalMessage || "");
         setMedia(data.media || []);
+        setMusic(data.music || []);
         setRecipientName(data.recipientName || "them");
         setLoading(false);
       } catch (err) {
@@ -107,6 +112,29 @@ export default function CreationContentPage() {
         ...updates,
         updatedAt: serverTimestamp(),
       });
+
+      // Update local context state for immediate feedback
+      setMomentData((prev: any) => {
+        if (!prev) return prev;
+        
+        // Handle nested styleConfig updates (though less common in this page)
+        if (updates.styleConfig && prev.styleConfig) {
+          return {
+            ...prev,
+            ...updates,
+            styleConfig: {
+              ...prev.styleConfig,
+              ...updates.styleConfig
+            }
+          };
+        }
+        
+        return {
+          ...prev,
+          ...updates
+        };
+      });
+
       setLastSaved(new Date());
     } catch (err) {
       console.error("Error saving draft:", err);
@@ -125,10 +153,15 @@ export default function CreationContentPage() {
   // Handle auto-save for media deletions/additions
   // We use a separate useEffect to avoid race conditions during batch uploads
   const debouncedMedia = useDebounce(media, 1000);
+  const debouncedMusic = useDebounce(music, 1000);
+
   useEffect(() => {
     if (loading) return;
-    saveDraft({ media: debouncedMedia });
-  }, [debouncedMedia, saveDraft, loading]);
+    saveDraft({ 
+      media: debouncedMedia,
+      music: debouncedMusic 
+    });
+  }, [debouncedMedia, debouncedMusic, saveDraft, loading]);
 
   // Handle Validation
   useEffect(() => {
@@ -137,25 +170,26 @@ export default function CreationContentPage() {
     setCanContinue(isValid);
   }, [personalMessage, setCanContinue]);
 
-  const stateRef = useRef({ personalMessage, media });
+  const stateRef = useRef({ personalMessage, media, music });
   useEffect(() => {
-    stateRef.current = { personalMessage, media };
-  }, [personalMessage, media]);
+    stateRef.current = { personalMessage, media, music };
+  }, [personalMessage, media, music]);
 
   const onSaveAction = useCallback(async () => {
     await saveDraft(stateRef.current);
   }, [saveDraft]);
 
   const onContinueAction = useCallback(async () => {
-    const docRef = doc(db!, collectionName, draftId); // Use dynamic collectionName
+    const docRef = doc(db!, collectionName, draftId);
     await updateDoc(docRef, { 
       personalMessage,
       media,
-      lastStepId: "pay",
+      music,
+      lastStepId: "style",
       completedSteps: Array.from(new Set([...(momentData?.completedSteps || []), "content"]))
     });
-    router.push(`/dashboard/create/${draftId}/pay`);
-  }, [personalMessage, media, draftId, momentData, router, collectionName]); // Added collectionName
+    router.push(`/dashboard/create/${draftId}/style`);
+  }, [personalMessage, media, music, draftId, momentData, router, collectionName]); // Added collectionName
 
   useEffect(() => {
     setOnSave(() => onSaveAction);
@@ -166,11 +200,17 @@ export default function CreationContentPage() {
     };
   }, [onSaveAction, onContinueAction, setOnSave, setOnContinue]);
 
+  const isPremium = momentData?.plan === "premium";
+  const hasUnlimitedAddon = (momentData?.selectedAddons || []).includes("extraMedia");
+  const isUnlimited = isPremium || hasUnlimitedAddon;
+  const maxAllowed = isUnlimited ? 999 : 20;
+  const currentTotal = (media?.length || 0) + (music?.length || 0);
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0 || !user) return;
 
-    const remainingSlots = 10 - media.length;
+    const remainingSlots = Math.max(0, maxAllowed - currentTotal);
     const filesToUpload = Array.from(files).slice(0, remainingSlots);
 
     for (const file of filesToUpload) {
@@ -207,8 +247,53 @@ export default function CreationContentPage() {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
+  const handleMusicUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0 || !user) return;
+
+    const remainingSlots = Math.max(0, maxAllowed - currentTotal);
+    const filesToUpload = Array.from(files).slice(0, remainingSlots);
+
+    for (const file of filesToUpload) {
+      const tempId = Math.random().toString(36).substr(2, 9);
+      const path = `users/${user.uid}/moments/${draftId}/music/${tempId}-${file.name}`;
+      
+      setUploadingFiles(prev => ({ ...prev, [tempId]: 0 }));
+
+      try {
+        const downloadURL = await uploadFile(file, path, (progress) => {
+          setUploadingFiles(prev => ({ ...prev, [tempId]: Math.round(progress) }));
+        });
+
+        const newMusicItem = {
+          id: tempId,
+          type: "audio",
+          url: downloadURL,
+          name: file.name,
+          uploadedAt: new Date().toISOString()
+        };
+
+        setMusic(prev => [...prev, newMusicItem]);
+      } catch (error) {
+        console.error("Music upload failed:", error);
+      } finally {
+        setUploadingFiles(prev => {
+          const newState = { ...prev };
+          delete newState[tempId];
+          return newState;
+        });
+      }
+    }
+
+    if (musicInputRef.current) musicInputRef.current.value = "";
+  };
+
   const removeMedia = (id: string) => {
     setMedia(prev => prev.filter(m => m.id !== id));
+  };
+
+  const removeMusic = (id: string) => {
+    setMusic(prev => prev.filter(m => m.id !== id));
   };
 
   if (loading) {
@@ -226,10 +311,10 @@ export default function CreationContentPage() {
         {/* Header Section */}
         <div className="mb-10 text-center sm:text-left w-full">
           <h1 className="text-3xl sm:text-4xl font-extrabold text-[#1b110e] dark:text-white mb-3 tracking-tight">
-            Surprise Content
+            Content Library
           </h1>
           <p className="text-lg text-[#97604e] font-medium">
-            Share a heartfelt message and your favorite memories for {recipientName}.
+            Collect all the memories and music that'll power your reveal.
           </p>
         </div>
 
@@ -264,10 +349,13 @@ export default function CreationContentPage() {
           <section className="flex flex-col gap-6">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
-                <h2 className="text-xl font-bold text-[#1b110e] dark:text-white">Memory Lane</h2>
+                <div className="p-2 rounded-lg bg-primary/10 text-primary">
+                  <ImageIcon size={20} />
+                </div>
+                <h2 className="text-xl font-bold text-[#1b110e] dark:text-white">Media Library</h2>
               </div>
               <span className="text-[10px] font-bold text-[#97604e] uppercase tracking-widest bg-[#fdf1ec] px-3 py-1 rounded-full border border-primary/10">
-                {media.length} of 10 items
+                {media.length} items
               </span>
             </div>
 
@@ -316,7 +404,7 @@ export default function CreationContentPage() {
               />
 
               {/* Upload Multi-Option Trigger */}
-              {media.length < 10 && (
+              {currentTotal < maxAllowed && (
                 <div 
                   onClick={() => fileInputRef.current?.click()}
                   className="aspect-square rounded-lg border-2 border-dashed border-[#e7d6d0] flex flex-col items-center justify-center gap-2 hover:border-primary/50 hover:bg-primary/[0.02] cursor-pointer group transition-all"
@@ -327,6 +415,93 @@ export default function CreationContentPage() {
                   <span className="text-[10px] font-extrabold text-[#97604e] uppercase tracking-tighter">Add Photo/Video</span>
                 </div>
               )}
+            </div>
+          </section>
+
+          {/* Music Library Section */}
+          <section className="flex flex-col gap-6">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-lg bg-primary/10 text-primary">
+                  <Music size={20} />
+                </div>
+                <h2 className="text-xl font-bold text-[#1b110e] dark:text-white">Music Library</h2>
+              </div>
+              <span className="text-[10px] font-bold text-[#97604e] uppercase tracking-widest bg-[#fdf1ec] px-3 py-1 rounded-full border border-primary/10">
+                {music.length} tracks
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Music Items */}
+              {music.map((item) => (
+                <div key={item.id} className="group relative flex items-center gap-4 p-4 rounded-xl border border-[#e7d6d0] bg-white shadow-sm hover:shadow-md transition-all">
+                  <div className="size-10 rounded-lg bg-primary/5 text-primary flex items-center justify-center">
+                    <Music2 size={20} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-[#1b110e] truncate">{item.name}</p>
+                    <p className="text-[10px] text-[#97604e] font-medium uppercase tracking-wider">Audio track</p>
+                  </div>
+                  <button 
+                    onClick={() => removeMusic(item.id)}
+                    className="p-2 text-[#97604e] hover:text-red-500 transition-colors"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              ))}
+
+              {/* Uploading States for Music */}
+              {Object.entries(uploadingFiles).filter(([id]) => !media.find(m => m.id === id) && !music.find(m => m.id === id)).map(([id, progress]) => (
+                <div key={id} className="flex items-center gap-4 p-4 rounded-xl border border-[#e7d6d0] bg-white/50 backdrop-blur-sm relative overflow-hidden">
+                   <div className="absolute inset-x-0 bottom-0 h-1 bg-[#fdf1ec]">
+                    <div 
+                      className="h-full bg-primary transition-all duration-300" 
+                      style={{ width: `${progress}%` }}
+                    />
+                  </div>
+                  <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                  <span className="text-xs font-bold text-[#97604e]">Uploading... {progress}%</span>
+                </div>
+              ))}
+
+              {/* Hidden Music Input */}
+              <input 
+                type="file"
+                ref={musicInputRef}
+                onChange={handleMusicUpload}
+                multiple
+                accept="audio/*"
+                className="hidden"
+              />
+
+              {/* Upload Music Trigger */}
+              {currentTotal < maxAllowed && (
+                <div 
+                  onClick={() => musicInputRef.current?.click()}
+                  className="flex items-center gap-4 p-4 rounded-xl border-2 border-dashed border-[#e7d6d0] hover:border-primary/50 hover:bg-primary/[0.02] cursor-pointer group transition-all"
+                >
+                  <div className="size-10 rounded-full bg-[#fdf1ec] text-primary flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <Plus size={20} />
+                  </div>
+                  <span className="text-sm font-extrabold text-[#97604e] uppercase tracking-tighter">Upload Music</span>
+                </div>
+              )}
+            </div>
+
+            {/* Total Limit Warning */}
+            <div className="mt-4 p-4 rounded-xl bg-[#fdf1ec]/50 border border-primary/10 flex items-start gap-3">
+              <AlertCircle size={18} className="text-primary shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-xs font-bold text-[#1b110e]">Storage Overview</p>
+                <p className="text-[11px] text-[#97604e] font-medium leading-relaxed">
+                  You've used <span className="font-black text-primary">{currentTotal}</span> out of <span className="font-black text-primary">{isUnlimited ? "∞" : "20"}</span> total items (photos, videos, and music).
+                  {!isUnlimited && (
+                    <span className="ml-1">Upgrade to <span className="font-black">Premium</span> or add <span className="font-black">Unlimited Media</span> to upload more.</span>
+                  )}
+                </p>
+              </div>
             </div>
           </section>
 

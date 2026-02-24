@@ -4,10 +4,12 @@ import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Avatar, Dropdown } from "antd";
-import { LogOut, User, PlusCircle } from "lucide-react";
+import { LogOut, User, PlusCircle, Moon, Sun, Monitor } from "lucide-react";
+import { useTheme } from "@/context/ThemeContext";
 
 export default function DashboardHeader() {
   const { user, logout } = useAuth();
+  const { theme, setTheme } = useTheme();
   const router = useRouter();
 
   const handleLogout = async () => {
@@ -20,10 +22,10 @@ export default function DashboardHeader() {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-surface-light/80 dark:bg-surface-dark/90 backdrop-blur-md border-b border-[#f3eae7] dark:border-white/10 px-6 py-4 transition-colors duration-200">
+    <header className="sticky top-0 z-50 w-full bg-surface/80 backdrop-blur-md border-b border-border px-6 py-4 transition-colors duration-200">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         {/* Logo */}
-        <Link href="/dashboard" className="flex items-center gap-3 text-text-main dark:text-white group cursor-pointer">
+        <Link href="/dashboard" className="flex items-center gap-3 text-text-main group cursor-pointer">
           <div className="size-10 text-primary flex items-center justify-center bg-primary/10 rounded-md">
             <span className="material-symbols-outlined text-[24px]">celebration</span>
           </div>
@@ -34,19 +36,19 @@ export default function DashboardHeader() {
         <nav className="hidden md:flex items-center gap-8">
           <Link 
             href="/dashboard" 
-            className="text-text-main dark:text-white font-medium hover:text-primary transition-colors"
+            className="text-text-main font-medium hover:text-primary transition-colors"
           >
             Dashboard
           </Link>
           <Link 
             href="#" 
-            className="text-text-muted dark:text-gray-400 font-medium hover:text-primary transition-colors"
+            className="text-text-muted font-medium hover:text-primary transition-colors"
           >
             Templates
           </Link>
           <Link 
             href="#" 
-            className="text-text-muted dark:text-gray-400 font-medium hover:text-primary transition-colors"
+            className="text-text-muted font-medium hover:text-primary transition-colors"
           >
             Inspiration
           </Link>
@@ -73,6 +75,34 @@ export default function DashboardHeader() {
                   onClick: () => router.push("/dashboard/profile")
                 },
                 {
+                  label: 'Theme',
+                  key: 'theme',
+                  icon: theme === "dark" ? <Moon size={16} /> : theme === "light" ? <Sun size={16} /> : <Monitor size={16} />,
+                  children: [
+                    {
+                      label: 'Light',
+                      key: 'theme-light',
+                      icon: <Sun size={14} />,
+                      onClick: () => setTheme("light"),
+                      disabled: theme === "light"
+                    },
+                    {
+                      label: 'Dark',
+                      key: 'theme-dark',
+                      icon: <Moon size={14} />,
+                      onClick: () => setTheme("dark"),
+                      disabled: theme === "dark"
+                    },
+                    {
+                      label: 'System',
+                      key: 'theme-system',
+                      icon: <Monitor size={14} />,
+                      onClick: () => setTheme("system"),
+                      disabled: theme === "system"
+                    }
+                  ]
+                },
+                {
                   label: 'Sign out',
                   key: 'logout',
                   icon: <LogOut className="h-4 w-4" />,
@@ -88,9 +118,9 @@ export default function DashboardHeader() {
                 src={user?.photoURL} 
                 size={40}
                 icon={!user?.photoURL && <User size={20} />}
-                className="border-2 border-white dark:border-surface-dark shadow-sm bg-primary/10 text-primary"
+                className="border-2 border-white dark:border-border shadow-sm bg-primary/10 text-primary"
               />
-              <div className="absolute bottom-0 right-0 size-3 bg-green-500 rounded-full border-2 border-white dark:border-surface-dark"></div>
+              <div className="absolute bottom-0 right-0 size-3 bg-green-500 rounded-full border-2 border-white dark:border-border"></div>
             </div>
           </Dropdown>
         </div>

@@ -19,6 +19,7 @@ export const metadata: Metadata = {
 }
 
 import { AuthProvider } from '@/context/AuthContext';
+import { ThemeProvider } from '@/context/ThemeContext';
 
 export default function RootLayout({
   children,
@@ -31,13 +32,15 @@ export default function RootLayout({
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
       </head>
       <body className={font.className}>
-        <ThemeRegistry>
-          <AuthProvider>
-            <CurrencyProvider>
-              {children}
-            </CurrencyProvider>
-          </AuthProvider>
-        </ThemeRegistry>
+        <AuthProvider>
+          <ThemeProvider>
+            <ThemeRegistry>
+              <CurrencyProvider>
+                {children}
+              </CurrencyProvider>
+            </ThemeRegistry>
+          </ThemeProvider>
+        </AuthProvider>
       </body>
     </html>
   )

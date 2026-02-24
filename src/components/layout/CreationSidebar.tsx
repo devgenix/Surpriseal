@@ -12,8 +12,13 @@ import {
   ChevronUp,
   ChevronDown,
   Check,
-  LogOut
+  LogOut,
+  Moon,
+  Sun,
+  Monitor
 } from "lucide-react";
+import { useTheme } from "@/context/ThemeContext";
+import { Dropdown } from "antd";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { ADDONS } from "@/lib/constants/pricing";
@@ -49,12 +54,13 @@ export function CreationSidebar({
 }: CreationSidebarProps) {
   const router = useRouter(); 
   const pathname = usePathname();
+  const { theme, setTheme } = useTheme();
   const [showAddonDetails, setShowAddonDetails] = useState(false);
   const selectedAddonIds = momentData?.selectedAddons || [];
 
   return (
     <aside className={cn(
-      "fixed inset-y-0 left-0 w-80 bg-white dark:bg-[#2a1d19] border-r border-[#e7d6d0] z-50 transition-transform duration-300 lg:relative lg:translate-x-0 shadow-sm",
+      "fixed inset-y-0 left-0 w-80 bg-surface border-r border-border z-50 transition-transform duration-300 lg:relative lg:translate-x-0 shadow-sm",
       sidebarOpen ? "translate-x-0" : "-translate-x-full"
     )}>
       <div className="flex flex-col h-full">
@@ -66,7 +72,7 @@ export function CreationSidebar({
           <div className="size-10 text-primary flex items-center justify-center bg-primary/10 rounded-md">
             <span className="material-symbols-outlined text-[24px]">celebration</span>
           </div>
-          <h1 className="text-xl font-bold tracking-tight text-[#1b110e] dark:text-white">Supriseal</h1>
+          <h1 className="text-xl font-bold tracking-tight text-text-main">Supriseal</h1>
           <button className="lg:hidden ml-auto p-1" onClick={(e) => {
             e.preventDefault();
             setSidebarOpen(false);
@@ -116,23 +122,23 @@ export function CreationSidebar({
                     <div className={cn(
                       "flex h-8 w-8 items-center justify-center rounded-full transition-all",
                         isCurrent 
-                          ? "bg-primary text-white shadow-sm ring-2 ring-primary ring-offset-2 ring-offset-[#fdf1ec]" 
+                          ? "bg-primary text-white shadow-sm ring-2 ring-primary ring-offset-2 ring-offset-surface" 
                           : (isCompleted || (momentData?.status === "Published" && step.id !== "pay"))
                             ? "bg-green-500 text-white"
                             : step.id === "pay" && momentData?.status === "Published"
                               ? "bg-white border-2 border-primary text-primary shadow-sm"
-                              : "border-2 border-[#e7d6d0] bg-white dark:bg-transparent text-[#e7d6d0]"
+                              : "border-2 border-border bg-transparent text-text-muted"
                     )}>
                       {isCompleted ? <Check size={16} strokeWidth={3} /> : <step.icon size={18} />}
                     </div>
                     <div className="flex flex-col">
                       <span className={cn(
                         "text-sm font-bold",
-                        isCurrent ? "text-[#1b110e]" : "text-[#1b110e]/70"
+                        isCurrent ? "text-text-main" : "text-text-main/70"
                       )}>{step.title}</span>
                       <span className={cn(
                         "text-[10px] font-bold uppercase tracking-wider",
-                        isCurrent ? "text-primary" : isCompleted ? "text-green-600" : "text-[#97604e]"
+                        isCurrent ? "text-primary" : isCompleted ? "text-green-600" : "text-text-muted"
                       )}>{step.status}</span>
                     </div>
                   </button>
@@ -143,13 +149,13 @@ export function CreationSidebar({
         </nav>
 
         {/* Plan & Addons Summary */}
-        <div className="p-6 border-t border-[#e7d6d0] bg-[#fdf1ec]/30">
+        <div className="p-6 border-t border-border bg-primary/5">
           <div className="flex flex-col gap-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <div className="flex flex-col">
-                  <span className="text-[10px] font-bold text-[#97604e] uppercase tracking-wider">Active Plan</span>
-                  <span className="text-sm font-bold text-[#1b110e] dark:text-white capitalize">{momentData?.plan || "..." } Plan</span>
+                  <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Active Plan</span>
+                  <span className="text-sm font-bold text-text-main capitalize">{momentData?.plan || "..." } Plan</span>
                 </div>
               </div>
               <button 
@@ -185,7 +191,7 @@ export function CreationSidebar({
                       );
                     }).filter(Boolean)
                   ) : (
-                    <span className="text-xs italic text-[#97604e]">No extra features selected</span>
+                    <span className="text-xs italic text-text-muted">No extra features selected</span>
                   )}
                 </div>
               </div>
@@ -204,14 +210,48 @@ export function CreationSidebar({
               )}
             </div>
             <div className="flex flex-col flex-1 min-w-0">
-              <span className="text-sm font-bold text-[#1b110e] dark:text-white truncate">
+              <span className="text-sm font-bold text-text-main truncate">
                 {user?.displayName || "My Account"}
               </span>
-              <span className="text-[10px] font-bold text-[#97604e] uppercase">{user?.email}</span>
+              <span className="text-[10px] font-bold text-text-muted uppercase">{user?.email}</span>
             </div>
+            <Dropdown
+              menu={{
+                items: [
+                  {
+                    label: 'Light',
+                    key: 'light',
+                    icon: <Sun size={14} />,
+                    onClick: () => setTheme("light"),
+                  },
+                  {
+                    label: 'Dark',
+                    key: 'dark',
+                    icon: <Moon size={14} />,
+                    onClick: () => setTheme("dark"),
+                  },
+                  {
+                    label: 'System',
+                    key: 'system',
+                    icon: <Monitor size={14} />,
+                    onClick: () => setTheme("system"),
+                  },
+                ]
+              }}
+              trigger={['click']}
+              placement="topRight"
+            >
+              <button 
+                className="p-1.5 text-text-muted hover:text-primary hover:bg-primary/5 rounded-lg transition-all"
+                title="Change Theme"
+              >
+                {theme === "dark" ? <Moon size={18} /> : theme === "light" ? <Sun size={18} /> : <Monitor size={18} />}
+              </button>
+            </Dropdown>
+            
             <Link 
               href="/dashboard/profile" 
-              className="p-1.5 text-[#97604e] hover:text-primary hover:bg-primary/5 rounded-lg transition-all"
+              className="p-1.5 text-text-muted hover:text-primary hover:bg-primary/5 rounded-lg transition-all"
               title="Profile Settings"
             >
               <Settings size={18} />
@@ -221,7 +261,7 @@ export function CreationSidebar({
                 await logout();
                 router.push("/");
               }}
-              className="p-1.5 text-[#97604e] hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+              className="p-1.5 text-text-muted hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
               title="Sign Out"
             >
               <LogOut size={18} />

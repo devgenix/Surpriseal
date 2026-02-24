@@ -16,6 +16,7 @@ import {
   Loader2,
   CheckCircle2,
   AlertCircle,
+  Sparkles,
 } from "lucide-react";
 import { formatPrice } from "@/lib/currency";
 import { calculateMomentPrice } from "@/lib/pricing-utils";
@@ -25,7 +26,8 @@ import { Button } from "@/components/ui/button";
 const STEPS = [
   { id: "configure", title: "Configure", icon: Settings },
   { id: "recipient", title: "Recipient Info", icon: PersonStanding },
-  { id: "content", title: "Surprise Content", icon: Edit3 },
+  { id: "content", title: "Content Library", icon: Edit3 },
+  { id: "style", title: "Content Studio", icon: Sparkles },
   { id: "pay", title: "Review & Pay", icon: CreditCard },
 ];
 
@@ -65,6 +67,7 @@ function CreationLayoutInner({ children }: { children: React.ReactNode }) {
               !pathname.includes("/", 18)))) ||
         (step.id === "recipient" && pathname.includes("/details")) ||
         (step.id === "content" && pathname.includes("/content")) ||
+        (step.id === "style" && pathname.includes("/style")) ||
         (step.id === "pay" && pathname.includes("/pay"));
 
       if (isCurrent) {

@@ -31,6 +31,7 @@ import {
   Copy
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Select } from "@/components/ui/Select";
 import { cn } from "@/lib/utils";
 import { useCreation } from "@/context/CreationContext";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -159,6 +160,29 @@ export default function CreationDetailsPage() {
         ...updates,
         updatedAt: serverTimestamp(),
       });
+
+      // Update local context state for immediate feedback
+      setMomentData((prev: any) => {
+        if (!prev) return prev;
+        
+        // Handle nested styleConfig updates
+        if (updates.styleConfig && prev.styleConfig) {
+          return {
+            ...prev,
+            ...updates,
+            styleConfig: {
+              ...prev.styleConfig,
+              ...updates.styleConfig
+            }
+          };
+        }
+        
+        return {
+          ...prev,
+          ...updates
+        };
+      });
+
       setLastSaved(new Date());
     } catch (err) {
       console.error("Error saving draft:", err);
@@ -375,10 +399,10 @@ export default function CreationDetailsPage() {
         <div className="w-full flex flex-col items-center sm:items-start animate-in fade-in slide-in-from-bottom-4 duration-700">
           {/* Header */}
           <div className="mb-10 text-center sm:text-left">
-            <h1 className="text-3xl sm:text-4xl font-extrabold text-[#1b110e] dark:text-white mb-3 tracking-tight">
+            <h1 className="text-3xl sm:text-4xl font-extrabold text-text-main mb-3 tracking-tight">
               Who is this surprise for?
             </h1>
-            <p className="text-lg text-[#97604e] font-medium">
+            <p className="text-lg text-text-muted font-medium">
               Start with the basics to set up your celebration page.
             </p>
           </div>
@@ -397,7 +421,7 @@ export default function CreationDetailsPage() {
                   <input 
                     value={recipientName}
                     onChange={(e) => setRecipientName(e.target.value)}
-                    className="w-full h-14 pl-12 pr-4 bg-white dark:bg-white/5 border border-[#e7d6d0] rounded-lg text-[#1b110e] dark:text-white placeholder:text-[#97604e]/50 focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all outline-none" 
+                    className="w-full h-14 pl-12 pr-4 bg-surface border border-border rounded-lg text-text-main placeholder:text-text-muted/50 focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all outline-none" 
                     placeholder="e.g. Sarah Jenkins"
                     type="text"
                   />
@@ -405,31 +429,18 @@ export default function CreationDetailsPage() {
               </div>
 
               {/* Occasion */}
-              <div className="flex flex-col gap-2.5">
-                <label className="text-sm font-bold text-[#1b110e] dark:text-white ml-1">Occasion</label>
-                <div className="relative group">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    {(() => {
-                      const Icon = OCCASION_ICONS[occasionId] || PartyPopper;
-                      return <Icon className="text-[#97604e] group-focus-within:text-primary transition-colors h-5 w-5" />;
-                    })()}
-                  </div>
-                  <select 
-                    value={occasionId}
-                    onChange={(e) => setOccasionId(e.target.value)}
-                    className="w-full h-14 pl-12 pr-10 bg-white dark:bg-white/5 border border-[#e7d6d0] rounded-lg text-[#1b110e] dark:text-white focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all outline-none appearance-none cursor-pointer"
-                  >
-                    <option value="" disabled>Select an occasion</option>
-                    {SHARED_OCCASIONS.map(occ => (
-                      <option key={occ.id} value={occ.id}>{occ.icon} {occ.title}</option>
-                    ))}
-                    <option value="custom">Other / Custom</option>
-                  </select>
-                  <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
-                    <ChevronDown className="text-[#97604e] h-5 w-5" />
-                  </div>
-                </div>
-              </div>
+              <Select
+                label="Occasion"
+                options={SHARED_OCCASIONS.map(occ => ({
+                  id: occ.id,
+                  title: occ.title,
+                  icon: occ.icon
+                }))}
+                value={occasionId}
+                onChange={(val) => setOccasionId(val)}
+                placeholder="Select an occasion"
+                icon={OCCASION_ICONS[occasionId] || PartyPopper}
+              />
             </div>
 
             {/* Custom Occasion Input */}
@@ -439,7 +450,7 @@ export default function CreationDetailsPage() {
                 <input 
                   value={customOccasion}
                   onChange={(e) => setCustomOccasion(e.target.value)}
-                  className="w-full h-14 px-4 bg-white dark:bg-white/5 border border-[#e7d6d0] rounded-lg text-[#1b110e] dark:text-white focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all outline-none" 
+                  className="w-full h-14 px-4 bg-surface border border-border rounded-lg text-text-main focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all outline-none" 
                   placeholder="e.g. New Job, Engagement, etc."
                   type="text"
                 />
@@ -449,7 +460,7 @@ export default function CreationDetailsPage() {
             {/* Custom Link Section */}
             <div className="flex flex-col gap-3">
               <div className="flex items-center justify-between mb-1">
-                <label className="text-sm font-bold text-[#1b110e] dark:text-white ml-1">Custom Link</label>
+                <label className="text-sm font-bold text-text-main ml-1">Custom Link</label>
                 {!isCustomLinkEnabled && localMomentData?.plan === "base" && (
                   <button 
                     onClick={() => toggleAddon("customUrl")}
@@ -465,7 +476,7 @@ export default function CreationDetailsPage() {
                     className={cn(
                       "text-[10px] font-bold px-2 py-1 rounded-full border flex items-center gap-1 uppercase tracking-wider",
                       momentData?.status === "Published" && momentData?.paidAddons?.includes("customUrl")
-                        ? "text-[#97604e] bg-[#f9f5f4] border-[#e7d6d0] cursor-not-allowed"
+                        ? "text-text-muted bg-primary/5 border-border cursor-not-allowed"
                         : "text-red-500 hover:bg-red-50/50 border-red-200"
                     )}
                   >
@@ -485,14 +496,14 @@ export default function CreationDetailsPage() {
               </div>
 
               {!isCustomLinkEnabled ? (
-                <div className="flex items-center justify-between p-4 bg-[#f9f5f4] dark:bg-white/5 rounded-lg border border-[#e7d6d0] border-dashed">
+                <div className="flex items-center justify-between p-4 bg-primary/5 rounded-lg border border-border border-dashed">
                   <div className="flex items-center gap-3">
-                    <div className="size-8 rounded-full bg-white dark:bg-white/10 flex items-center justify-center text-[#97604e]">
+                    <div className="size-8 rounded-full bg-surface flex items-center justify-center text-text-muted">
                       <LinkIcon size={16} />
                     </div>
                     <div className="flex flex-col">
-                      <span className="text-xs font-bold text-[#1b110e]/70 uppercase tracking-tighter">Your temporary link</span>
-                      <span className="text-sm font-medium text-[#97604e]">supriseal.com/view/{draftId.slice(0, 8)}...</span>
+                      <span className="text-xs font-bold text-text-main/70 uppercase tracking-tighter">Your Surpriseal Link</span>
+                      <span className="text-sm font-medium text-text-muted">supriseal.com/view/{draftId.slice(0, 8)}...</span>
                     </div>
                   </div>
                   <button 
@@ -504,14 +515,14 @@ export default function CreationDetailsPage() {
                   </button>
                 </div>
               ) : (
-                <div className="flex rounded-lg border border-[#e7d6d0] bg-white dark:bg-white/5 overflow-hidden focus-within:ring-4 focus-within:ring-primary/10 focus-within:border-primary transition-all pr-1">
-                  <div className="bg-[#fcf9f8] dark:bg-white/10 px-4 flex items-center border-r border-[#e7d6d0]">
-                    <span className="text-[#97604e] font-bold text-sm whitespace-nowrap">supriseal.com/view/</span>
+                <div className="flex rounded-lg border border-border bg-surface overflow-hidden focus-within:ring-4 focus-within:ring-primary/10 focus-within:border-primary transition-all pr-1">
+                  <div className="bg-primary/5 px-4 flex items-center border-r border-border">
+                    <span className="text-text-muted font-bold text-sm whitespace-nowrap">supriseal.com/view/</span>
                   </div>
                   <input 
                     value={urlSlug}
                     onChange={(e) => setUrlSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'))}
-                    className="flex-1 h-14 px-4 bg-transparent border-none text-[#1b110e] dark:text-white placeholder:text-[#97604e]/50 focus:ring-0 outline-none font-medium" 
+                    className="flex-1 h-14 px-4 bg-transparent border-none text-text-main placeholder:text-text-muted/50 focus:ring-0 outline-none font-medium" 
                     placeholder="sarahs-big-30"
                     type="text"
                   />
@@ -540,7 +551,7 @@ export default function CreationDetailsPage() {
                 <p className="text-[10px] text-red-500 font-bold ml-1">Oops! This link is already taken.</p>
               )}
               {!isCustomLinkEnabled && (
-                <p className="text-[10px] text-[#97604e] ml-1 font-medium">Customise the link to make it personal and memorable.</p>
+                <p className="text-[10px] text-text-muted ml-1 font-medium">Customise the link to make it personal and memorable.</p>
               )}
             </div>
 
