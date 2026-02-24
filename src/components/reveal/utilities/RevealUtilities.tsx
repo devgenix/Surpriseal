@@ -78,7 +78,7 @@ export function GalleryUtility({ config }: { config: any }) {
       <div className="w-full h-full flex items-center justify-center relative overflow-hidden">
         {/* Blurred Background Layer */}
         <div 
-          className="absolute inset-0 z-0 scale-110 blur-2xl opacity-40"
+          className="hidden sm:block absolute inset-0 z-0 scale-110 blur-2xl opacity-40"
           style={{ 
             backgroundImage: `url(${currentItem.url})`,
             backgroundPosition: 'center',
@@ -95,7 +95,7 @@ export function GalleryUtility({ config }: { config: any }) {
             transition={{ duration: 0.8, ease: "easeOut" }}
             className="relative z-10 w-full h-full flex items-center justify-center p-8 sm:p-12"
           >
-             <div className="relative w-full h-full rounded-3xl overflow-hidden shadow-2xl border-4 border-white/20 bg-black/20 backdrop-blur-sm">
+             <div className="relative w-full h-full lg:rounded-3xl overflow-hidden shadow-2xl lg:border-4 border-white/20 lg:bg-black/20 lg:backdrop-blur-sm">
                 <img 
                   src={currentItem.url} 
                   className="w-full h-full object-contain" 
