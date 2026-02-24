@@ -225,7 +225,7 @@ export default function CreationContentPage() {
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
               {/* Media Items */}
               {media.map((item) => (
-                <div key={item.id} className="group relative aspect-square rounded-xl overflow-hidden border border-[#e7d6d0] bg-white shadow-sm hover:shadow-md transition-all">
+                <div key={item.id} className="group relative aspect-square rounded-lg overflow-hidden border border-[#e7d6d0] bg-white shadow-sm hover:shadow-md transition-all">
                   <img src={item.url} alt={item.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                     <button 
@@ -242,7 +242,7 @@ export default function CreationContentPage() {
               {media.length < 10 && (
                 <div 
                   onClick={addMediaPlaceholder}
-                  className="aspect-square rounded-xl border-2 border-dashed border-[#e7d6d0] flex flex-col items-center justify-center gap-2 hover:border-primary/50 hover:bg-primary/[0.02] cursor-pointer group transition-all"
+                  className="aspect-square rounded-lg border-2 border-dashed border-[#e7d6d0] flex flex-col items-center justify-center gap-2 hover:border-primary/50 hover:bg-primary/[0.02] cursor-pointer group transition-all"
                 >
                   <div className="p-3 rounded-full bg-[#fdf1ec] text-primary group-hover:scale-110 transition-transform shadow-sm">
                     <Plus size={20} />
