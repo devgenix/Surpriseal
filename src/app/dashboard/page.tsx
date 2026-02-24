@@ -25,7 +25,7 @@ export default function DashboardPage() {
     if (!user || !db) return;
 
     const q = query(
-      collection(db, "drafts"),
+      collection(db, "moments"),
       where("userId", "==", user.uid),
       orderBy("updatedAt", "desc")
     );

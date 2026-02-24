@@ -62,15 +62,9 @@ export default function CreationPayPage() {
     async function loadDraft() {
       if (!draftId || !user) return;
       try {
-        // Try drafts first
-        let docRef = doc(db!, "drafts", draftId);
-        let docSnap = await getDoc(docRef);
-        
-        if (!docSnap.exists()) {
-          // Try moments
-          docRef = doc(db!, "moments", draftId);
-          docSnap = await getDoc(docRef);
-        }
+        // Fetch from moments collection
+        const docRef = doc(db!, "moments", draftId);
+        const docSnap = await getDoc(docRef);
 
         if (docSnap.exists()) {
           const data = docSnap.data();

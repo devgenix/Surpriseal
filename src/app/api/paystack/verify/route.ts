@@ -26,32 +26,26 @@ export async function POST(req: NextRequest) {
     }
 
     // 2. Fulfill order in Firestore
-    const draftRef = adminDb.collection("drafts").doc(draftId);
-    const draftSnap = await draftRef.get();
+    const momentRef = adminDb.collection("moments").doc(draftId);
+    const momentSnap = await momentRef.get();
 
-    if (!draftSnap.exists) {
-      return NextResponse.json({ error: "Draft not found" }, { status: 404 });
+    if (!momentSnap.exists) {
+      return NextResponse.json({ error: "Moment not found" }, { status: 404 });
     }
 
-    const draftData = draftSnap.data() || {};
-    const existingPaidAmount = draftData.paidAmount || 0;
+    const momentData = momentSnap.data() || {};
+    const existingPaidAmount = momentData.paidAmount || 0;
     const additionalAmount = paystackData.data.amount / 100; // Convert back to major unit
     const newPaidAmount = existingPaidAmount + additionalAmount;
     
-    // Get newly paid addons (current selected minus already paid)
-    const selectedAddons = draftData.selectedAddons || [];
-    const existingPaidAddons = draftData.paidAddons || [];
-    const newlyPaidAddons = selectedAddons.filter((id: string) => !existingPaidAddons.includes(id));
+    const selectedAddons = momentData.selectedAddons || [];
 
-    // Update the "published" moment or create it
-    const momentId = draftId;
-    
     const updatePayload: any = {
-      ...draftData,
       status: "Published",
       isPaid: true,
       paidAmount: newPaidAmount,
       publishedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       lastPaymentDetails: {
         reference,
         amount: paystackData.data.amount,
@@ -63,22 +57,9 @@ export async function POST(req: NextRequest) {
       updatePayload.paidAddons = admin.firestore.FieldValue.arrayUnion(...selectedAddons);
     }
 
-    await adminDb.collection("moments").doc(momentId).set(updatePayload, { merge: true });
+    await momentRef.update(updatePayload);
 
-    const draftUpdate: any = {
-      status: "Published",
-      isPaid: true,
-      paidAmount: newPaidAmount,
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-    };
-
-    if (selectedAddons.length > 0) {
-      draftUpdate.paidAddons = admin.firestore.FieldValue.arrayUnion(...selectedAddons);
-    }
-
-    await draftRef.update(draftUpdate);
-
-    return NextResponse.json({ success: true, momentId });
+    return NextResponse.json({ success: true, momentId: draftId });
   } catch (error) {
     console.error("Payment verification error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

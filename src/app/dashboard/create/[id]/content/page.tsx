@@ -42,7 +42,6 @@ export default function CreationContentPage() {
 
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [collectionName, setCollectionName] = useState<"drafts" | "moments">("drafts");
   
   // Form State
   const [personalMessage, setPersonalMessage] = useState("");
@@ -67,22 +66,13 @@ export default function CreationContentPage() {
     async function loadDraft() {
       if (!draftId || !user) return;
       try {
-        // Try drafts first
-        let docRef = doc(db!, "drafts", draftId);
-        let docSnap = await getDoc(docRef);
+        // Fetch from moments collection
+        const docRef = doc(db, "moments", draftId);
+        const docSnap = await getDoc(docRef);
         
-        if (docSnap.exists()) {
-          setCollectionName("drafts");
-        } else {
-          // Try moments
-          docRef = doc(db!, "moments", draftId);
-          docSnap = await getDoc(docRef);
-          if (docSnap.exists()) {
-            setCollectionName("moments");
-          } else {
-            router.push("/dashboard");
-            return;
-          }
+        if (!docSnap.exists()) {
+          router.push("/dashboard");
+          return;
         }
 
         const data = docSnap.data();
@@ -107,7 +97,7 @@ export default function CreationContentPage() {
     setSaving(true);
     setSaveError(false);
     try {
-      const docRef = doc(db!, collectionName, draftId);
+      const docRef = doc(db!, "moments", draftId);
       await updateDoc(docRef, {
         ...updates,
         updatedAt: serverTimestamp(),
@@ -142,7 +132,7 @@ export default function CreationContentPage() {
     } finally {
       setSaving(false);
     }
-  }, [draftId, setSaving, setSaveError, setLastSaved, collectionName]);
+  }, [draftId, setSaving, setSaveError, setLastSaved, setMomentData]);
 
   // Handle auto-save for message
   useEffect(() => {
@@ -180,7 +170,7 @@ export default function CreationContentPage() {
   }, [saveDraft]);
 
   const onContinueAction = useCallback(async () => {
-    const docRef = doc(db!, collectionName, draftId);
+    const docRef = doc(db!, "moments", draftId);
     await updateDoc(docRef, { 
       personalMessage,
       media,
@@ -189,7 +179,7 @@ export default function CreationContentPage() {
       completedSteps: Array.from(new Set([...(momentData?.completedSteps || []), "content"]))
     });
     router.push(`/dashboard/create/${draftId}/style`);
-  }, [personalMessage, media, music, draftId, momentData, router, collectionName]); // Added collectionName
+  }, [personalMessage, media, music, draftId, momentData, router]);
 
   useEffect(() => {
     setOnSave(() => onSaveAction);

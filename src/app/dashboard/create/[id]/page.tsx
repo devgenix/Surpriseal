@@ -33,7 +33,7 @@ export default function EditRedirectPage() {
         }
 
         try {
-          const docRef = doc(db, "drafts", id);
+          const docRef = doc(db, "moments", id);
           const docSnap = await getDoc(docRef);
           
           if (docSnap.exists()) {
@@ -55,14 +55,7 @@ export default function EditRedirectPage() {
               setDeciding(false);
             }
           } else {
-            // Check moments collection
-            const momentRef = doc(db, "moments", id);
-            const momentSnap = await getDoc(momentRef);
-            if (momentSnap.exists()) {
-              router.replace(`/dashboard/create/${id}/details`);
-            } else {
-              router.replace("/dashboard");
-            }
+            router.replace("/dashboard");
           }
         } catch (error) {
           console.error("Error checking progress:", error);

@@ -29,27 +29,24 @@ export default function PublicViewPage() {
       try {
         setLoading(true);
 
-        // 1. Collect potential matches from all sources
+        // 1. Collect potential matches from moments collection
         const results: any[] = [];
         
-        // Direct ID Lookups
-        const [momentSnap, draftSnap] = await Promise.all([
-          getDoc(doc(db!, "moments", id)),
-          getDoc(doc(db!, "drafts", id))
-        ]);
-
-        if (momentSnap.exists()) results.push({ id: momentSnap.id, collection: "moments", data: momentSnap.data() });
-        if (draftSnap.exists()) results.push({ id: draftSnap.id, collection: "drafts", data: draftSnap.data() });
-
-        // Slug Lookups (Case-insensitive via lowercase match)
+        // Direct ID Lookup
+        const momentSnap = await getDoc(doc(db!, "moments", id));
+        if (momentSnap.exists()) {
+          results.push({ id: momentSnap.id, data: momentSnap.data() });
+        }
+        
+        // Slug Lookup (Case-insensitive via lowercase match)
         const slugLower = id.toLowerCase();
-        const [momentSlugSnap, draftSlugSnap] = await Promise.all([
-          getDocs(query(collection(db!, "moments"), where("urlSlug", "==", slugLower))),
-          getDocs(query(collection(db!, "drafts"), where("urlSlug", "==", slugLower)))
-        ]);
-
-        momentSlugSnap.forEach(doc => results.push({ id: doc.id, collection: "moments", data: doc.data() }));
-        draftSlugSnap.forEach(doc => results.push({ id: doc.id, collection: "drafts", data: doc.data() }));
+        const momentSlugSnap = await getDocs(query(collection(db!, "moments"), where("urlSlug", "==", slugLower)));
+        momentSlugSnap.forEach(doc => {
+          // Avoid duplicates if ID match already found
+          if (!results.find(r => r.id === doc.id)) {
+            results.push({ id: doc.id, data: doc.data() });
+          }
+        });
 
         if (results.length > 0) {
           // 2. Select the most recent version
@@ -62,7 +59,7 @@ export default function PublicViewPage() {
           setMomentData(winner.data);
           
           // Increment views
-          const winnerRef = doc(db!, winner.collection, winner.id);
+          const winnerRef = doc(db!, "moments", winner.id);
           await updateDoc(winnerRef, { views: increment(1) });
           
           handleSchedule(winner.data);

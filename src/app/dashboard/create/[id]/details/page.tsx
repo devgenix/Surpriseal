@@ -74,7 +74,6 @@ export default function CreationDetailsPage() {
   const [localMomentData, setLocalMomentData] = useState<any>(null);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [collectionName, setCollectionName] = useState<"drafts" | "moments">("drafts");
   const [copied, setCopied] = useState(false);
 
   // Form State
@@ -111,22 +110,13 @@ export default function CreationDetailsPage() {
     async function loadDraft() {
       if (!draftId || !user) return;
       try {
-        // Try drafts first
-        let docRef = doc(db!, "drafts", draftId);
-        let docSnap = await getDoc(docRef);
+        // Fetch from moments collection
+        const docRef = doc(db, "moments", draftId);
+        const docSnap = await getDoc(docRef);
         
-        if (docSnap.exists()) {
-          setCollectionName("drafts");
-        } else {
-          // Try moments
-          docRef = doc(db!, "moments", draftId);
-          docSnap = await getDoc(docRef);
-          if (docSnap.exists()) {
-            setCollectionName("moments");
-          } else {
-            router.push("/dashboard");
-            return;
-          }
+        if (!docSnap.exists()) {
+          router.push("/dashboard");
+          return;
         }
 
         const data = docSnap.data();
@@ -155,7 +145,7 @@ export default function CreationDetailsPage() {
     setSaving(true);
     setSaveError(false);
     try {
-      const docRef = doc(db!, collectionName, draftId);
+      const docRef = doc(db!, "moments", draftId);
       await updateDoc(docRef, {
         ...updates,
         updatedAt: serverTimestamp(),
@@ -190,7 +180,7 @@ export default function CreationDetailsPage() {
     } finally {
       setSaving(false);
     }
-  }, [draftId, setSaving, setSaveError, setLastSaved, collectionName]);
+  }, [draftId, setSaving, setSaveError, setLastSaved]);
 
   // Use refs to keep actions stable while having access to latest state
   const stateRef = useRef({
@@ -348,23 +338,13 @@ export default function CreationDetailsPage() {
       }
       setCheckingSlug(true);
       try {
-        // Check drafts
-        const qDrafts = query(collection(db!, "drafts"), where("urlSlug", "==", debouncedUrlSlug));
-        const draftSnap = await getDocs(qDrafts);
-        const existsInDrafts = draftSnap.docs.some(doc => doc.id !== draftId);
-        
-        if (existsInDrafts) {
-          setSlugAvailable(false);
-          setCheckingSlug(false);
-          return;
-        }
+        const momentsRef = collection(db!, "moments");
+        const q = query(momentsRef, where("urlSlug", "==", debouncedUrlSlug));
+        const querySnap = await getDocs(q);
 
-        // Check moments (published)
-        const qMoments = query(collection(db!, "moments"), where("urlSlug", "==", debouncedUrlSlug));
-        const momentSnap = await getDocs(qMoments);
-        const existsInMoments = momentSnap.docs.some(doc => doc.id !== draftId);
-
-        setSlugAvailable(!existsInDrafts && !existsInMoments);
+        // It's available if no one else has it, OR if the one who has it is US
+        const isTakenByOthers = querySnap.docs.some(doc => doc.id !== draftId);
+        setSlugAvailable(!isTakenByOthers);
       } catch (err) {
         console.error("Error checking slug:", err);
       } finally {

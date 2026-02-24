@@ -48,7 +48,7 @@ export default function MomentDetailPage() {
     async function fetchMoment() {
       if (!id || !db) return;
       try {
-        const docRef = doc(db, "drafts", id as string);
+        const docRef = doc(db, "moments", id as string);
         const docSnap = await getDoc(docRef);
         
         if (docSnap.exists()) {
@@ -72,7 +72,7 @@ export default function MomentDetailPage() {
     if (!db || !id) return;
     setIsDeleting(true);
     try {
-      await deleteDoc(doc(db, "drafts", id as string));
+      await deleteDoc(doc(db, "moments", id as string));
       router.push("/dashboard");
     } catch (error) {
       console.error("Error deleting moment:", error);

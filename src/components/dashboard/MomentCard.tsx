@@ -36,7 +36,7 @@ export default function MomentCard({ moment }: { moment: MomentProps }) {
     if (!db) return;
     setIsDeleting(true);
     try {
-      await deleteDoc(doc(db, "drafts", moment.id));
+      await deleteDoc(doc(db, "moments", moment.id));
     } catch (error) {
       console.error("Error deleting moment:", error);
       setIsDeleting(false);
