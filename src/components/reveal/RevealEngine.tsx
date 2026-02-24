@@ -62,35 +62,34 @@ export default function RevealEngine({ moment, isPreview = false }: RevealEngine
 
     lastMusicUrlRef.current = musicUrl;
 
-    // Stop and unload previous sound
-    if (soundRef.current) {
-      soundRef.current.stop();
-      soundRef.current.unload();
-    }
-
-    soundRef.current = new Howl({
+    // Create new sound instance
+    const sound = new Howl({
       src: [musicUrl],
       loop: true,
       volume: 0.5,
-      autoplay: true, // Try to autoplay, if blocked onplayerror will handle it
+      autoplay: !isPreview, // Autoplay if not in preview (preview handles it manually)
       mute: isMuted,
       html5: true,
       onplayerror: function() {
-        soundRef.current?.once('unlock', function() {
-          soundRef.current?.play();
+        sound.once('unlock', function() {
+          sound.play();
         });
       }
     });
 
+    soundRef.current = sound;
+
     // If in preview, we definitely want to try playing immediately 
-    // since the user just interacted with the "Live Preview" button
     if (isPreview) {
-      soundRef.current.play();
+      sound.play();
     }
 
     return () => {
-      soundRef.current?.stop();
-      soundRef.current?.unload();
+      sound.stop();
+      sound.unload();
+      if (soundRef.current === sound) {
+        soundRef.current = null;
+      }
     };
   }, [style.musicUrl, currentScene?.config?.musicUrl, isPreview]);
 

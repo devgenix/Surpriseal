@@ -17,35 +17,37 @@ interface ViewClientProps {
 
 export default function ViewClient({ initialMomentData, momentId }: ViewClientProps) {
   const router = useRouter();
-  const [currentStep, setCurrentStep] = useState<RevealStep>("engine");
-  const [timeLeft, setTimeLeft] = useState<number>(0);
-  const [hasIncremented, setHasIncremented] = useState(false);
-
   // Initialize step and countdown
-  useEffect(() => {
+  const [currentStep, setCurrentStep] = useState<RevealStep>(() => {
     if (initialMomentData.scheduledReveal && initialMomentData.revealTime) {
       let revealDate: number;
       const rt = initialMomentData.revealTime;
-      
-      if (rt.toDate) {
-        revealDate = rt.toDate().getTime();
-      } else if (rt._seconds) {
-        revealDate = rt._seconds * 1000;
-      } else {
-        revealDate = new Date(rt).getTime();
-      }
+      if (rt.toDate) revealDate = rt.toDate().getTime();
+      else if (rt._seconds) revealDate = rt._seconds * 1000;
+      else revealDate = new Date(rt).getTime();
 
-      const now = Date.now();
-      if (revealDate > now) {
-        setTimeLeft(revealDate - now);
-        setCurrentStep("countdown");
-      } else {
-        setCurrentStep("engine");
-      }
-    } else {
-      setCurrentStep("engine");
+      return revealDate > Date.now() ? "countdown" : "engine";
     }
-  }, [initialMomentData]);
+    return "engine";
+  });
+
+  const [timeLeft, setTimeLeft] = useState<number>(0);
+  const [hasIncremented, setHasIncremented] = useState(false);
+
+  // Sync timeLeft if we start in countdown
+  useEffect(() => {
+    if (currentStep === "countdown" && initialMomentData.revealTime) {
+      let revealDate: number;
+      const rt = initialMomentData.revealTime;
+      if (rt.toDate) revealDate = rt.toDate().getTime();
+      else if (rt._seconds) revealDate = rt._seconds * 1000;
+      else revealDate = new Date(rt).getTime();
+      
+      const diff = revealDate - Date.now();
+      if (diff > 0) setTimeLeft(diff);
+      else setCurrentStep("engine");
+    }
+  }, [currentStep, initialMomentData.revealTime]);
 
   // View Increment
   useEffect(() => {
