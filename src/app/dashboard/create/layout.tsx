@@ -18,6 +18,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { formatPrice } from "@/lib/currency";
+import { calculateMomentPrice } from "@/lib/pricing-utils";
 import { useCurrency } from "@/context/CurrencyContext";
 import { Button } from "@/components/ui/button";
 
@@ -242,8 +243,11 @@ function CreationLayoutInner({ children }: { children: React.ReactNode }) {
                     {formatPrice(
                       Math.max(
                         0,
-                        (momentData?.totalPrice || 0) -
-                          (momentData?.paidAmount || 0)
+                        calculateMomentPrice(
+                          momentData?.plan || "base",
+                          momentData?.selectedAddons || [],
+                          currency
+                        ) - (momentData?.paidAmount || 0)
                       ),
                       currency
                     )}
@@ -313,8 +317,11 @@ function CreationLayoutInner({ children }: { children: React.ReactNode }) {
                   {formatPrice(
                     Math.max(
                       0,
-                      (momentData?.totalPrice || 0) -
-                        (momentData?.paidAmount || 0)
+                      calculateMomentPrice(
+                        momentData?.plan || "base",
+                        momentData?.selectedAddons || [],
+                        currency
+                      ) - (momentData?.paidAmount || 0)
                     ),
                     currency
                   )}
