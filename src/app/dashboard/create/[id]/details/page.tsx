@@ -36,14 +36,22 @@ import { useCreation } from "@/context/CreationContext";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useCurrency } from "@/context/CurrencyContext";
 import { PLANS, ADDONS } from "@/lib/constants/pricing";
+import { occasions as SHARED_OCCASIONS } from "@/lib/constants/occasions";
 import { formatPrice } from "@/lib/currency";
 
-const occasions = [
-  { id: "birthday", title: "Birthday", icon: Cake },
-  { id: "anniversary", title: "Anniversary", icon: Sparkles },
-  { id: "valentine", title: "Valentine's Day", icon: PartyPopper },
-  { id: "appreciation", title: "Appreciation", icon: Smile },
-];
+const OCCASION_ICONS: Record<string, any> = {
+  birthday: Cake,
+  anniversary: Sparkles,
+  wedding: PartyPopper,
+  valentine: PartyPopper,
+  retirement: PartyPopper,
+  graduation: PartyPopper,
+  memorial: Smile,
+  teacher_appreciation: Smile,
+  promotion: Sparkles,
+  new_baby: Smile,
+  appreciation: Smile,
+};
 
 export default function CreationDetailsPage() {
   const router = useRouter();
@@ -401,7 +409,10 @@ export default function CreationDetailsPage() {
                 <label className="text-sm font-bold text-[#1b110e] dark:text-white ml-1">Occasion</label>
                 <div className="relative group">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <Cake className="text-[#97604e] group-focus-within:text-primary transition-colors h-5 w-5" />
+                    {(() => {
+                      const Icon = OCCASION_ICONS[occasionId] || PartyPopper;
+                      return <Icon className="text-[#97604e] group-focus-within:text-primary transition-colors h-5 w-5" />;
+                    })()}
                   </div>
                   <select 
                     value={occasionId}
@@ -409,8 +420,8 @@ export default function CreationDetailsPage() {
                     className="w-full h-14 pl-12 pr-10 bg-white dark:bg-white/5 border border-[#e7d6d0] rounded-lg text-[#1b110e] dark:text-white focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all outline-none appearance-none cursor-pointer"
                   >
                     <option value="" disabled>Select an occasion</option>
-                    {occasions.map(occ => (
-                      <option key={occ.id} value={occ.id}>{occ.title}</option>
+                    {SHARED_OCCASIONS.map(occ => (
+                      <option key={occ.id} value={occ.id}>{occ.icon} {occ.title}</option>
                     ))}
                     <option value="custom">Other / Custom</option>
                   </select>

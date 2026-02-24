@@ -11,12 +11,14 @@ export default function PublicLayout({
 }) {
   const pathname = usePathname();
   const isAuthPage = pathname === "/login" || pathname === "/signup" || pathname === "/forgot-password";
+  const isViewPage = pathname.startsWith("/view");
+  const hideNav = isAuthPage || isViewPage;
 
   return (
     <div className="flex min-h-screen flex-col">
-      {!isAuthPage && <Header />}
+      {!hideNav && <Header />}
       <main className="flex-1">{children}</main>
-      {!isAuthPage && <Footer />}
+      {!hideNav && <Footer />}
     </div>
   );
 }
