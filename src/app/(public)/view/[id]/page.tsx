@@ -1,177 +1,338 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { db } from "@/lib/firebase";
+import { doc, getDoc, updateDoc, increment } from "firebase/firestore";
+import { Loader2, Gift, Heart, Cake, PartyPopper, ArrowRight, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import Confetti from "react-confetti";
-import { Button } from "antd";
-import { PlayCircle, Volume2, Heart } from "lucide-react";
-import Link from "next/link";
+import ReactConfetti from "react-confetti";
+import { ScratchCard } from "@/components/reveal/ScratchCard";
 
-// Mock Data
-const surpriseData = {
-  recipient: "Sarah",
-  openingMessage: "Sarah, you bring so much light into the world. Here are a few moments that make me smile when I think of you...",
-  photos: [
-    "https://images.unsplash.com/photo-1513201099705-a9746e1e201f?q=80&w=2897&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?q=80&w=2940&auto=format&fit=crop",
-  ],
-  videoUrl: null, // or URL
-  finalMessage: "Happy Birthday! I love you more than words can say. Can't wait to celebrate with you tonight!",
-  hasConfetti: true,
-};
+type RevealStep = "countdown" | "splash" | "interaction" | "celebration" | "scratch" | "reveal";
 
-export default function ExperiencePage() {
-  const [stage, setStage] = useState(0);
+export default function PublicViewPage() {
+  const params = useParams();
+  const router = useRouter();
+  const { id } = params as { id: string };
+
+  const [loading, setLoading] = useState(true);
+  const [momentData, setMomentData] = useState<any>(null);
+  const [currentStep, setCurrentStep] = useState<RevealStep>("splash");
+  const [timeLeft, setTimeLeft] = useState<number>(0);
   const [windowSize, setWindowSize] = useState({ width: 0, height: 0 });
 
+  // Load moment data
   useEffect(() => {
-    setWindowSize({ width: window.innerWidth, height: window.innerHeight });
+    async function fetchData() {
+      if (!id) return;
+      try {
+        // Try moments first
+        let docRef = doc(db!, "moments", id);
+        let docSnap = await getDoc(docRef);
+
+        if (!docSnap.exists()) {
+          // Try drafts (for preview purposes)
+          docRef = doc(db!, "drafts", id);
+          docSnap = await getDoc(docRef);
+        }
+
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          setMomentData(data);
+          
+          // Increment view count
+          await updateDoc(docRef, { views: increment(1) });
+
+          // Check for scheduled reveal
+          if (data.scheduledReveal && data.revealTime) {
+            const revealDate = data.revealTime.toDate().getTime();
+            const now = Date.now();
+            if (revealDate > now) {
+              setTimeLeft(revealDate - now);
+              setCurrentStep("countdown");
+            }
+          }
+        } else {
+          router.push("/");
+        }
+      } catch (err) {
+        console.error("Error fetching moment:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, [id, router]);
+
+  // Handle window resize for confetti
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowSize({ width: window.innerWidth, height: window.innerHeight });
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const nextStage = () => setStage((prev) => prev + 1);
+  // Countdown timer
+  useEffect(() => {
+    if (currentStep !== "countdown") return;
+    const interval = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1000) {
+          clearInterval(interval);
+          setCurrentStep("splash");
+          return 0;
+        }
+        return prev - 1000;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [currentStep]);
 
-  // Animation variants
-  const containerVariants = {
-    hidden: { opacity: 0, y: 20, scale: 0.95 },
-    visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.8, ease: "easeInOut" as const } }, 
-    exit: { opacity: 0, y: -20, scale: 1.05, transition: { duration: 0.5 } },
+  const formatCountdown = (ms: number) => {
+    const seconds = Math.floor((ms / 1000) % 60);
+    const minutes = Math.floor((ms / (1000 * 60)) % 60);
+    const hours = Math.floor((ms / (1000 * 60 * 60)) % 24);
+    const days = Math.floor(ms / (1000 * 60 * 60 * 24));
+    return `${days}d ${hours}h ${minutes}m ${seconds}s`;
+  };
+
+  if (loading) {
+    return (
+      <div className="h-screen w-full flex items-center justify-center bg-[#FFFBF8]">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  const occasion = momentData?.occasionId || "Birthday";
+  const recipient = momentData?.recipientName || "Darling";
+
+  const getCelebrationIcon = () => {
+    switch (occasion) {
+      case "Anniversary": return <Heart className="w-20 h-20 text-red-500" />;
+      case "Birthday": return <Cake className="w-20 h-20 text-primary" />;
+      default: return <PartyPopper className="w-20 h-20 text-primary" />;
+    }
   };
 
   return (
-    <div className="fixed inset-0 overflow-hidden bg-background flex items-center justify-center font-sans">
-      {/* Background Ambience */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-primary/15 via-background to-background z-0" />
-      <div className="absolute top-0 left-0 w-full h-full bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 z-0 pointer-events-none brightness-100 contrast-150 mix-blend-overlay"></div>
-      
-      {stage === 4 && surpriseData.hasConfetti && (
-         <div className="absolute inset-0 z-50 pointer-events-none">
-            <Confetti width={windowSize.width} height={windowSize.height} numberOfPieces={300} gravity={0.15} colors={['#e64c19', '#FFDCC3', '#E88D72', '#FFC107']} />
-         </div>
-      )}
+    <div className="h-screen w-full bg-[#FFFBF8] dark:bg-[#1b110e] overflow-hidden relative font-display">
+      <AnimatePresence mode="wait">
+        
+        {/* Step: Countdown */}
+        {currentStep === "countdown" && (
+          <motion.div 
+            key="countdown"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="flex flex-col items-center justify-center h-full text-center px-6"
+          >
+            <div className="p-6 rounded-full bg-primary/5 mb-8">
+              <Gift className="w-12 h-12 text-primary animate-bounce" />
+            </div>
+            <h2 className="text-2xl font-bold text-[#1b110e] dark:text-white mb-2">Something special is coming...</h2>
+            <p className="text-[#97604e] mb-8 font-medium">For {recipient}</p>
+            <div className="text-4xl font-black text-primary tabular-nums tracking-wider px-8 py-4 bg-white dark:bg-white/5 border border-[#e7d6d0] rounded-2xl shadow-xl">
+              {formatCountdown(timeLeft)}
+            </div>
+          </motion.div>
+        )}
 
-      <div className="relative z-10 w-full max-w-md px-6 text-center">
-        <AnimatePresence mode="wait">
-          {/* Stage 0: Welcome */}
-          {stage === 0 && (
-            <motion.div
-              key="welcome"
-              variants={containerVariants}
-              initial="hidden"
-              animate="visible"
-              exit="exit"
-              className="flex flex-col items-center"
+        {/* Step: Splash */}
+        {currentStep === "splash" && (
+          <motion.div 
+            key="splash"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 1.1 }}
+            className="flex flex-col items-center justify-center h-full text-center px-6 bg-gradient-to-b from-primary/5 to-transparent"
+          >
+            <h1 className="text-5xl sm:text-7xl font-black text-primary mb-6 tracking-tighter">
+              {recipient},
+            </h1>
+            <p className="text-xl sm:text-2xl font-bold text-[#1b110e] dark:text-white mb-12">
+              Someone has shared a special moment with you.
+            </p>
+            <button 
+              onClick={() => setCurrentStep("interaction")}
+              className="group flex items-center gap-3 px-10 py-5 bg-primary text-white text-xl font-black rounded-full shadow-2xl shadow-primary/30 hover:scale-105 transition-transform active:scale-95"
             >
-              <div className="mb-10 p-6 bg-white/50 backdrop-blur-xl rounded-full shadow-2xl ring-1 ring-white/50">
-                <Heart className="w-16 h-16 text-primary animate-pulse" fill="currentColor" />
-              </div>
-              <h1 className="text-4xl font-extrabold text-gray-900 mb-6 tracking-tight">For {surpriseData.recipient}</h1>
-              <p className="text-xl text-gray-600 mb-12 font-medium">A special surprise awaits you.</p>
-              <Button type="primary" size="large" onClick={nextStage} className="h-16 px-12 text-xl font-bold rounded-full shadow-xl shadow-primary/30 hover:scale-105 transition-all hover:shadow-2xl hover:shadow-primary/40">
-                Tap to Open
-              </Button>
+              Open Surprise
+              <ArrowRight className="group-hover:translate-x-1 transition-transform" />
+            </button>
+          </motion.div>
+        )}
+
+        {/* Step: Interaction */}
+        {currentStep === "interaction" && (
+          <motion.div 
+            key="interaction"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="flex flex-col items-center justify-center h-full text-center px-6"
+          >
+            <h2 className="text-3xl sm:text-4xl font-black text-[#1b110e] dark:text-white mb-12 leading-tight">
+              {occasion === "Anniversary" ? "Are you ready for some love?" : "Are you ready to celebrate?"}
+            </h2>
+            <div className="flex gap-4">
+              <button 
+                onClick={() => setCurrentStep("celebration")}
+                className="px-12 py-5 bg-emerald-500 text-white text-xl font-black rounded-2xl shadow-xl shadow-emerald-500/20 hover:scale-105 transition-transform active:scale-95"
+              >
+                Yes! ✨
+              </button>
+              <button 
+                onClick={() => alert("Oh, come on! Don't be shy! 😉")}
+                className="px-8 py-5 border-2 border-[#e7d6d0] text-[#97604e] text-lg font-bold rounded-2xl hover:bg-gray-50 transition-colors"
+              >
+                Not yet
+              </button>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Step: Celebration */}
+        {currentStep === "celebration" && (
+          <motion.div 
+            key="celebration"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex flex-col items-center justify-center h-full text-center px-6 z-50"
+          >
+            <ReactConfetti 
+              width={windowSize.width} 
+              height={windowSize.height}
+              numberOfPieces={300}
+              recycle={false}
+              colors={occasion === "Anniversary" ? ["#EF4444", "#FCA5A5", "#FFFFFF"] : ["#e64c19", "#FFDCC3", "#FFFBF8", "#e64c19"]}
+            />
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: [0, 1.2, 1] }}
+              transition={{ duration: 0.8, times: [0, 0.6, 1] }}
+              className="mb-8"
+            >
+              {getCelebrationIcon()}
             </motion.div>
-          )}
-
-          {/* Stage 1: Opening Message */}
-          {stage === 1 && (
-            <motion.div
-              key="message"
-              variants={containerVariants}
-              initial="hidden"
-              animate="visible"
-              exit="exit"
-              className="flex flex-col items-center max-w-sm mx-auto"
+            <h2 className="text-4xl sm:text-6xl font-black text-primary mb-8 tracking-tighter uppercase">
+              Yay!!! 🎉
+            </h2>
+            <button 
+              onClick={() => setCurrentStep("scratch")}
+              className="px-10 py-5 bg-primary text-white text-xl font-black rounded-full shadow-2xl shadow-primary/30 animate-pulse"
             >
-               <div className="bg-white/60 backdrop-blur-md p-8 rounded-3xl shadow-lg border border-white/40 relative">
-                  <div className="absolute -top-4 -left-4 text-6xl text-primary/20 font-serif">"</div>
-                  <h2 className="text-2xl font-medium text-gray-800 leading-relaxed italic relative z-10">
-                    {surpriseData.openingMessage}
-                  </h2>
-                   <div className="absolute -bottom-8 -right-4 text-6xl text-primary/20 font-serif rotate-180">"</div>
-               </div>
-               <div className="mt-12">
-                  <Button type="text" onClick={nextStage} className="text-gray-500 hover:text-primary text-lg font-medium flex-col h-auto gap-2 group">
-                    Continue <span className="text-xs opacity-50 group-hover:translate-y-1 transition-transform">↓</span>
-                  </Button>
-               </div>
-            </motion.div>
-          )}
+              See your message
+            </button>
+          </motion.div>
+        )}
 
-           {/* Stage 2: Photos */}
-           {stage === 2 && (
-            <motion.div
-              key="photos"
-              variants={containerVariants}
-              initial="hidden"
-              animate="visible"
-              exit="exit"
-              className="flex flex-col items-center w-full"
-            >
-               <div className="relative w-full aspect-[4/5] bg-white p-2 rounded-3xl shadow-2xl mb-8 rotate-1 hover:rotate-0 transition-transform duration-500 ring-1 ring-black/5">
-                  <div className="w-full h-full rounded-2xl overflow-hidden relative">
-                     <img src={surpriseData.photos[0]} className="object-cover w-full h-full" alt="Memory" />
-                     <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-60"></div>
-                  </div>
-               </div>
-              <Button type="text" onClick={nextStage} className="text-gray-500 hover:text-primary mt-4">
-                Next Memory →
-              </Button>
-            </motion.div>
-          )}
-
-            {/* Stage 3: Video/Voice */}
-           {stage === 3 && (
-            <motion.div
-              key="media"
-              variants={containerVariants}
-              initial="hidden"
-              animate="visible"
-              exit="exit"
-              className="flex flex-col items-center w-full"
-            >
-                <div className="w-full aspect-video bg-black rounded-3xl flex items-center justify-center mb-8 shadow-2xl relative overflow-hidden group cursor-pointer">
-                    <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1492684223066-81342ee5ff30?q=80&w=2940&auto=format&fit=crop')] bg-cover bg-center opacity-40 group-hover:scale-105 transition-transform duration-700"></div>
-                    <div className="w-20 h-20 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center z-10 group-hover:scale-110 transition-transform">
-                        <PlayCircle className="w-10 h-10 text-white fill-white" />
-                    </div>
+        {/* Step: Scratch */}
+        {currentStep === "scratch" && (
+          <motion.div 
+            key="scratch"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex flex-col items-center justify-center h-full text-center px-4"
+          >
+            <div className="w-full max-w-sm aspect-square bg-white dark:bg-white/5 rounded-3xl overflow-hidden shadow-2xl border-4 border-white dark:border-white/10 relative">
+              <ScratchCard 
+                width={window.innerWidth < 400 ? 320 : 384} 
+                height={window.innerWidth < 400 ? 320 : 384}
+                onComplete={() => setTimeout(() => setCurrentStep("reveal"), 1000)}
+                coverColor={occasion === "Anniversary" ? "#EF4444" : "#e64c19"}
+              >
+                <div className="flex flex-col items-center gap-4 text-center">
+                  <Sparkles className="w-8 h-8 text-primary animate-pulse" />
+                  <p className="text-xl font-bold text-[#1b110e] dark:text-white leading-relaxed">
+                    {momentData?.personalMessage?.substring(0, 100)}...
+                  </p>
                 </div>
-                <p className="text-gray-600 mb-8 font-medium">Watch this video...</p>
-              <Button type="primary" ghost size="large" onClick={nextStage} className="h-14 px-8 rounded-full border-2 border-primary/20 text-primary hover:border-primary hover:bg-primary/5">
-                Reveal Surprise ✨
-              </Button>
-            </motion.div>
-          )}
+              </ScratchCard>
+            </div>
+            <p className="mt-8 text-sm font-bold text-[#97604e] uppercase tracking-widest animate-pulse">
+              Scratch the surface to reveal
+            </p>
+          </motion.div>
+        )}
 
-          {/* Stage 4: Final Reveal */}
-          {stage === 4 && (
-             <motion.div
-              key="reveal"
-              variants={containerVariants}
-              initial="hidden"
-              animate="visible"
-              className="flex flex-col items-center"
-            >
-              <h1 className="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-br from-primary to-accent mb-8 leading-tight tracking-tight drop-shadow-sm">
-                {surpriseData.finalMessage}
-              </h1>
-              <div className="p-8 bg-white/70 backdrop-blur-md rounded-3xl shadow-xl border border-white/60 w-full max-w-sm">
-                 <p className="text-gray-600 mb-6 font-medium">Send a reaction back!</p>
-                 <div className="flex gap-4 justify-center">
-                    <Button shape="circle" size="large" className="w-14 h-14 text-2xl border-none shadow-md bg-white hover:scale-110 transition-transform">❤️</Button>
-                    <Button shape="circle" size="large" className="w-14 h-14 text-2xl border-none shadow-md bg-white hover:scale-110 transition-transform">🥺</Button>
-                    <Button shape="circle" size="large" className="w-14 h-14 text-2xl border-none shadow-md bg-white hover:scale-110 transition-transform">🎉</Button>
-                 </div>
+        {/* Step: Reveal */}
+        {currentStep === "reveal" && (
+          <motion.div 
+            key="reveal"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="h-full w-full overflow-y-auto px-4 py-12 bg-[#FFFBF8] dark:bg-[#1b110e]"
+          >
+            <div className="max-w-2xl mx-auto flex flex-col items-center">
+              
+              <div className="text-center mb-16">
+                <span className="inline-block px-4 py-1.5 bg-primary/10 text-primary rounded-full text-xs font-black uppercase tracking-widest mb-4">
+                  {occasion} Message
+                </span>
+                <h2 className="text-4xl sm:text-5xl font-black text-[#1b110e] dark:text-white mb-8 tracking-tight leading-tight">
+                  For {recipient}
+                </h2>
+                <div className="w-20 h-1.5 bg-primary rounded-full mx-auto" />
               </div>
-               <div className="mt-12">
-                   <Link href="/" className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-primary transition-colors font-medium">
-                     <span className="w-2 h-2 rounded-full bg-primary/40"></span>
-                     Created with Surpriseal
-                   </Link>
-               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
+
+              <div className="w-full p-8 sm:p-12 bg-white dark:bg-white/5 rounded-[2rem] shadow-xl border border-[#e7d6d0] mb-12 relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-4 opacity-5">
+                  {getCelebrationIcon()}
+                </div>
+                <p className="text-xl sm:text-2xl text-[#1b110e] dark:text-white leading-relaxed font-medium whitespace-pre-wrap">
+                  {momentData?.personalMessage}
+                </p>
+              </div>
+
+              {/* Media Gallery */}
+              {momentData?.media && momentData.media.length > 0 && (
+                <div className="w-full mb-20">
+                  <h3 className="text-2xl font-black text-[#1b110e] dark:text-white mb-8 flex items-center gap-2">
+                    <Sparkles className="text-primary" />
+                    Memory Lane
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {momentData.media.map((item: any, idx: number) => (
+                      <motion.div 
+                        key={item.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        transition={{ delay: idx * 0.1 }}
+                        className="aspect-square rounded-2xl overflow-hidden border border-[#e7d6d0] shadow-md group"
+                      >
+                        {item.type === "video" ? (
+                          <video src={item.url} autoPlay muted loop playsInline className="w-full h-full object-cover" />
+                        ) : (
+                          <img src={item.url} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                        )}
+                      </motion.div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Conversion Footer */}
+              <div className="w-full py-12 px-8 bg-primary rounded-[2rem] text-center shadow-2xl shadow-primary/30 mb-8">
+                <h4 className="text-2xl font-black text-white mb-4">Create your own unforgettable moment!</h4>
+                <p className="text-white/80 font-bold mb-8">Surprise someone special today.</p>
+                <button 
+                  onClick={() => router.push("/")}
+                  className="px-8 py-4 bg-white text-primary text-lg font-black rounded-xl hover:scale-105 transition-transform active:scale-95"
+                >
+                  Get Started — It's Free! 🎁
+                </button>
+              </div>
+
+            </div>
+          </motion.div>
+        )}
+
+      </AnimatePresence>
     </div>
   );
 }

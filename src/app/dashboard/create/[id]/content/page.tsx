@@ -14,11 +14,13 @@ import {
   Type,
   ImageIcon,
   Video,
-  AlertCircle
+  AlertCircle,
+  Upload
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCreation } from "@/context/CreationContext";
 import { useDebounce } from "@/hooks/useDebounce";
+import { uploadFile } from "@/lib/upload";
 
 export default function CreationContentPage() {
   const router = useRouter();
@@ -44,6 +46,8 @@ export default function CreationContentPage() {
   const [personalMessage, setPersonalMessage] = useState("");
   const [media, setMedia] = useState<any[]>([]);
   const [recipientName, setRecipientName] = useState("");
+  const [uploadingFiles, setUploadingFiles] = useState<Record<string, number>>({});
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Auth check
   useEffect(() => {
@@ -118,6 +122,14 @@ export default function CreationContentPage() {
     saveDraft({ personalMessage: debouncedMessage });
   }, [debouncedMessage, saveDraft, loading]);
 
+  // Handle auto-save for media deletions/additions
+  // We use a separate useEffect to avoid race conditions during batch uploads
+  const debouncedMedia = useDebounce(media, 1000);
+  useEffect(() => {
+    if (loading) return;
+    saveDraft({ media: debouncedMedia });
+  }, [debouncedMedia, saveDraft, loading]);
+
   // Handle Validation
   useEffect(() => {
     // For MVP, we require at least a message
@@ -154,25 +166,49 @@ export default function CreationContentPage() {
     };
   }, [onSaveAction, onContinueAction, setOnSave, setOnContinue]);
 
-  const addMediaPlaceholder = () => {
-    // Simple simulated upload for MVP
-    const newMedia = [
-      ...media,
-      {
-        id: Math.random().toString(36).substr(2, 9),
-        type: "image",
-        url: "https://images.unsplash.com/photo-1513201099705-a9746e1e201f?q=80&w=2897&auto=format&fit=crop",
-        name: "memory-" + (media.length + 1) + ".jpg"
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0 || !user) return;
+
+    const remainingSlots = 10 - media.length;
+    const filesToUpload = Array.from(files).slice(0, remainingSlots);
+
+    for (const file of filesToUpload) {
+      const tempId = Math.random().toString(36).substr(2, 9);
+      const path = `users/${user.uid}/moments/${draftId}/${tempId}-${file.name}`;
+      
+      setUploadingFiles(prev => ({ ...prev, [tempId]: 0 }));
+
+      try {
+        const downloadURL = await uploadFile(file, path, (progress) => {
+          setUploadingFiles(prev => ({ ...prev, [tempId]: Math.round(progress) }));
+        });
+
+        const newMediaItem = {
+          id: tempId,
+          type: file.type.startsWith("video/") ? "video" : "image",
+          url: downloadURL,
+          name: file.name,
+          uploadedAt: new Date().toISOString()
+        };
+
+        setMedia(prev => [...prev, newMediaItem]);
+      } catch (error) {
+        console.error("Upload failed for file:", file.name, error);
+      } finally {
+        setUploadingFiles(prev => {
+          const newState = { ...prev };
+          delete newState[tempId];
+          return newState;
+        });
       }
-    ];
-    setMedia(newMedia);
-    saveDraft({ media: newMedia });
+    }
+
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const removeMedia = (id: string) => {
-    const newMedia = media.filter(m => m.id !== id);
-    setMedia(newMedia);
-    saveDraft({ media: newMedia });
+    setMedia(prev => prev.filter(m => m.id !== id));
   };
 
   if (loading) {
@@ -239,7 +275,11 @@ export default function CreationContentPage() {
               {/* Media Items */}
               {media.map((item) => (
                 <div key={item.id} className="group relative aspect-square rounded-lg overflow-hidden border border-[#e7d6d0] bg-white shadow-sm hover:shadow-md transition-all">
-                  <img src={item.url} alt={item.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                  {item.type === "video" ? (
+                    <video src={item.url} className="w-full h-full object-cover" />
+                  ) : (
+                    <img src={item.url} alt={item.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                  )}
                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                     <button 
                       onClick={() => removeMedia(item.id)}
@@ -251,10 +291,34 @@ export default function CreationContentPage() {
                 </div>
               ))}
 
-              {/* Upload Multi-Option Trigger (MVP Concept) */}
+              {/* Uploading States */}
+              {Object.entries(uploadingFiles).map(([id, progress]) => (
+                <div key={id} className="aspect-square rounded-lg border border-[#e7d6d0] bg-white/50 backdrop-blur-sm flex flex-col items-center justify-center gap-3 relative overflow-hidden">
+                  <div className="absolute inset-x-0 bottom-0 h-1 bg-[#fdf1ec]">
+                    <div 
+                      className="h-full bg-primary transition-all duration-300" 
+                      style={{ width: `${progress}%` }}
+                    />
+                  </div>
+                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                  <span className="text-[10px] font-bold text-[#97604e] uppercase tracking-widest">{progress}%</span>
+                </div>
+              ))}
+
+              {/* Hidden File Input */}
+              <input 
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileUpload}
+                multiple
+                accept="image/*,video/*"
+                className="hidden"
+              />
+
+              {/* Upload Multi-Option Trigger */}
               {media.length < 10 && (
                 <div 
-                  onClick={addMediaPlaceholder}
+                  onClick={() => fileInputRef.current?.click()}
                   className="aspect-square rounded-lg border-2 border-dashed border-[#e7d6d0] flex flex-col items-center justify-center gap-2 hover:border-primary/50 hover:bg-primary/[0.02] cursor-pointer group transition-all"
                 >
                   <div className="p-3 rounded-full bg-[#fdf1ec] text-primary group-hover:scale-110 transition-transform shadow-sm">
