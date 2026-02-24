@@ -71,7 +71,7 @@ export function Select({
                 <span className="text-lg">{selectedOption.icon}</span>
               ) : (
                 (() => {
-                  const Icon = selectedOption.icon as React.ElementType;
+                  const Icon = selectedOption.icon as any;
                   return <Icon className={cn("h-5 w-5 transition-colors", isOpen ? "text-primary" : "text-text-muted")} />;
                 })()
               )
@@ -130,7 +130,7 @@ export function Select({
                         <span className="text-xl w-6 flex justify-center">{option.icon}</span>
                       ) : (
                         (() => {
-                          const Icon = option.icon as React.ElementType;
+                          const Icon = option.icon as any;
                           return <Icon className="h-4 w-4" />;
                         })()
                       )
