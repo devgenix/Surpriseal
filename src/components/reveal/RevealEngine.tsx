@@ -10,7 +10,8 @@ import {
   VolumeX, 
   ChevronRight, 
   ChevronLeft,
-  X
+  X,
+  Music2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ScratchUtility, GalleryUtility, CompositionUtility } from "./utilities/RevealUtilities";
@@ -32,6 +33,8 @@ export default function RevealEngine({ moment, isPreview = false }: RevealEngine
   const [isMuted, setIsMuted] = useState(false);
   const soundRef = useRef<Howl | null>(null);
   const lastMusicUrlRef = useRef<string>("");
+  const ytPlayerRef = useRef<any>(null);
+  const [isYtReady, setIsYtReady] = useState(false);
 
   const scenes = useMemo(() => moment?.styleConfig?.scenes || [], [moment]);
   const style = moment?.styleConfig || {};
@@ -49,16 +52,107 @@ export default function RevealEngine({ moment, isPreview = false }: RevealEngine
 
   const currentScene = scenes[currentSceneIndex];
 
+  // Initialize YouTube API
+  useEffect(() => {
+    if (typeof window === "undefined" || (window as any).YT) {
+      if ((window as any).YT) setIsYtReady(true);
+      return;
+    }
+    const tag = document.createElement('script');
+    tag.src = "https://www.youtube.com/iframe_api";
+    const firstScriptTag = document.getElementsByTagName('script')[0];
+    firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
+
+    (window as any).onYouTubeIframeAPIReady = () => {
+      setIsYtReady(true);
+    };
+  }, []);
+
   // Consolidated Audio Management
   useEffect(() => {
+    const ytId = currentScene?.config?.ytMusicId || style.ytMusicId;
     const sceneMusic = currentScene?.config?.musicUrl;
     const projectMusic = style.musicUrl;
-    const musicUrl = sceneMusic || projectMusic || "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3";
+    const musicUrl = sceneMusic || projectMusic || (ytId ? null : "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3");
     
     // Config for segment
     const config = currentScene?.config || {};
     const start = config.audioStart || 0;
     const duration = config.audioDuration || 0;
+
+    // --- YouTube Logic ---
+    if (ytId && isYtReady) {
+      // Stop Howler if running
+      if (soundRef.current) {
+        soundRef.current.stop();
+        soundRef.current.unload();
+        soundRef.current = null;
+      }
+
+      const initPlayer = () => {
+        if (ytPlayerRef.current) {
+          const player = ytPlayerRef.current;
+          if (player.loadVideoById) {
+            player.loadVideoById({
+              videoId: ytId,
+              startSeconds: start
+            });
+            player.setVolume(isMuted ? 0 : 50);
+            if (!isPreview) player.playVideo();
+          }
+           return;
+        }
+
+        ytPlayerRef.current = new (window as any).YT.Player('hidden-yt-player', {
+          height: '0',
+          width: '0',
+          videoId: ytId,
+          playerVars: {
+            autoplay: isPreview ? 0 : 1,
+            controls: 0,
+            start: start,
+            loop: 1,
+            playlist: ytId // Required for looping
+          },
+          events: {
+            onReady: (event: any) => {
+              event.target.setVolume(isMuted ? 0 : 50);
+              if (!isPreview) event.target.playVideo();
+            },
+            onStateChange: (event: any) => {
+              // Handle looping if duration is set
+              if (duration > 0 && event.data === (window as any).YT.PlayerState.PLAYING) {
+                // We'll use the interval below
+              }
+            }
+          }
+        });
+      };
+
+      initPlayer();
+
+      let ytLoopInterval: NodeJS.Timeout | null = null;
+      if (duration > 0) {
+        ytLoopInterval = setInterval(() => {
+          if (ytPlayerRef.current && ytPlayerRef.current.getCurrentTime) {
+            const currentPos = ytPlayerRef.current.getCurrentTime();
+            if (currentPos >= (start + duration)) {
+              ytPlayerRef.current.seekTo(start);
+            }
+          }
+        }, 500);
+      }
+
+      return () => {
+        if (ytLoopInterval) clearInterval(ytLoopInterval);
+        if (ytPlayerRef.current && ytPlayerRef.current.stopVideo) {
+          ytPlayerRef.current.stopVideo();
+        }
+      };
+    }
+
+    // --- Howler Logic (Legacy/Fallback) ---
+    if (!musicUrl) return;
 
     // Check if we already have this music loaded AND we are just updating the segment
     if (soundRef.current && lastMusicUrlRef.current === musicUrl) {
@@ -75,6 +169,11 @@ export default function RevealEngine({ moment, isPreview = false }: RevealEngine
     // New Music Instance Required
     lastMusicUrlRef.current = musicUrl;
     
+    // Cleanup YouTube player if switching
+    if (ytPlayerRef.current && ytPlayerRef.current.stopVideo) {
+      ytPlayerRef.current.stopVideo();
+    }
+
     // Cleanup previous completely before starting new one
     if (soundRef.current) {
       soundRef.current.stop();
@@ -129,11 +228,14 @@ export default function RevealEngine({ moment, isPreview = false }: RevealEngine
         soundRef.current = null;
       }
     };
-  }, [style.musicUrl, currentScene?.config?.musicUrl, isPreview, currentSceneIndex]);
+  }, [style.musicUrl, style.ytMusicId, currentScene?.config?.musicUrl, currentScene?.config?.ytMusicId, isPreview, currentSceneIndex, isYtReady]);
 
   useEffect(() => {
     if (soundRef.current) {
       soundRef.current.mute(isMuted);
+    }
+    if (ytPlayerRef.current && ytPlayerRef.current.setVolume) {
+      ytPlayerRef.current.setVolume(isMuted ? 0 : 50);
     }
   }, [isMuted]);
 
@@ -141,6 +243,9 @@ export default function RevealEngine({ moment, isPreview = false }: RevealEngine
     // Start music on first interaction
     if (soundRef.current && !soundRef.current.playing()) {
       soundRef.current.play();
+    }
+    if (ytPlayerRef.current && ytPlayerRef.current.playVideo) {
+      ytPlayerRef.current.playVideo();
     }
 
     if (currentSceneIndex < scenes.length - 1) {
@@ -295,6 +400,8 @@ export default function RevealEngine({ moment, isPreview = false }: RevealEngine
         </button>
       </div>
 
+      {/* Hidden YouTube Player */}
+      <div id="hidden-yt-player" className="fixed inset-0 pointer-events-none opacity-0 z-[-1]" />
     </div>
   );
 }

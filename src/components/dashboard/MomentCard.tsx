@@ -3,6 +3,7 @@ import { useState } from "react";
 import { db } from "@/lib/firebase";
 import { doc, deleteDoc } from "firebase/firestore";
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 
 interface MomentProps {
     id: string;
@@ -48,9 +49,25 @@ export default function MomentCard({ moment }: { moment: MomentProps }) {
     <div className="group relative flex flex-col bg-white dark:bg-surface-dark rounded-lg border border-[#f3eae7] dark:border-white/5 shadow-sm hover:shadow-md hover:border-primary/20 transition-all duration-300 overflow-hidden">
       {/* Card Image/Cover */}
       <div 
-        className="h-32 bg-cover bg-center relative overflow-hidden" 
-        style={{ backgroundImage: `url(${moment.imageUrl || 'https://images.unsplash.com/photo-1513201099705-a9746e1e201f?q=80&w=2897&auto=format&fit=crop'})` }}
+        className={cn(
+          "h-32 bg-cover bg-center relative overflow-hidden flex items-center justify-center",
+          !moment.imageUrl && (
+            moment.occasion === "Birthday" ? "bg-gradient-to-br from-pink-500 to-rose-400" :
+            moment.occasion === "Anniversary" ? "bg-gradient-to-br from-amber-500 to-orange-400" :
+            "bg-gradient-to-br from-primary to-primary-light"
+          )
+        )} 
+        style={moment.imageUrl ? { backgroundImage: `url(${moment.imageUrl})` } : {}}
       >
+        {!moment.imageUrl && (
+          <div className="flex flex-col items-center justify-center text-white/40 drop-shadow-xl">
+             <div className="size-12 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center mb-1">
+               {occasionIcons[moment.occasion] || <Cake size={24} />}
+             </div>
+             <p className="text-[8px] font-black uppercase tracking-[0.2em]">{moment.occasion}</p>
+          </div>
+        )}
+
         {/* Darkening Overlay for Badge Visibility */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/20 opacity-70 group-hover:scale-110 transition-transform duration-500"></div>
         

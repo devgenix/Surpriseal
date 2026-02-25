@@ -1,7 +1,8 @@
 import { 
   ref, 
   uploadBytesResumable, 
-  getDownloadURL 
+  getDownloadURL,
+  deleteObject
 } from "firebase/storage";
 import { storage } from "./firebase";
 
@@ -46,4 +47,15 @@ export const uploadFile = (
       }
     );
   });
+};
+
+export const deleteFile = async (url: string): Promise<void> => {
+  if (!storage) throw new Error("Firebase Storage not initialized");
+  try {
+    const storageRef = ref(storage, url);
+    await deleteObject(storageRef);
+  } catch (error) {
+    console.error("Delete file error:", error);
+    // We don't necessarily want to block if delete fails (e.g. file already gone)
+  }
 };

@@ -28,6 +28,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: `A Surprise For ${recipient} | Surpriseal`,
       description: `Created by ${sender}. Reveal this special surprise!`,
       images: moment.imageUrl ? [moment.imageUrl] : [],
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `A Surprise For ${recipient} | Surpriseal`,
+      description: `Created by ${sender}. Reveal this special surprise!`,
+      images: moment.imageUrl ? [moment.imageUrl] : [],
     },
   };
 }

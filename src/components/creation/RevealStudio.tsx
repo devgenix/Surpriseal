@@ -23,9 +23,10 @@ import { cn } from "@/lib/utils";
 import { useCreation } from "@/context/CreationContext";
 import RevealEngine from "../reveal/RevealEngine";
 import { Button } from "@/components/ui/button";
-import { uploadFile } from "@/lib/upload";
+import { uploadFile, deleteFile } from "@/lib/upload";
 import { auth } from "@/lib/firebase";
 import AudioTrimmer from "./AudioTrimmer";
+import { optimizeImage } from "@/lib/image";
 import { Select } from "@/components/ui/Select";
 
 
@@ -55,6 +56,14 @@ export default function RevealStudio({ draftId, onSave }: RevealStudioProps) {
   const [isUploadingMusic, setIsUploadingMusic] = useState(false);
   const [musicUploadProgress, setMusicUploadProgress] = useState(0);
   const musicInputRef = useRef<HTMLInputElement>(null);
+
+  // YouTube Music Search State
+  const [ytSearchQuery, setYtSearchQuery] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
+  const [ytResults, setYtResults] = useState<any[]>([]);
+  const [showSearchResults, setShowSearchResults] = useState(false);
+  
+  const [isProcessingThumbnail, setIsProcessingThumbnail] = useState<string | null>(null);
 
   useEffect(() => {
     setCanContinue(scenes.length > 0);
@@ -175,15 +184,94 @@ export default function RevealStudio({ draftId, onSave }: RevealStudioProps) {
     media: momentData?.media || []
   };
 
-  const toggleMusic = (musicUrl: string) => {
+  const toggleMusic = async (song: any) => {
     if (!activeScene) return;
-    const currentMusicUrl = activeScene.config.musicUrl;
-    const newMusicUrl = currentMusicUrl === musicUrl ? null : musicUrl;
-    updateSceneConfig(activeSceneId, { musicUrl: newMusicUrl });
+    const currentYtId = activeScene.config.ytMusicId;
+    const isSelected = currentYtId === song.videoId;
+    
+    const updates = isSelected 
+      ? { ytMusicId: null, ytMetadata: null, musicUrl: null }
+      : { 
+          ytMusicId: song.videoId, 
+          ytMetadata: song,
+          musicUrl: `https://www.youtube.com/watch?v=${song.videoId}` // Fallback for legacy
+        };
+        
+    updateSceneConfig(activeSceneId, updates);
   };
 
-  const isMusicSelected = (musicUrl: string) => {
-    return activeScene?.config?.musicUrl === musicUrl;
+  const isMusicSelected = (videoId: string) => {
+    return activeScene?.config?.ytMusicId === videoId;
+  };
+
+  const handleYTSearch = async () => {
+    if (!ytSearchQuery.trim()) return;
+    try {
+      setIsSearching(true);
+      const res = await fetch(`/api/yt-music/search?q=${encodeURIComponent(ytSearchQuery)}`);
+      const data = await res.json();
+      setYtResults(data.songs || []);
+      setShowSearchResults(true);
+    } catch (err) {
+      console.error("YouTube search error:", err);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleSetThumbnail = async (media: any) => {
+    if (!auth.currentUser) return;
+    
+    try {
+      setIsProcessingThumbnail(media.id);
+      
+      // 1. Fetch the image and optimize it
+      const response = await fetch(media.url);
+      const blob = await response.blob();
+      const file = new File([blob], "thumbnail.jpg", { type: "image/jpeg" });
+      
+      // Optimize to max 800px width and ~70% quality (targeting <100KB)
+      const optimizedBlob = await optimizeImage(file, 800, 0.7);
+      const optimizedFile = new File([optimizedBlob], "thumbnail_optimized.jpg", { type: "image/jpeg" });
+
+      // 2. Upload to Firebase
+      const path = `users/${auth.currentUser.uid}/moments/${draftId}/thumbnail.jpg`;
+      const thumbnailUrl = await uploadFile(optimizedFile, path);
+
+      // 3. Delete old thumbnail if it exists (Firestore might have a different URL)
+      // Note: In this case, we overwrite the file at the same path if we use the same path, 
+      // but let's be safe if the user changes strategy later.
+      
+      // 4. Update the moment
+      await onSave({
+        imageUrl: thumbnailUrl // Using imageUrl as the primary thumbnail field for the moment
+      });
+      
+    } catch (err) {
+      console.error("Thumbnail selection failed:", err);
+    } finally {
+      setIsProcessingThumbnail(null);
+    }
+  };
+
+  const handleRemoveThumbnail = async () => {
+    if (!auth.currentUser || !momentData?.imageUrl) return;
+    
+    try {
+      setIsProcessingThumbnail("removing");
+      
+      // Delete from storage
+      const path = `users/${auth.currentUser.uid}/moments/${draftId}/thumbnail.jpg`;
+      await deleteFile(path);
+
+      // Update doc
+      await onSave({ imageUrl: null });
+      
+    } catch (err) {
+      console.error("Thumbnail removal failed:", err);
+    } finally {
+      setIsProcessingThumbnail(null);
+    }
   };
 
   const onSaveTheme = async (themeId: string) => {
@@ -440,6 +528,37 @@ export default function RevealStudio({ draftId, onSave }: RevealStudioProps) {
                           )}
                         >
                           <img src={m.url} className="w-full h-full object-cover" />
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2 p-2">
+                            <button 
+                              onClick={(e) => { e.stopPropagation(); toggleMedia(m.id); }}
+                              className="w-full bg-white/20 hover:bg-white/40 text-[8px] font-black text-white uppercase tracking-widest py-1 rounded-full backdrop-blur-sm"
+                            >
+                               {isMediaSelected(m.id) ? "Remove" : "Add to Scene"}
+                            </button>
+                            <button 
+                              onClick={(e) => { e.stopPropagation(); handleSetThumbnail(m); }}
+                              disabled={isProcessingThumbnail === m.id}
+                              className={cn(
+                                "w-full bg-primary/80 hover:bg-primary text-[8px] font-black text-white uppercase tracking-widest py-1 rounded-full backdrop-blur-sm flex items-center justify-center gap-1",
+                                momentData?.imageUrl === m.url && "bg-green-500/80 hover:bg-green-500"
+                              )}
+                            >
+                               {isProcessingThumbnail === m.id ? (
+                                 <Loader2 size={8} className="animate-spin" />
+                               ) : (
+                                 momentData?.imageUrl === m.url ? "Current Thumb" : "Set as Thumb"
+                               )}
+                            </button>
+                            {momentData?.imageUrl === m.url && (
+                              <button 
+                                onClick={(e) => { e.stopPropagation(); handleRemoveThumbnail(); }}
+                                disabled={isProcessingThumbnail === "removing"}
+                                className="w-full bg-red-500/80 hover:bg-red-500 text-[8px] font-black text-white uppercase tracking-widest py-1 rounded-full backdrop-blur-sm"
+                              >
+                                {isProcessingThumbnail === "removing" ? <Loader2 size={8} className="animate-spin" /> : "Remove Thumb"}
+                              </button>
+                            )}
+                          </div>
                           {isMediaSelected(m.id) && (
                             <div className="absolute top-1 right-1 bg-primary text-white rounded-full p-0.5">
                               <CheckCircle2 size={10} />
@@ -455,40 +574,100 @@ export default function RevealStudio({ draftId, onSave }: RevealStudioProps) {
                     </div>
                   </section>
 
-                  {/* Music Library Section */}
+                  {/* YouTube Music Search Section */}
                   <section>
                     <h3 className="text-[10px] font-black uppercase tracking-widest text-text-muted mb-4 flex items-center gap-2">
                       <Music size={12} />
-                      Music Library
+                      YouTube Music Search
                     </h3>
+                    
+                    <div className="flex gap-2 mb-4">
+                      <div className="relative flex-1">
+                        <input 
+                          type="text"
+                          value={ytSearchQuery}
+                          onChange={(e) => setYtSearchQuery(e.target.value)}
+                          onKeyDown={(e) => e.key === "Enter" && handleYTSearch()}
+                          placeholder="Search for a song..."
+                          className="w-full p-3 pr-10 rounded-xl bg-white border border-border text-xs focus:border-primary outline-none"
+                        />
+                        {isSearching && (
+                          <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                            <Loader2 size={14} className="animate-spin text-primary" />
+                          </div>
+                        )}
+                      </div>
+                      <Button 
+                        size="sm" 
+                        variant="secondary"
+                        onClick={handleYTSearch}
+                        className="rounded-xl px-4"
+                      >
+                        Search
+                      </Button>
+                    </div>
+
+                    {showSearchResults && ytResults.length > 0 && (
+                      <div className="flex flex-col gap-2 max-h-[250px] overflow-y-auto pr-1 mb-6 animate-in fade-in slide-in-from-top-2">
+                        <div className="flex items-center justify-between mb-1 px-1">
+                          <p className="text-[8px] font-black text-text-muted uppercase tracking-widest">Search Results</p>
+                          <button onClick={() => setShowSearchResults(false)} className="text-[8px] font-bold text-primary hover:underline">Close</button>
+                        </div>
+                        {ytResults.map((song: any) => (
+                          <div 
+                            key={song.videoId}
+                            onClick={() => toggleMusic(song)}
+                            className={cn(
+                              "flex items-center gap-3 p-2 rounded-xl border-2 transition-all cursor-pointer group",
+                              isMusicSelected(song.videoId) ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"
+                            )}
+                          >
+                            <div className="size-10 rounded-lg overflow-hidden bg-border/20 shrink-0">
+                              <img src={song.thumbnail} className="w-full h-full object-cover" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-[10px] font-bold text-text-main truncate">{song.title}</p>
+                              <p className="text-[8px] text-text-muted font-bold truncate">{song.artist}</p>
+                            </div>
+                            <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onSave({ styleConfig: { ...style, ytMusicId: song.videoId, ytMetadata: song } });
+                                }}
+                                className="text-[8px] font-black text-primary hover:underline uppercase"
+                              >
+                                Set Master
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Selected Music (Per Scene) */}
                     <div className="flex flex-col gap-2">
-                      {momentData?.music?.map((m: any) => (
-                        <div 
-                          key={m.id}
-                          onClick={() => toggleMusic(m.url)}
-                          className={cn(
-                            "flex items-center gap-3 p-3 rounded-xl border-2 transition-all cursor-pointer",
-                            isMusicSelected(m.url) ? "border-primary bg-primary/5 shadow-sm scale-[0.98]" : "border-border hover:border-primary/50"
-                          )}
-                        >
-                          <div className="size-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
-                            <Music2 size={16} />
+                      <p className="text-[8px] font-black text-text-muted uppercase tracking-widest px-1">Current Scene Track</p>
+                      {activeScene?.config?.ytMetadata ? (
+                        <div className="flex items-center gap-3 p-3 rounded-xl border-2 border-primary bg-primary/5 shadow-sm">
+                          <div className="size-12 rounded-lg overflow-hidden shrink-0 shadow-lg ring-2 ring-white">
+                            <img src={activeScene.config.ytMetadata.thumbnail} className="w-full h-full object-cover" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-[10px] font-bold text-text-main truncate">{m.name}</p>
-                            <p className="text-[8px] text-text-muted uppercase font-bold tracking-tighter">Audio Track</p>
+                            <p className="text-[10px] font-bold text-text-main truncate">{activeScene.config.ytMetadata.title}</p>
+                            <p className="text-[9px] text-primary font-black uppercase tracking-tighter">{activeScene.config.ytMetadata.artist}</p>
                           </div>
-                          {isMusicSelected(m.url) && (
-                            <div className="bg-primary text-white rounded-full p-0.5">
-                              <CheckCircle2 size={10} />
-                            </div>
-                          )}
+                          <button 
+                            onClick={() => toggleMusic(activeScene.config.ytMetadata)}
+                            className="text-text-muted hover:text-red-500 transition-colors"
+                          >
+                            <Trash2 size={14} />
+                          </button>
                         </div>
-                      ))}
-                      {(!momentData?.music || momentData.music.length === 0) && (
-                        <p className="text-[10px] text-text-muted font-bold italic py-4">
-                          No music uploaded to library yet.
-                        </p>
+                      ) : (
+                        <div className="p-4 rounded-xl border border-dashed border-border flex items-center justify-center gap-2 opacity-60">
+                          <p className="text-[8px] font-black uppercase tracking-widest text-text-muted">No scene-specific track</p>
+                        </div>
                       )}
                     </div>
                   </section>
@@ -520,29 +699,29 @@ export default function RevealStudio({ draftId, onSave }: RevealStudioProps) {
                   )}
 
 
-                  {/* Global Music Selection (Legacy/Default) */}
-                  <section className="flex flex-col gap-4">
+                  {/* Master Music Section */}
+                  <section className="flex flex-col gap-4 pt-4 border-t border-border">
                     <div className="flex items-center gap-2 mb-2">
-                      <Settings className="text-primary" size={16} />
-                      <h3 className="text-[10px] font-black uppercase tracking-widest text-text-muted">Master Background Music</h3>
+                       <Settings className="text-primary" size={16} />
+                       <h3 className="text-[10px] font-black uppercase tracking-widest text-text-muted">Master Background Music</h3>
                     </div>
                     
                     <div className="flex flex-col gap-3">
-                      {style.musicUrl ? (
-                        <div className="p-4 rounded-xl bg-primary/5 border border-primary/20 flex items-center justify-between">
+                      {style.ytMetadata ? (
+                        <div className="p-4 rounded-xl bg-white border border-border shadow-sm flex items-center justify-between group">
                           <div className="flex items-center gap-3">
-                            <div className="size-8 rounded-lg bg-primary text-white flex items-center justify-center">
-                              <Play size={14} fill="currentColor" />
+                            <div className="size-10 rounded-lg overflow-hidden shrink-0">
+                               <img src={style.ytMetadata.thumbnail} className="w-full h-full object-cover" />
                             </div>
                             <div className="flex-1 overflow-hidden">
-                              <p className="text-xs font-bold truncate">Default Track</p>
-                              <p className="text-[10px] text-text-muted font-medium">Plays when no scene track is set</p>
+                              <p className="text-[10px] font-bold truncate">{style.ytMetadata.title}</p>
+                              <p className="text-[8px] text-text-muted font-medium">Default for all screens</p>
                             </div>
                           </div>
                           <button 
                             onClick={async () => {
                               await onSave({
-                                styleConfig: { ...style, musicUrl: null }
+                                styleConfig: { ...style, ytMusicId: null, ytMetadata: null, musicUrl: null }
                               });
                             }}
                             className="text-text-muted hover:text-red-500 transition-colors"
@@ -551,34 +730,11 @@ export default function RevealStudio({ draftId, onSave }: RevealStudioProps) {
                           </button>
                         </div>
                       ) : (
-                        <div 
-                          onClick={() => musicInputRef.current?.click()}
-                          className="p-8 rounded-xl border-2 border-dashed border-border hover:border-primary/50 hover:bg-primary/[0.02] transition-all cursor-pointer flex flex-col items-center justify-center gap-3"
-                        >
-                          {isUploadingMusic ? (
-                             <>
-                               <Loader2 className="animate-spin text-primary" size={20} />
-                               <p className="text-[10px] font-bold text-primary">Uploading... {musicUploadProgress}%</p>
-                             </>
-                          ) : (
-                             <>
-                               <div className="size-8 rounded-full bg-primary/10 text-primary flex items-center justify-center">
-                                 <Plus size={16} />
-                               </div>
-                               <p className="text-[10px] font-bold text-text-muted uppercase">Set Master Music</p>
-                             </>
-                          )}
+                        <div className="p-4 rounded-xl border border-dashed border-border flex flex-col items-center justify-center gap-1 opacity-60">
+                           <p className="text-[8px] font-black uppercase tracking-widest text-text-muted">No Master Track Set</p>
                         </div>
                       )}
                     </div>
-
-                    <input 
-                      type="file"
-                      ref={musicInputRef}
-                      onChange={handleMusicUpload}
-                      accept="audio/*"
-                      className="hidden"
-                    />
                   </section>
                 </div>
               </div>
