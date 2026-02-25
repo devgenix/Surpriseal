@@ -1,10 +1,19 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { cn } from "@/lib/utils";
 import { db, auth } from "@/lib/firebase";
-import { doc, getDoc, updateDoc, serverTimestamp, collection, query, where, getDocs } from "firebase/firestore";
+import { formatPrice } from "@/lib/currency";
+import { Button } from "@/components/ui/button";
+import { Select } from "@/components/ui/Select";
+import { useDebounce } from "@/hooks/useDebounce";
+import { useRouter, useParams } from "next/navigation";
 import { onAuthStateChanged, User } from "firebase/auth";
+import { useCreation } from "@/context/CreationContext";
+import { useCurrency } from "@/context/CurrencyContext";
+import { PLANS, ADDONS } from "@/lib/constants/pricing";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { occasions as SHARED_OCCASIONS } from "@/lib/constants/occasions";
+import { doc, getDoc, updateDoc, serverTimestamp, collection, query, where, getDocs } from "firebase/firestore";
 import { 
   Loader2, 
   ArrowLeft, 
@@ -18,6 +27,7 @@ import {
   CreditCard,
   CheckCircle2,
   Smile,
+  AlertCircle,
   Cake,
   Link as LinkIcon,
   Calendar,
@@ -31,15 +41,6 @@ import {
   Trash2,
   Copy
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Select } from "@/components/ui/Select";
-import { cn } from "@/lib/utils";
-import { useCreation } from "@/context/CreationContext";
-import { useDebounce } from "@/hooks/useDebounce";
-import { useCurrency } from "@/context/CurrencyContext";
-import { PLANS, ADDONS } from "@/lib/constants/pricing";
-import { occasions as SHARED_OCCASIONS } from "@/lib/constants/occasions";
-import { formatPrice } from "@/lib/currency";
 
 const OCCASION_ICONS: Record<string, any> = {
   birthday: Cake,
@@ -79,6 +80,7 @@ export default function CreationDetailsPage() {
 
   // Form State
   const [recipientName, setRecipientName] = useState("");
+  const [personalMessage, setPersonalMessage] = useState("");
   const [occasionId, setOccasionId] = useState("");
   const [customOccasion, setCustomOccasion] = useState("");
   const [urlSlug, setUrlSlug] = useState("");
@@ -92,6 +94,7 @@ export default function CreationDetailsPage() {
   const [slugAvailable, setSlugAvailable] = useState<boolean | null>(null);
 
   const debouncedName = useDebounce(recipientName, 1000);
+  const debouncedMessage = useDebounce(personalMessage, 1000);
   const debouncedSenderName = useDebounce(senderName, 1000);
   const debouncedOccasionId = useDebounce(occasionId, 1000);
   const debouncedCustomOccasion = useDebounce(customOccasion, 1000);
@@ -127,6 +130,7 @@ export default function CreationDetailsPage() {
         setLocalMomentData(data);
         setMomentData(data); // Sync shared context
         setRecipientName(data.recipientName || "");
+        setPersonalMessage(data.personalMessage || "");
         setOccasionId(data.occasionId || "");
         setCustomOccasion(data.customOccasion || "");
         setUrlSlug(data.urlSlug || "");
@@ -191,6 +195,7 @@ export default function CreationDetailsPage() {
   // Use refs to keep actions stable while having access to latest state
   const stateRef = useRef({
     recipientName,
+    personalMessage,
     occasionId,
     customOccasion,
     urlSlug,
@@ -204,6 +209,7 @@ export default function CreationDetailsPage() {
   useEffect(() => {
     stateRef.current = {
       recipientName,
+      personalMessage,
       occasionId,
       customOccasion,
       urlSlug,
@@ -213,7 +219,7 @@ export default function CreationDetailsPage() {
       senderName,
       isAnonymous
     };
-  }, [recipientName, occasionId, customOccasion, urlSlug, unlockDate, unlockTime, recipientEmail, senderName, isAnonymous]);
+  }, [recipientName, personalMessage, occasionId, customOccasion, urlSlug, unlockDate, unlockTime, recipientEmail, senderName, isAnonymous]);
 
   const onSaveAction = useCallback(async () => {
     await saveDraft(stateRef.current);
@@ -222,12 +228,12 @@ export default function CreationDetailsPage() {
   const onContinueAction = useCallback(async () => {
     const updates = {
       ...stateRef.current,
-      lastStepId: "content",
-      completedSteps: Array.from(new Set([...(localMomentData?.completedSteps || []), "recipient"]))
+      lastStepId: "settings",
+      completedSteps: Array.from(new Set([...(momentData?.completedSteps || []), "recipient"]))
     };
     await saveDraft(updates);
-    router.push(`/dashboard/create/${draftId}/content`);
-  }, [saveDraft, router, draftId, localMomentData]);
+    router.push(`/dashboard/create/${draftId}/settings`);
+  }, [draftId, router, momentData, saveDraft]);
 
   // Register actions with layout
   useEffect(() => {
@@ -243,10 +249,12 @@ export default function CreationDetailsPage() {
   // Handle Validation for Continue button
   useEffect(() => {
     const isValid = recipientName.trim() !== "" && 
+                   personalMessage.trim().length > 10 &&
+                   (senderName.trim() !== "" || isAnonymous) &&
                    occasionId !== "" && 
                    (occasionId !== "custom" || customOccasion.trim() !== "");
     setCanContinue(isValid);
-  }, [recipientName, occasionId, customOccasion, setCanContinue]);
+  }, [recipientName, personalMessage, occasionId, customOccasion, senderName, isAnonymous, setCanContinue]);
 
    const toggleAddon = useCallback(async (addonId: string) => {
     if (!momentData || momentData.plan === "premium") return;
@@ -275,10 +283,16 @@ export default function CreationDetailsPage() {
     
     const newTotal = basePrice + addonsPrice;
     
-    const updates = {
+    const updates: any = {
       selectedAddons: newAddons,
       totalPrice: newTotal
     };
+
+    if (!isAdding && addonId === "customUrl") {
+      updates.urlSlug = "";
+      setUrlSlug("");
+      setSlugAvailable(null);
+    }
 
     setLocalMomentData((prev: any) => ({
       ...prev,
@@ -308,6 +322,11 @@ export default function CreationDetailsPage() {
     if (loading) return;
     saveDraft({ recipientName: debouncedName });
   }, [debouncedName, saveDraft, loading]);
+
+  useEffect(() => {
+    if (loading) return;
+    saveDraft({ personalMessage: debouncedMessage });
+  }, [debouncedMessage, saveDraft, loading]);
 
   useEffect(() => {
     if (loading) return;
@@ -424,7 +443,6 @@ export default function CreationDetailsPage() {
                 options={SHARED_OCCASIONS.map(occ => ({
                   id: occ.id,
                   title: occ.title,
-                  icon: occ.icon
                 }))}
                 value={occasionId}
                 onChange={(val) => setOccasionId(val)}
@@ -448,41 +466,91 @@ export default function CreationDetailsPage() {
             )}
 
             {/* Sender Name & Anonymity */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-primary/5 rounded-xl border border-primary/10">
-              <div className="flex flex-col gap-2.5">
-                <label className="text-sm font-bold text-[#1b110e] dark:text-white ml-1">Your Name (Sender)</label>
-                <div className="relative group">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <Users className="text-[#97604e] group-focus-within:text-primary transition-colors h-5 w-5" />
-                  </div>
-                  <input 
-                    value={senderName}
-                    onChange={(e) => setSenderName(e.target.value)}
-                    className="w-full h-14 pl-12 pr-4 bg-surface border border-border rounded-lg text-text-main placeholder:text-text-muted/50 focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all outline-none" 
-                    placeholder="e.g. John Doe"
-                    type="text"
-                  />
+            <div className="flex flex-col gap-4 p-6 bg-primary/5 rounded-xl border border-primary/10">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <label className="text-sm font-bold text-[#1b110e] dark:text-white ml-1">Who is sending this?</label>
+                
+                {/* Segmented Control */}
+                <div className="flex items-center p-1 bg-surface border border-border rounded-lg shrink-0">
+                  <button
+                    onClick={() => {
+                      setIsAnonymous(false);
+                    }}
+                    className={cn(
+                      "flex-1 sm:flex-none px-4 py-2 text-xs font-bold rounded-md transition-all",
+                      !isAnonymous 
+                        ? "bg-white text-primary shadow-sm ring-1 ring-border" 
+                        : "text-text-muted hover:text-text-main"
+                    )}
+                  >
+                    Use Name
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsAnonymous(true);
+                      setSenderName("");
+                    }}
+                    className={cn(
+                      "flex-1 sm:flex-none px-4 py-2 text-xs font-bold rounded-md transition-all",
+                      isAnonymous 
+                        ? "bg-primary text-white shadow-sm" 
+                        : "text-text-muted hover:text-text-main"
+                    )}
+                  >
+                    Stay Anonymous
+                  </button>
                 </div>
               </div>
 
-              <div className="flex flex-col justify-center">
-                <label className="text-sm font-bold text-[#1b110e] dark:text-white ml-1 mb-2.5">Anonymity</label>
-                <div 
-                  onClick={() => setIsAnonymous(!isAnonymous)}
-                  className="flex items-center gap-3 p-3 rounded-lg border border-border bg-surface hover:bg-white transition-all cursor-pointer group"
-                >
-                  <div className={cn(
-                    "size-6 rounded-md border-2 flex items-center justify-center transition-all",
-                    isAnonymous ? "bg-primary border-primary" : "border-border group-hover:border-primary/50"
-                  )}>
-                    {isAnonymous && <Check size={14} className="text-white" />}
+              <div className="relative group mt-2">
+                {!isAnonymous ? (
+                  <>
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                      <Users className="text-[#97604e] group-focus-within:text-primary transition-colors h-5 w-5" />
+                    </div>
+                    <input 
+                      value={senderName}
+                      onChange={(e) => setSenderName(e.target.value)}
+                      className="w-full h-14 pl-12 pr-4 bg-surface border border-border rounded-lg text-text-main placeholder:text-text-muted/50 focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all outline-none" 
+                      placeholder="e.g. John Doe, or The Smith Family"
+                      type="text"
+                    />
+                  </>
+                ) : (
+                  <div className="w-full h-14 px-4 bg-surface border border-border border-dashed rounded-lg flex items-center justify-center gap-2">
+                    <div className="size-6 rounded-full bg-primary/10 flex items-center justify-center">
+                      <Check size={12} className="text-primary" />
+                    </div>
+                    <span className="text-sm font-bold text-text-muted">You will appear as "a thoughtful person"</span>
                   </div>
-                  <div className="flex flex-col">
-                    <span className="text-xs font-bold text-text-main">Stay Anonymous</span>
-                    <span className="text-[10px] text-text-muted">Show "a thoughtful person" instead of your name</span>
-                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Message Section */}
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center gap-2 mb-2">
+                <h2 className="text-xl font-bold text-[#1b110e] dark:text-white">Personal Message</h2>
+              </div>
+              
+              <div className="relative group">
+                <textarea 
+                  rows={3}
+                  value={personalMessage}
+                  onChange={(e) => setPersonalMessage(e.target.value)}
+                  className="w-full min-h-[136px] max-h-[194px] lg:max-h-[253px] p-6 bg-surface border border-border rounded-lg text-text-main placeholder:text-text-muted/50 focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all outline-none resize-y text-lg leading-relaxed shadow-sm font-medium"
+                  placeholder={`Dear ${recipientName || 'Someone Special'}, I wanted to share something special with you...`}
+                />
+                <div className="absolute bottom-4 right-4 text-[10px] font-bold text-[#97604e] bg-white/50 backdrop-blur-sm px-2 py-1 rounded-md border border-[#e7d6d0]/50 uppercase tracking-widest">
+                  {personalMessage.length} characters
                 </div>
               </div>
+              {personalMessage.length > 0 && personalMessage.length <= 10 && (
+                <p className="text-[10px] text-amber-600 font-bold flex items-center gap-1 ml-1 animate-pulse">
+                  <AlertCircle size={12} />
+                  A slightly longer message would be more meaningful!
+                </p>
+              )}
             </div>
 
             {/* Custom Link Section */}
@@ -544,17 +612,18 @@ export default function CreationDetailsPage() {
                 </div>
               ) : (
                 <div className="flex rounded-lg border border-border bg-surface overflow-hidden focus-within:ring-4 focus-within:ring-primary/10 focus-within:border-primary transition-all pr-1">
-                  <div className="bg-primary/5 px-4 flex items-center border-r border-border">
-                    <span className="text-text-muted font-bold text-sm whitespace-nowrap">supriseal.com/view/</span>
+                  <div className="bg-primary/5 px-3 sm:px-4 flex items-center border-r border-border shrink-0">
+                    <span className="text-text-muted font-bold text-xs sm:text-sm whitespace-nowrap hidden sm:inline">supriseal.com/view/</span>
+                    <span className="text-text-muted font-bold text-xs whitespace-nowrap sm:hidden">.../view/</span>
                   </div>
                   <input 
                     value={urlSlug}
                     onChange={(e) => setUrlSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'))}
-                    className="flex-1 h-14 px-4 bg-transparent border-none text-text-main placeholder:text-text-muted/50 focus:ring-0 outline-none font-medium" 
+                    className="flex-1 min-w-0 h-14 px-3 sm:px-4 bg-transparent border-none text-text-main placeholder:text-text-muted/50 focus:ring-0 outline-none font-medium text-sm sm:text-base" 
                     placeholder="sarahs-big-30"
                     type="text"
                   />
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1 shrink-0">
                     <button 
                       onClick={() => copyToClipboard(urlSlug || draftId)}
                       disabled={!urlSlug && !draftId}
@@ -563,15 +632,18 @@ export default function CreationDetailsPage() {
                     >
                       {copied ? <CheckCircle2 size={18} /> : <Copy size={18} />}
                     </button>
-                    <div className="pr-3 flex items-center">
-                      {checkingSlug ? (
-                        <Loader2 size={16} className="text-primary animate-spin" />
-                      ) : slugAvailable === true ? (
-                        <CheckCircle2 size={16} className="text-green-500" />
-                      ) : slugAvailable === false ? (
-                        <X size={16} className="text-red-500" />
-                      ) : null}
-                    </div>
+                    {/* Only show status container if we're checking or have a result */}
+                    {(checkingSlug || slugAvailable !== null) && (
+                      <div className="pr-2 sm:pr-3 flex items-center w-6 justify-center">
+                        {checkingSlug ? (
+                          <Loader2 size={18} className="text-primary animate-spin" />
+                        ) : slugAvailable === true ? (
+                          <CheckCircle2 size={18} className="text-green-500" />
+                        ) : slugAvailable === false ? (
+                          <X size={18} className="text-red-500" />
+                        ) : null}
+                      </div>
+                    )}
                   </div>
                 </div>
               )}

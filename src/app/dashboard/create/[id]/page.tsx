@@ -43,7 +43,6 @@ export default function EditRedirectPage() {
             // Map step IDs to paths (excluding configure which is this page)
             const stepPaths: Record<string, string> = {
               "recipient": "details",
-              "content": "content",
               "style": "style",
               "pay": "pay"
             };

@@ -108,7 +108,7 @@ export default function ViewClient({ initialMomentData, momentId }: ViewClientPr
   }), [initialMomentData]);
 
   return (
-    <div className="h-screen w-full bg-black overflow-hidden relative font-display">
+    <div className="flex h-[100dvh] w-full bg-black overflow-hidden relative font-display">
       <AnimatePresence mode="wait">
         
         {/* Step: Countdown */}

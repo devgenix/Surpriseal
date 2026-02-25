@@ -200,73 +200,92 @@ export function CreationSidebar({
         </div>
 
         {/* User Profile */}
-        <div className="p-6 border-t border-[#e7d6d0]">
-          <div className="flex items-center gap-3 w-full p-2 rounded-lg group">
-            <div className="h-10 w-10 rounded-full bg-primary/10 border border-[#e7d6d0] flex items-center justify-center text-primary font-bold overflow-hidden transition-transform group-hover:scale-105">
-               {user?.photoURL ? (
-                <img src={user.photoURL} alt={user.displayName || ""} className="w-full h-full object-cover" />
-              ) : (
-                user?.displayName?.charAt(0) || user?.email?.charAt(0).toUpperCase()
-              )}
+        <div className="p-4 border-t border-[#e7d6d0]">
+          <Dropdown
+            trigger={["click"]}
+            placement="topRight"
+            menu={{
+              items: [
+                {
+                  key: "user-info",
+                  label: (
+                    <div className="flex flex-col">
+                      <span className="text-sm font-bold text-text-main">
+                        {user?.displayName || "My Account"}
+                      </span>
+                      <span className="text-[10px] font-bold text-text-muted uppercase">
+                        {user?.email}
+                      </span>
+                    </div>
+                  ),
+                  disabled: true,
+                },
+                { type: "divider" },
+
+                {
+                  key: "theme-light",
+                  label: "Light Theme",
+                  icon: <Sun size={14} />,
+                  onClick: () => setTheme("light"),
+                },
+                {
+                  key: "theme-dark",
+                  label: "Dark Theme",
+                  icon: <Moon size={14} />,
+                  onClick: () => setTheme("dark"),
+                },
+                {
+                  key: "theme-system",
+                  label: "System Theme",
+                  icon: <Monitor size={14} />,
+                  onClick: () => setTheme("system"),
+                },
+
+                { type: "divider" },
+
+                {
+                  key: "profile",
+                  label: "Profile Settings",
+                  icon: <Settings size={14} />,
+                  onClick: () => router.push("/dashboard/profile"),
+                },
+                {
+                  key: "logout",
+                  label: "Sign Out",
+                  icon: <LogOut size={14} />,
+                  danger: true,
+                  onClick: async () => {
+                    await logout();
+                    router.push("/");
+                  },
+                },
+              ],
+            }}
+          >
+            <div className="flex items-center gap-3 w-full p-2 rounded-lg cursor-pointer hover:bg-primary/5 transition-all">
+              <div className="h-10 w-10 rounded-full bg-primary/10 border border-[#e7d6d0] flex items-center justify-center text-primary font-bold overflow-hidden transition-transform hover:scale-105">
+                {user?.photoURL ? (
+                  <img
+                    src={user.photoURL}
+                    alt={user.displayName || ""}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  user?.displayName?.charAt(0) ||
+                  user?.email?.charAt(0).toUpperCase()
+                )}
+              </div>
+
+              <div className="flex flex-col flex-1 min-w-0">
+                <span className="text-sm font-bold text-text-main truncate">
+                  {user?.displayName || "My Account"}
+                </span>
+                <span className="text-[10px] font-bold text-text-muted uppercase truncate">
+                  {user?.email}
+                </span>
+              </div>
             </div>
-            <div className="flex flex-col flex-1 min-w-0">
-              <span className="text-sm font-bold text-text-main truncate">
-                {user?.displayName || "My Account"}
-              </span>
-              <span className="text-[10px] font-bold text-text-muted uppercase">{user?.email}</span>
-            </div>
-            <Dropdown
-              menu={{
-                items: [
-                  {
-                    label: 'Light',
-                    key: 'light',
-                    icon: <Sun size={14} />,
-                    onClick: () => setTheme("light"),
-                  },
-                  {
-                    label: 'Dark',
-                    key: 'dark',
-                    icon: <Moon size={14} />,
-                    onClick: () => setTheme("dark"),
-                  },
-                  {
-                    label: 'System',
-                    key: 'system',
-                    icon: <Monitor size={14} />,
-                    onClick: () => setTheme("system"),
-                  },
-                ]
-              }}
-              trigger={['click']}
-              placement="topRight"
-            >
-              <button 
-                className="p-1.5 text-text-muted hover:text-primary hover:bg-primary/5 rounded-lg transition-all"
-                title="Change Theme"
-              >
-                {theme === "dark" ? <Moon size={18} /> : theme === "light" ? <Sun size={18} /> : <Monitor size={18} />}
-              </button>
-            </Dropdown>
-            
-            <Link 
-              href="/dashboard/profile" 
-              className="p-1.5 text-text-muted hover:text-primary hover:bg-primary/5 rounded-lg transition-all"
-              title="Profile Settings"
-            >
-              <Settings size={18} />
-            </Link>
-            <button 
-              onClick={async () => {
-                await logout();
-                router.push("/");
-              }}
-              className="p-1.5 text-text-muted hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
-              title="Sign Out"
-            >
-              <LogOut size={18} />
-            </button>
-          </div>
+          </Dropdown>
         </div>
       </div>
     </aside>

@@ -5,6 +5,8 @@ import {
   deleteObject
 } from "firebase/storage";
 import { storage } from "./firebase";
+import { compressForUpload } from "./image";
+
 
 export interface UploadProgress {
   progress: number;
@@ -12,19 +14,27 @@ export interface UploadProgress {
   error?: Error;
 }
 
-export const uploadFile = (
+export const uploadFile = async (
   file: File, 
   path: string, 
   onProgress?: (progress: number) => void
 ): Promise<string> => {
+  const finalFile = await compressForUpload(file);
+
   return new Promise((resolve, reject) => {
     if (!storage) {
       reject(new Error("Firebase Storage not initialized"));
       return;
     }
 
+    // Since we compress the image locally, we might have converted PNG to WebP. 
+    // It's good practice to provide the metadata's contentType.
+    const metadata = {
+      contentType: finalFile.type
+    };
+
     const storageRef = ref(storage, path);
-    const uploadTask = uploadBytesResumable(storageRef, file);
+    const uploadTask = uploadBytesResumable(storageRef, finalFile, metadata);
 
     uploadTask.on(
       "state_changed",

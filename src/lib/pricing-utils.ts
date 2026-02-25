@@ -38,3 +38,12 @@ export function calculateMomentPrice(
 export function calculateBalanceDue(totalPrice: number, paidAmount: number): number {
   return Math.max(0, totalPrice - paidAmount);
 }
+
+/**
+ * Calculates the media upload limit for a moment.
+ */
+export function getMediaLimit(momentData: any): number {
+  const planLimit = momentData?.plan === "premium" ? 25 : 10;
+  const extraSlots = momentData?.selectedAddons?.includes("extraMedia") ? 25 : 0;
+  return planLimit + extraSlots;
+}

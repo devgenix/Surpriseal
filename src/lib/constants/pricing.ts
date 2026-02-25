@@ -34,7 +34,7 @@ export const PLANS: PlanDefinition[] = [
     features: [
       { title: "Structured reveal timeline", desc: "Build anticipation step-by-step." },
       { title: "Interactive celebration page", desc: "Confetti, animations, and love." },
-      { title: "Gallery (Up to 20 memories)", desc: "Upload photos and video messages." },
+      { title: "Gallery (Up to 10 memories)", desc: "Upload photos and video messages." },
       { title: "Background music selection", desc: "Set the perfect mood." },
       { title: "30-day hosting included", desc: "Live for a full month." },
     ],
@@ -51,7 +51,7 @@ export const PLANS: PlanDefinition[] = [
     features: [
       { title: "Everything in Base + All Add-ons" },
       { title: "Extended 1-Year Hosting" },
-      { title: "Unlimited Media Storage" },
+      { title: "Gallery (Up to 25 memories)" },
       { title: "Custom Personalized URL" },
       { title: "Whitelabel (No Branding)" },
       { title: "Scheduled Reveal Date" },
@@ -71,10 +71,10 @@ export const ADDONS: AddonDefinition[] = [
   },
   {
     id: "extraMedia",
-    title: "Unlimited Media",
-    description: "Upload unlimited photos and videos.",
+    title: "Extra Media",
+    description: "Add 25 extra photos and video messages.",
     price: { NGN: 2000, USD: 2 },
-    badge: "Unlimited",
+    badge: "+25 Media",
   },
   {
     id: "customUrl",

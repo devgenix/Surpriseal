@@ -11,7 +11,14 @@ import {
   ChevronRight, 
   ChevronLeft,
   X,
-  Music2
+  Music2,
+  Lock,
+  Camera,
+  HelpCircle,
+  RefreshCcw,
+  CheckCircle2,
+  AlertCircle,
+  Loader2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ScratchUtility, GalleryUtility, CompositionUtility } from "./utilities/RevealUtilities";
@@ -29,28 +36,47 @@ interface RevealEngineProps {
 }
 
 export default function RevealEngine({ moment, isPreview = false }: RevealEngineProps) {
-  const [currentSceneIndex, setCurrentSceneIndex] = useState(-1); // -1 for splash/intro
+  const [currentSceneIndex, setCurrentSceneIndex] = useState(-1); // -1 for splash, -2 for lock
+  const [isLocked, setIsLocked] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [unlockError, setUnlockError] = useState<string | null>(null);
+  const [inputValue, setInputValue] = useState("");
   const [isMuted, setIsMuted] = useState(false);
   const soundRef = useRef<Howl | null>(null);
   const lastMusicUrlRef = useRef<string>("");
   const ytPlayerRef = useRef<any>(null);
   const [isYtReady, setIsYtReady] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const scenes = useMemo(() => moment?.styleConfig?.scenes || [], [moment]);
   const style = moment?.styleConfig || {};
+  const currentScene = scenes[currentSceneIndex];
 
   // Auto-theme selection based on occasion if not manually set
+  // Init lock state
+  useEffect(() => {
+    if (moment?.unlockConfig?.type && moment.unlockConfig.type !== "none" && !isPreview) {
+      setIsLocked(true);
+      setCurrentSceneIndex(-2);
+    }
+  }, [moment, isPreview]);
+
+  // Hierarchy Theme Selection
   const activeThemeId = useMemo(() => {
+    const sceneTheme = currentScene?.config?.themeId;
+    const useGlobal = currentScene?.config?.useGlobalTheme !== false;
+    
+    if (!useGlobal && sceneTheme) return sceneTheme;
     if (style.themeId) return style.themeId;
+    
     const occasion = moment?.occasionId;
     if (occasion === "birthday") return "birthday-classic";
     if (occasion === "anniversary") return "anniversary-gold";
     if (occasion === "wedding") return "elegant-noir";
     if (occasion === "valentine") return "romantic-rose";
     return "surprise-neon";
-  }, [style.themeId, moment?.occasionId]);
-
-  const currentScene = scenes[currentSceneIndex];
+  }, [style.themeId, currentScene?.config, moment?.occasionId]);
 
   // Initialize YouTube API
   useEffect(() => {
@@ -70,8 +96,10 @@ export default function RevealEngine({ moment, isPreview = false }: RevealEngine
 
   // Consolidated Audio Management
   useEffect(() => {
-    const ytId = currentScene?.config?.ytMusicId || style.ytMusicId;
-    const sceneMusic = currentScene?.config?.musicUrl;
+    const useGlobalMusic = currentScene?.config?.useGlobalMusic !== false;
+    
+    const ytId = (!useGlobalMusic && currentScene?.config?.ytMusicId) || style.ytMusicId;
+    const sceneMusic = !useGlobalMusic ? currentScene?.config?.musicUrl : null;
     const projectMusic = style.musicUrl;
     const musicUrl = sceneMusic || projectMusic || (ytId ? null : "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3");
     

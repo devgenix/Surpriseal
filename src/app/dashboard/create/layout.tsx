@@ -7,7 +7,6 @@ import { useAuth } from "@/context/AuthContext";
 import {
   Settings,
   PersonStanding,
-  Edit3,
   CreditCard,
   Menu,
   ArrowLeft,
@@ -17,6 +16,7 @@ import {
   CheckCircle2,
   AlertCircle,
   Sparkles,
+  Sliders,
 } from "lucide-react";
 import { formatPrice } from "@/lib/currency";
 import { calculateMomentPrice } from "@/lib/pricing-utils";
@@ -26,7 +26,7 @@ import { Button } from "@/components/ui/button";
 const STEPS = [
   { id: "configure", title: "Configure", icon: Settings },
   { id: "recipient", title: "Recipient Info", icon: PersonStanding },
-  { id: "content", title: "Content Library", icon: Edit3 },
+  { id: "settings", title: "Reveal Settings", icon: Sliders },
   { id: "style", title: "Content Studio", icon: Sparkles },
   { id: "pay", title: "Review & Pay", icon: CreditCard },
 ];
@@ -66,7 +66,7 @@ function CreationLayoutInner({ children }: { children: React.ReactNode }) {
             (pathname.startsWith("/dashboard/create/") &&
               !pathname.includes("/", 18)))) ||
         (step.id === "recipient" && pathname.includes("/details")) ||
-        (step.id === "content" && pathname.includes("/content")) ||
+        (step.id === "settings" && pathname.includes("/settings")) ||
         (step.id === "style" && pathname.includes("/style")) ||
         (step.id === "pay" && pathname.includes("/pay"));
 
@@ -116,7 +116,7 @@ function CreationLayoutInner({ children }: { children: React.ReactNode }) {
 
         {/* ================= HEADER ================= */}
         <header className="shrink-0 z-40 bg-white/80 dark:bg-[#2a1d19]/80 backdrop-blur-md border-b border-[#e7d6d0] px-4 py-4">
-          <div className="max-w-4xl mx-auto flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="max-w-5xl mx-auto flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
 
             {/* MOBILE ROW */}
             <div className="flex items-center justify-between w-full lg:hidden">
@@ -211,7 +211,7 @@ function CreationLayoutInner({ children }: { children: React.ReactNode }) {
 
         {/* ================= FOOTER ================= */}
         <footer className="shrink-0 z-40 bg-white/95 dark:bg-[#211511]/95 backdrop-blur-md border-t border-[#e7d6d0] px-4 py-5">
-          <div className="max-w-4xl mx-auto">
+          <div className="max-w-5xl mx-auto">
 
             {/* ================= DESKTOP LAYOUT ================= */}
             <div className="hidden lg:flex items-center justify-between">
