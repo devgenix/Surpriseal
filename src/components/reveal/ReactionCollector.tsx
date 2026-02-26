@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { db, storage } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
-import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { 
   Keyboard, 
   Mic, 
@@ -164,8 +164,8 @@ export default function ReactionCollector({ momentId, isPreview, onActiveChange,
         const ext = mode === "camera" ? "webm" : "webm"; 
         const path = `public/reactions/${momentId}/${Date.now()}.${ext}`;
         const storageRef = ref(storage, path);
-        const uploadTask = await uploadBytesResumable(storageRef, mediaBlob, { contentType: mode === "camera" ? 'video/webm' : 'audio/webm' });
-        content = await getDownloadURL(uploadTask.ref);
+        const uploadResult = await uploadBytes(storageRef, mediaBlob, { contentType: mode === "camera" ? 'video/webm' : 'audio/webm' });
+        content = await getDownloadURL(uploadResult.ref);
       }
 
       const payload = {
@@ -185,7 +185,8 @@ export default function ReactionCollector({ momentId, isPreview, onActiveChange,
     } catch (err) {
       console.error("Reaction submission failed", err);
       setMode("idle");
-      alert("Failed to send reaction. Please try again.");
+      const errorMessage = err instanceof Error ? err.message : "Unknown error";
+      alert(`Failed to send reaction: ${errorMessage}`);
     }
   };
 

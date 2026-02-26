@@ -1,6 +1,11 @@
 import { adminDb } from "./firebase-admin";
 import { cache } from "react";
 
+// Simple module-level cache to deduplicate identical requests in the same tick 
+// (Useful when Next.js `cache()` doesn't perfectly span generateMetadata and the page)
+const requestCache = new Map<string, Promise<MomentData | null>>();
+const CACHE_TTL_MS = 10000; // 10 seconds
+
 export interface MomentData {
   id: string;
   recipientName?: string;
@@ -30,10 +35,14 @@ export const getMomentByIdOrSlug = cache(async function getMomentByIdOrSlug(idOr
     return null;
   }
 
+  if (requestCache.has(idOrSlug)) {
+    return requestCache.get(idOrSlug)!;
+  }
+
   try {
     let timeoutId: NodeJS.Timeout;
     const timeoutPromise = new Promise((_, reject) => {
-      timeoutId = setTimeout(() => reject(new Error("Firestore query timed out")), 4500);
+      timeoutId = setTimeout(() => reject(new Error("Firestore query timed out")), 10000);
     });
 
     const performLookup = async () => {
@@ -66,7 +75,17 @@ export const getMomentByIdOrSlug = cache(async function getMomentByIdOrSlug(idOr
       }
     };
 
-    return await Promise.race([performLookup(), timeoutPromise]) as MomentData | null;
+    const promise = Promise.race([performLookup(), timeoutPromise]) as Promise<MomentData | null>;
+    
+    // Store promise in cache
+    requestCache.set(idOrSlug, promise);
+    
+    // Auto-clear cache after TTL to prevent stale data
+    setTimeout(() => {
+      requestCache.delete(idOrSlug);
+    }, CACHE_TTL_MS);
+
+    return await promise;
   } catch (error) {
     console.error("Error fetching moment on server:", error);
     return null;

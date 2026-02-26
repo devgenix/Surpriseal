@@ -171,19 +171,22 @@ export default function RevealEngine({ moment, isPreview = false, activeSceneInd
     const isFinal = currentSceneIndex === scenes.length;
     
     // Determine which music to use for the CURRENT state
-    const useGlobalMusic = isSplash 
+    const prefersGlobal = isSplash 
       ? style.splashConfig?.useGlobalMusic !== false 
       : (isFinal || currentScene?.config?.useGlobalMusic !== false);
+
+    const useGlobalMusic = prefersGlobal && !isReacting;
+    const useSceneMusic = !prefersGlobal && !isReacting;
 
     // Track Metadata
     const globalYtId = style.ytMusicId;
     const globalUrl = style.musicUrl;
     
-    const sceneYtId = !useGlobalMusic ? (isSplash ? style.splashConfig?.ytMusicId : currentScene?.config?.ytMusicId) : null;
-    const sceneUrl = !useGlobalMusic ? (isSplash ? style.splashConfig?.musicUrl : currentScene?.config?.musicUrl) : null;
+    const sceneYtId = !prefersGlobal ? (isSplash ? style.splashConfig?.ytMusicId : currentScene?.config?.ytMusicId) : null;
+    const sceneUrl = !prefersGlobal ? (isSplash ? style.splashConfig?.musicUrl : currentScene?.config?.musicUrl) : null;
     
-    const sceneStart = !useGlobalMusic ? (isSplash ? style.splashConfig?.audioStart || 0 : currentScene?.config?.audioStart || 0) : 0;
-    const sceneDuration = !useGlobalMusic ? (isSplash ? style.splashConfig?.audioDuration || 0 : currentScene?.config?.audioDuration || 0) : 0;
+    const sceneStart = !prefersGlobal ? (isSplash ? style.splashConfig?.audioStart || 0 : currentScene?.config?.audioStart || 0) : 0;
+    const sceneDuration = !prefersGlobal ? (isSplash ? style.splashConfig?.audioDuration || 0 : currentScene?.config?.audioDuration || 0) : 0;
 
     // --- 1. GLOBAL AUDIO MANAGEMENT ---
     if (globalYtId) {
@@ -197,6 +200,7 @@ export default function RevealEngine({ moment, isPreview = false, activeSceneInd
             }
           }
         });
+        lastGlobalMusicRef.current = globalYtId;
       } else if (lastGlobalMusicRef.current !== globalYtId) {
         if (typeof globalYtPlayerRef.current.loadVideoById === 'function') {
           globalYtPlayerRef.current.loadVideoById(globalYtId);
@@ -234,6 +238,7 @@ export default function RevealEngine({ moment, isPreview = false, activeSceneInd
              }
           }
          });
+         lastSceneMusicRef.current = sceneYtId;
       } else if (lastSceneMusicRef.current !== sceneYtId) {
          if (typeof sceneYtPlayerRef.current.loadVideoById === 'function') {
            sceneYtPlayerRef.current.loadVideoById({ videoId: sceneYtId, startSeconds: sceneStart });
@@ -244,19 +249,20 @@ export default function RevealEngine({ moment, isPreview = false, activeSceneInd
       // Vol Control & State
       const player = sceneYtPlayerRef.current;
       if (typeof player?.setVolume === 'function') {
-        player.setVolume(isMuted ? 0 : (!useGlobalMusic ? 50 : 0));
-        if (!useGlobalMusic && !isPreview && !isMuted) player.playVideo();
-        else if (useGlobalMusic) player.pauseVideo();
+        player.setVolume(isMuted ? 0 : (useSceneMusic ? 50 : 0));
+        if (useSceneMusic && !isPreview && !isMuted) player.playVideo();
+        else if (!useSceneMusic) player.pauseVideo();
       }
     } else if (sceneUrl) {
        if (!sceneSoundRef.current || lastSceneMusicRef.current !== sceneUrl) {
          if (sceneSoundRef.current) sceneSoundRef.current.unload();
          sceneSoundRef.current = new Howl({ src: [sceneUrl], loop: true, volume: 0.5 });
+         if (sceneStart > 0) sceneSoundRef.current.seek(sceneStart);
          lastSceneMusicRef.current = sceneUrl;
        }
-       sceneSoundRef.current.mute(isMuted);
-       if (sceneStart > 0) sceneSoundRef.current.seek(sceneStart);
-       if (!isPreview && !isMuted) sceneSoundRef.current.play();
+       sceneSoundRef.current.mute(isMuted || !useSceneMusic);
+       if (useSceneMusic && !isPreview && !isMuted) sceneSoundRef.current.play();
+       else if (!useSceneMusic) sceneSoundRef.current.pause();
     } else {
       if (sceneYtPlayerRef.current) sceneYtPlayerRef.current.stopVideo();
       if (sceneSoundRef.current) sceneSoundRef.current.stop();
@@ -275,16 +281,19 @@ export default function RevealEngine({ moment, isPreview = false, activeSceneInd
     }, 500);
 
     return () => clearInterval(loopInterval);
-  }, [currentSceneIndex, style, isYtReady, isMuted, isPreview]);
+  }, [currentSceneIndex, style, isYtReady, isMuted, isPreview, isReacting]);
 
   // Audio Interaction Handler
   const startAudioOnInteraction = useCallback(() => {
-    if (isMuted) return;
+    // Force set isMuted to false if we're calling this from an interaction
+    setIsMuted(false);
+    
+    // Explicitly trigger play for all players to catch the user interaction event
     if (globalYtPlayerRef.current?.playVideo) globalYtPlayerRef.current.playVideo();
     if (globalSoundRef.current) globalSoundRef.current.play();
     if (sceneYtPlayerRef.current?.playVideo) sceneYtPlayerRef.current.playVideo();
     if (sceneSoundRef.current) sceneSoundRef.current.play();
-  }, [isMuted]);
+  }, []);
 
   const nextScene = useCallback(() => {
     // Start music on interaction
@@ -319,12 +328,7 @@ export default function RevealEngine({ moment, isPreview = false, activeSceneInd
   return (
     <div 
       className="relative w-full h-full bg-black overflow-hidden font-display select-none"
-      onClick={() => {
-        if (isMuted) {
-          setIsMuted(false);
-          startAudioOnInteraction();
-        }
-      }}
+      onClick={startAudioOnInteraction}
     >
       
       {/* Background Layer */}
@@ -508,7 +512,7 @@ export default function RevealEngine({ moment, isPreview = false, activeSceneInd
       </AnimatePresence>
 
       {/* Navigation Controls */}
-      {currentSceneIndex >= 0 && (
+      {currentSceneIndex >= 0 && currentSceneIndex < scenes.length && (
         <div className="absolute bottom-10 inset-x-0 flex items-center justify-center gap-6 z-50">
            <button 
              onClick={prevScene}
@@ -530,10 +534,10 @@ export default function RevealEngine({ moment, isPreview = false, activeSceneInd
              </button>
            ) : (
              <button 
-                onClick={() => isPreview ? null : window.location.reload()}
-                className="px-6 h-12 rounded-full bg-green-500 text-white font-black uppercase tracking-widest text-xs shadow-lg shadow-green-500/20 active:scale-95 transition-all"
+                onClick={nextScene}
+                className="px-6 h-12 rounded-full bg-green-500 text-white font-black uppercase tracking-widest text-xs shadow-lg shadow-green-500/20 active:scale-95 transition-all flex items-center gap-1"
              >
-               Replay
+               Finish <ChevronRight size={16} />
              </button>
            )}
         </div>

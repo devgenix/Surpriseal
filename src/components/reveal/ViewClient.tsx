@@ -44,7 +44,7 @@ export default function ViewClient({ initialMomentData, momentId }: ViewClientPr
     const unsubscribe = onSnapshot(doc(db, "moments", momentId), (doc) => {
       if (doc.exists()) {
         const data = doc.data();
-        setMomentData(JSON.parse(JSON.stringify(data)));
+        setMomentData(JSON.parse(JSON.stringify({ ...data, id: doc.id })));
       }
     });
 
