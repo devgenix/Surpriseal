@@ -3,10 +3,11 @@
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { db } from "@/lib/firebase";
-import { doc, updateDoc, increment } from "firebase/firestore";
+import { doc, updateDoc, increment, onSnapshot } from "firebase/firestore";
 import { Loader2, Gift } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import RevealEngine from "@/components/reveal/RevealEngine";
+import { prepareMomentForEngine } from "./utilities/RevealEngineUtils";
 
 type RevealStep = "countdown" | "engine";
 
@@ -17,11 +18,13 @@ interface ViewClientProps {
 
 export default function ViewClient({ initialMomentData, momentId }: ViewClientProps) {
   const router = useRouter();
+  const [momentData, setMomentData] = useState(initialMomentData);
+  
   // Initialize step and countdown
   const [currentStep, setCurrentStep] = useState<RevealStep>(() => {
-    if (initialMomentData.scheduledReveal && initialMomentData.revealTime) {
+    if (momentData.scheduledReveal && momentData.revealTime) {
       let revealDate: number;
-      const rt = initialMomentData.revealTime;
+      const rt = momentData.revealTime;
       if (rt.toDate) revealDate = rt.toDate().getTime();
       else if (rt._seconds) revealDate = rt._seconds * 1000;
       else revealDate = new Date(rt).getTime();
@@ -34,11 +37,25 @@ export default function ViewClient({ initialMomentData, momentId }: ViewClientPr
   const [timeLeft, setTimeLeft] = useState<number>(0);
   const [hasIncremented, setHasIncremented] = useState(false);
 
+  // Live Listener for Real-time Updates from Content Studio
+  useEffect(() => {
+    if (!db || !momentId) return;
+    
+    const unsubscribe = onSnapshot(doc(db, "moments", momentId), (doc) => {
+      if (doc.exists()) {
+        const data = doc.data();
+        setMomentData(JSON.parse(JSON.stringify(data)));
+      }
+    });
+
+    return () => unsubscribe();
+  }, [momentId]);
+
   // Sync timeLeft if we start in countdown
   useEffect(() => {
-    if (currentStep === "countdown" && initialMomentData.revealTime) {
+    if (currentStep === "countdown" && momentData.revealTime) {
       let revealDate: number;
-      const rt = initialMomentData.revealTime;
+      const rt = momentData.revealTime;
       if (rt.toDate) revealDate = rt.toDate().getTime();
       else if (rt._seconds) revealDate = rt._seconds * 1000;
       else revealDate = new Date(rt).getTime();
@@ -47,7 +64,7 @@ export default function ViewClient({ initialMomentData, momentId }: ViewClientPr
       if (diff > 0) setTimeLeft(diff);
       else setCurrentStep("engine");
     }
-  }, [currentStep, initialMomentData.revealTime]);
+  }, [currentStep, momentData.revealTime]);
 
   // View Increment
   useEffect(() => {
@@ -88,27 +105,16 @@ export default function ViewClient({ initialMomentData, momentId }: ViewClientPr
     return `${days}d ${hours}h ${minutes}m ${seconds}s`;
   };
 
-  const recipient = initialMomentData.recipientName || "Someone Special";
-  const showBranding = initialMomentData.plan !== "premium" && !initialMomentData.paidAddons?.includes("removeBranding");
+  const recipient = momentData.recipientName || "Someone Special";
+  const showBranding = momentData.plan !== "premium" && !momentData.paidAddons?.includes("removeBranding");
 
-  // Refine moment for the engine - memoized to prevent re-renders when other state changes
-  const engineMoment = useMemo(() => ({
-    ...initialMomentData,
-    styleConfig: {
-      ...initialMomentData.styleConfig,
-      scenes: initialMomentData.styleConfig?.scenes?.length > 0 
-        ? initialMomentData.styleConfig.scenes 
-        : [{ id: "1", type: "scratch", config: { coverColor: "#e64c19", isFullScreen: false } }]
-    },
-    recipientName: initialMomentData.recipientName || "Someone Special",
-    senderName: initialMomentData.senderName || "",
-    isAnonymous: initialMomentData.isAnonymous || false,
-    personalMessage: initialMomentData.personalMessage || "",
-    media: initialMomentData.media || []
-  }), [initialMomentData]);
+  // Refine moment for the engine - unified via shared utility
+  const engineMoment = useMemo(() => prepareMomentForEngine(momentData), [momentData]);
+
+  if (!engineMoment) return null;
 
   return (
-    <div className="flex h-[100dvh] w-full bg-black overflow-hidden relative font-display">
+    <div className="flex h-[100dvh] w-full bg-black overflow-hidden relative font-display text-white">
       <AnimatePresence mode="wait">
         
         {/* Step: Countdown */}
@@ -140,17 +146,6 @@ export default function ViewClient({ initialMomentData, momentId }: ViewClientPr
             className="h-full w-full"
           >
             <RevealEngine moment={engineMoment} />
-            
-            {showBranding && (
-              <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-[100] w-full max-w-xs transition-transform hover:scale-105 active:scale-95">
-                <button 
-                  onClick={() => router.push("/")}
-                  className="w-full py-4 bg-white/10 backdrop-blur-xl border border-white/20 text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-2xl"
-                >
-                  Create your own 🎁
-                </button>
-              </div>
-            )}
           </motion.div>
         )}
 
@@ -158,3 +153,4 @@ export default function ViewClient({ initialMomentData, momentId }: ViewClientPr
     </div>
   );
 }
+

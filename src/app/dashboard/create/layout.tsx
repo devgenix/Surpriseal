@@ -26,8 +26,8 @@ import { Button } from "@/components/ui/button";
 const STEPS = [
   { id: "configure", title: "Configure", icon: Settings },
   { id: "recipient", title: "Recipient Info", icon: PersonStanding },
-  { id: "settings", title: "Reveal Settings", icon: Sliders },
   { id: "style", title: "Content Studio", icon: Sparkles },
+  { id: "settings", title: "Security & Sharing", icon: Sliders },
   { id: "pay", title: "Review & Pay", icon: CreditCard },
 ];
 
@@ -115,8 +115,8 @@ function CreationLayoutInner({ children }: { children: React.ReactNode }) {
       <main className="flex-1 flex flex-col h-full overflow-hidden relative">
 
         {/* ================= HEADER ================= */}
-        <header className="shrink-0 z-40 bg-white/80 dark:bg-[#2a1d19]/80 backdrop-blur-md border-b border-[#e7d6d0] px-4 py-4">
-          <div className="max-w-5xl mx-auto flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <header className="shrink-0 z-40 bg-white/80 dark:bg-[#2a1d19]/80 backdrop-blur-md border-b border-[#e7d6d0] px-4 h-[72px] flex flex-col justify-center">
+          <div className="w-full max-w-4xl mx-auto flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between px-2">
 
             {/* MOBILE ROW */}
             <div className="flex items-center justify-between w-full lg:hidden">
@@ -211,7 +211,7 @@ function CreationLayoutInner({ children }: { children: React.ReactNode }) {
 
         {/* ================= FOOTER ================= */}
         <footer className="shrink-0 z-40 bg-white/95 dark:bg-[#211511]/95 backdrop-blur-md border-t border-[#e7d6d0] px-4 py-5">
-          <div className="max-w-5xl mx-auto">
+          <div className="max-w-4xl mx-auto">
 
             {/* ================= DESKTOP LAYOUT ================= */}
             <div className="hidden lg:flex items-center justify-between">

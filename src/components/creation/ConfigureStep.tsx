@@ -28,7 +28,7 @@ interface ConfigureStepProps {
 
 export default function ConfigureStep({ draftId: initialDraftId }: ConfigureStepProps) {
   const router = useRouter();
-  const { momentData, setMomentData, setOnContinue, setSaving, setCanContinue } = useCreation();
+  const { momentData, setMomentData, setOnContinue, setOnSave, setSaving, setCanContinue } = useCreation();
   const [user, setUser] = useState<User | null>(null);
   const [loadingAuth, setLoadingAuth] = useState(true);
   const { currency } = useCurrency();
@@ -111,13 +111,13 @@ export default function ConfigureStep({ draftId: initialDraftId }: ConfigureStep
     }));
   }, [selectedPlanId, selectedAddonIds, totalPrice, setMomentData, fetchingDraft]);
 
-  const handleContinue = useCallback(async () => {
+  const saveDraft = useCallback(async () => {
     if (!user) {
       alert("Please sign in to continue!");
-      return;
+      return null;
     }
 
-    if (!db) return;
+    if (!db) return null;
 
     setSaving(true);
 
@@ -128,42 +128,55 @@ export default function ConfigureStep({ draftId: initialDraftId }: ConfigureStep
         currency,
         basePrice: selectedPlan.price[currency],
         selectedAddons: (selectedPlanId === "premium") ? ADDONS.map(a => a.id) : selectedAddonIds,
-        totalPrice, // We still save it for quick display, but UI will recalculate if currency changes
+        totalPrice, 
         status: momentData?.status || "Draft",
-        lastStepId: "recipient",
-        completedSteps: Array.from(new Set([...(momentData?.completedSteps || []), "configure"])),
         updatedAt: serverTimestamp(),
       };
 
       let finalDraftId = localDraftId;
 
       if (finalDraftId) {
-        // Update existing in moments collection
         await updateDoc(doc(db, "moments", finalDraftId), draftData);
       } else {
-        // Create new in moments collection
         const docRef = await addDoc(collection(db, "moments"), {
           ...draftData,
           createdAt: serverTimestamp(),
         });
         finalDraftId = docRef.id;
+        setLocalDraftId(finalDraftId);
       }
-      
-      router.push(`/dashboard/create/${finalDraftId}/details`);
+      return finalDraftId;
     } catch (error: any) {
       console.error("Error saving draft:", error);
       alert("Failed to save. Please try again.");
+      return null;
     } finally {
        setSaving(false);
     }
-  }, [user, db, selectedPlanId, currency, selectedPlan, selectedAddonIds, totalPrice, localDraftId, router, setSaving]);
+  }, [user, db, selectedPlanId, currency, selectedPlan, selectedAddonIds, totalPrice, localDraftId, setSaving, momentData, setLocalDraftId]);
+
+  const handleContinue = useCallback(async () => {
+    const finalDraftId = await saveDraft();
+    if (finalDraftId) {
+      // Update step progress on continue
+      await updateDoc(doc(db!, "moments", finalDraftId), {
+        lastStepId: "recipient",
+        completedSteps: Array.from(new Set([...(momentData?.completedSteps || []), "configure"])),
+      });
+      router.push(`/dashboard/create/${finalDraftId}/details`);
+    }
+  }, [saveDraft, db, momentData, router]);
 
   // Register action with layout
   useEffect(() => {
     setOnContinue(() => handleContinue);
+    setOnSave(() => async () => { await saveDraft(); });
     setCanContinue(true); // Step 1 is always valid by default
-    return () => setOnContinue(null);
-  }, [handleContinue, setOnContinue, setCanContinue]);
+    return () => {
+      setOnContinue(null);
+      setOnSave(null);
+    };
+  }, [handleContinue, saveDraft, setOnContinue, setOnSave, setCanContinue]);
 
   if (loadingAuth || fetchingDraft) {
     return (

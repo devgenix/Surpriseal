@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { useRouter, useParams } from "next/navigation";
-import { db, auth } from "@/lib/firebase";
-import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
-import { onAuthStateChanged, User } from "firebase/auth";
 import { Loader2 } from "lucide-react";
+import { db, auth } from "@/lib/firebase";
+import { useRouter, useParams } from "next/navigation";
+import { onAuthStateChanged, User } from "firebase/auth";
 import { useCreation } from "@/context/CreationContext";
+import { useState, useEffect, useCallback } from "react";
 import RevealStudio from "@/components/creation/RevealStudio";
+import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 
 export default function CreationStylePage() {
   const router = useRouter();
@@ -25,8 +25,8 @@ export default function CreationStylePage() {
     setOnContinue,
   } = useCreation();
 
-  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(null);
 
   // Auth check
   useEffect(() => {
@@ -61,7 +61,7 @@ export default function CreationStylePage() {
     if (user) loadDraft();
   }, [draftId, user, router, setMomentData]);
 
-  const saveDraft = useCallback(async (updates: any) => {
+  const saveDraft = useCallback(async (updates: any = {}) => {
     if (!draftId) return;
     setSaving(true);
     setSaveError(false);
@@ -107,16 +107,20 @@ export default function CreationStylePage() {
     if (!draftId) return;
     const docRef = doc(db!, "moments", draftId);
     await updateDoc(docRef, { 
-      lastStepId: "pay",
+      lastStepId: "settings",
       completedSteps: Array.from(new Set([...(momentData?.completedSteps || []), "style"]))
     });
-    router.push(`/dashboard/create/${draftId}/pay`);
+    router.push(`/dashboard/create/${draftId}/settings`);
   }, [draftId, router, momentData]);
 
   useEffect(() => {
     setOnContinue(() => onContinueAction);
-    return () => setOnContinue(null);
-  }, [onContinueAction, setOnContinue]);
+    setOnSave(() => async () => { await saveDraft(); });
+    return () => {
+      setOnContinue(null);
+      setOnSave(null);
+    };
+  }, [onContinueAction, saveDraft, setOnContinue, setOnSave]);
 
   if (loading) {
     return (

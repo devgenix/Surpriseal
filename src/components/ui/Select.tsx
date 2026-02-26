@@ -109,7 +109,7 @@ export function Select({
               animate={{ opacity: 1, y: 4, scale: 1 }}
               exit={{ opacity: 0, y: -10, scale: 0.95 }}
               transition={{ duration: 0.2, ease: "easeOut" }}
-              className="absolute z-[100] w-full mt-1 bg-surface border border-border rounded-lg shadow-2xl max-h-60 overflow-auto py-2 outline-none"
+              className="absolute z-[9999] w-full mt-1 bg-surface border border-border rounded-lg shadow-2xl max-h-60 overflow-auto py-2 outline-none"
             >
               {options.map((option) => (
                 <li

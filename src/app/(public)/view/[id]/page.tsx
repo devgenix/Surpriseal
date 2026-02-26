@@ -41,14 +41,30 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function PublicViewPage({ params }: Props) {
   const { id } = await params;
+  console.log("Rendering PublicViewPage for ID:", id);
+  
   const moment = await getMomentByIdOrSlug(id);
 
   if (!moment) {
+    console.warn("Moment NOT FOUND in PublicViewPage, redirecting to home.");
     redirect("/");
   }
 
-  // Serialize Firestore timestamps or other non-plain objects if necessary
-  const serializedMoment = JSON.parse(JSON.stringify(moment));
+  // Improved serialization to handle Firestore Timestamps and nulls
+  const serializeData = (data: any) => {
+    if (!data) return data;
+    const stringified = JSON.stringify(data, (key, value) => {
+      // Convert Firestore Timestamps to ISO strings
+      if (value && typeof value === 'object' && ('_seconds' in value || 'seconds' in value)) {
+        const date = value.toDate ? value.toDate() : new Date((value.seconds || value._seconds) * 1000);
+        return date.toISOString();
+      }
+      return value;
+    });
+    return JSON.parse(stringified);
+  };
+
+  const serializedMoment = serializeData(moment);
 
   return <ViewClient initialMomentData={serializedMoment} momentId={moment.id} />;
 }

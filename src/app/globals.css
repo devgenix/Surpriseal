@@ -85,3 +85,25 @@
     height: 100dvh;
   }
 }
+
+/* Rich Text Utilities */
+.rich-text-container img {
+  @apply rounded-xl shadow-lg my-4 max-w-full h-auto mx-auto block;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.rich-text-container p {
+  @apply mb-4 leading-relaxed;
+}
+
+.rich-text-container strong {
+  @apply font-black;
+}
+
+/* Font Families */
+.font-handwriting { font-family: 'Dancing Script', cursive; }
+.font-classic { font-family: 'Playfair Display', serif; }
+.font-modern { font-family: 'Outfit', sans-serif; }
+.font-artisan { font-family: 'Space Grotesk', sans-serif; }
+.font-elegant { font-family: 'Cormorant Garamond', serif; }
+.font-cursive { font-family: 'Homemade Apple', cursive; }
