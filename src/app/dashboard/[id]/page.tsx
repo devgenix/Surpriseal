@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { db, auth } from "@/lib/firebase";
-import { doc, getDoc, deleteDoc } from "firebase/firestore";
+import { doc, getDoc, deleteDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { 
   ArrowLeft, 
@@ -19,7 +19,11 @@ import {
   CheckCircle2,
   Lock,
   Globe,
-  Settings
+  Settings,
+  MessageCircleHeart,
+  Play,
+  Video,
+  Mic
 } from "lucide-react";
 import Link from "next/link";
 import Container from "@/components/ui/Container";
@@ -33,6 +37,7 @@ export default function MomentDetailPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [copying, setCopying] = useState(false);
+  const [reactions, setReactions] = useState<any[]>([]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (val) => {
@@ -53,6 +58,14 @@ export default function MomentDetailPage() {
         
         if (docSnap.exists()) {
           setMoment({ id: docSnap.id, ...docSnap.data() });
+
+          const q = query(collection(db, "reactions"), where("momentId", "==", id as string));
+          const reactionsSnap = await getDocs(q);
+          const rawReactions = reactionsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+          // Sort client-side to avoid composite index requirements
+          rawReactions.sort((a: any, b: any) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
+          setReactions(rawReactions);
+          
         } else {
           router.push("/dashboard");
         }
@@ -254,6 +267,66 @@ export default function MomentDetailPage() {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Reactions Section */}
+        <div className="bg-white dark:bg-surface-dark rounded-xl border border-[#f3eae7] dark:border-white/5 overflow-hidden shadow-sm">
+           <div className="p-8 border-b border-[#f3eae7] dark:border-white/5 flex items-center justify-between">
+              <h3 className="text-xs font-black text-[#1b110e] dark:text-white uppercase tracking-widest flex items-center gap-2">
+                <MessageCircleHeart size={18} className="text-pink-500" />
+                Audience Reactions
+              </h3>
+              <div className="px-3 py-1 rounded-full bg-pink-500/10 text-pink-500 text-[10px] font-black uppercase tracking-widest">
+                {reactions.length} total
+              </div>
+           </div>
+
+           <div className="p-8">
+             {reactions.length === 0 ? (
+               <div className="text-center py-12">
+                  <div className="size-16 rounded-full bg-black/[0.02] dark:bg-white/5 flex items-center justify-center mx-auto mb-4 text-text-muted">
+                     <MessageCircleHeart size={24} />
+                  </div>
+                  <p className="text-sm font-bold text-[#1b110e] dark:text-white mb-2">No reactions yet</p>
+                  <p className="text-xs font-medium text-text-muted max-w-sm mx-auto">
+                    When someone viewing your moment leaves a voice note, video, or message, it will appear here securely.
+                  </p>
+               </div>
+             ) : (
+               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                 {reactions.map((reaction) => (
+                   <div key={reaction.id} className="p-6 rounded-2xl border border-[#f3eae7] dark:border-white/5 bg-[#fafafa] dark:bg-black/20 flex flex-col items-start gap-4 shadow-sm hover:shadow-md transition-shadow">
+                     <div className="flex items-center justify-between w-full">
+                       <div className="flex items-center gap-2">
+                         <span className="text-2xl">{reaction.emoji || "💬"}</span>
+                         <span className="text-[10px] font-black uppercase tracking-widest text-text-muted">
+                           {reaction.createdAt ? new Date(reaction.createdAt.toDate()).toLocaleDateString() : 'Just now'}
+                         </span>
+                       </div>
+                       {reaction.type === 'voice' && <Mic size={14} className="text-blue-500" />}
+                       {reaction.type === 'camera' && <Video size={14} className="text-purple-500" />}
+                     </div>
+                     
+                     {reaction.type === 'text' && (
+                       <p className="text-sm font-medium text-[#1b110e] dark:text-white leading-relaxed italic">"{reaction.content}"</p>
+                     )}
+
+                     {reaction.type === 'voice' && (
+                       <div className="w-full">
+                         <audio src={reaction.content} controls className="w-full h-8 outline-none" />
+                       </div>
+                     )}
+
+                     {reaction.type === 'camera' && (
+                       <div className="w-full aspect-[3/4] rounded-xl overflow-hidden bg-black relative border border-border">
+                         <video src={reaction.content} controls className="w-full h-full object-cover" />
+                       </div>
+                     )}
+                   </div>
+                 ))}
+               </div>
+             )}
+           </div>
         </div>
       </div>
 

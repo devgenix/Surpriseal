@@ -20,10 +20,15 @@ import {
   CheckCircle2,
   AlertCircle,
   Loader2,
-  Gift
+  Gift,
+  Play,
+  Pause,
+  Maximize2,
+  Minimize2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ScratchUtility, GalleryUtility, CompositionUtility } from "./utilities/RevealUtilities";
+import ReactionCollector from "./ReactionCollector";
 
 interface Scene {
   id: string;
@@ -96,6 +101,7 @@ function Confetti3D({ count = 100, colors = ["#ff0000", "#00ff00", "#0000ff"] })
 export default function RevealEngine({ moment, isPreview = false, activeSceneIndex }: RevealEngineProps) {
   const [currentSceneIndex, setCurrentSceneIndex] = useState(activeSceneIndex ?? -1); // -1 for splash
   const [isLocked, setIsLocked] = useState(false);
+  const [isReacting, setIsReacting] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [unlockError, setUnlockError] = useState<string | null>(null);
   const [inputValue, setInputValue] = useState("");
@@ -420,41 +426,66 @@ export default function RevealEngine({ moment, isPreview = false, activeSceneInd
                  animate={{ opacity: 1, y: 0 }}
                  className="max-w-md w-full"
                >
-                  <div className="size-20 bg-primary/20 rounded-3xl flex items-center justify-center mx-auto mb-8 border border-primary/30">
-                    <Gift className="text-primary" size={32} />
-                  </div>
-                  
-                  {showBranding ? (
-                    <>
-                      <h2 className="text-3xl font-black text-white uppercase tracking-tighter mb-4 leading-tight">
-                        This beautiful surprise was created with Surpriseal
-                      </h2>
-                      <p className="text-white/40 font-bold uppercase tracking-widest text-[10px] mb-12">
-                        Elevate your gifting experience 🎁
-                      </p>
-                      
-                      <button 
-                        onClick={() => window.open("/", "_blank")}
-                        className="w-full py-5 bg-primary text-white rounded-2xl font-black uppercase tracking-[0.2em] text-xs shadow-2xl shadow-primary/40 hover:scale-105 active:scale-95 transition-all"
+                  <AnimatePresence mode="popLayout">
+                    {!isReacting && (
+                      <motion.div
+                        key="end-content"
+                        initial={{ opacity: 0, scale: 0.9, height: 0 }}
+                        animate={{ opacity: 1, scale: 1, height: 'auto' }}
+                        exit={{ opacity: 0, scale: 0.9, height: 0, overflow: 'hidden' }}
+                        className="flex flex-col items-center"
                       >
-                        Create your own surprise
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <h2 className="text-3xl font-black text-white uppercase tracking-tighter mb-4 leading-tight">
-                        The End of this Moment
-                      </h2>
-                      <p className="text-white/40 font-bold uppercase tracking-widest text-[10px] mb-12">
-                        We hope you enjoyed this surprise!
-                      </p>
-                      <button 
-                        onClick={() => setCurrentSceneIndex(-1)}
-                        className="w-full py-5 bg-white/10 text-white border border-white/20 rounded-2xl font-black uppercase tracking-[0.2em] text-xs hover:bg-white/20 active:scale-95 transition-all"
-                      >
-                        Watch Again
-                      </button>
-                    </>
+                         <div className="size-20 bg-primary/20 rounded-3xl flex items-center justify-center mx-auto mb-8 border border-primary/30">
+                           <Gift className="text-primary" size={32} />
+                         </div>
+                         
+                         {showBranding ? (
+                           <>
+                             <h2 className="text-3xl font-black text-white uppercase tracking-tighter mb-4 leading-tight">
+                               This beautiful surprise was created with Surpriseal
+                             </h2>
+                             <p className="text-white/40 font-bold uppercase tracking-widest text-[10px] mb-12">
+                               Elevate your gifting experience 🎁
+                             </p>
+                             
+                             <button 
+                               onClick={() => window.open("/", "_blank")}
+                               className="w-full py-5 bg-primary text-white rounded-2xl font-black uppercase tracking-[0.2em] text-xs shadow-2xl shadow-primary/40 hover:scale-105 active:scale-95 transition-all"
+                             >
+                               Create your own surprise
+                             </button>
+                           </>
+                         ) : (
+                           <>
+                             <h2 className="text-3xl font-black text-white uppercase tracking-tighter mb-4 leading-tight">
+                               The End of this Moment
+                             </h2>
+                             <p className="text-white/40 font-bold uppercase tracking-widest text-[10px] mb-12">
+                               We hope you enjoyed this surprise!
+                             </p>
+                             {moment?.styleConfig?.showReactions === false && (
+                               <button 
+                                 onClick={() => setCurrentSceneIndex(-1)}
+                                 className="w-full py-5 bg-white/10 text-white border border-white/20 rounded-2xl font-black uppercase tracking-[0.2em] text-xs hover:bg-white/20 active:scale-95 transition-all mb-8"
+                               >
+                                 Watch Again
+                               </button>
+                             )}
+                           </>
+                         )}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  {(!showBranding && moment?.styleConfig?.showReactions !== false) && (
+                     <motion.div layout className="animate-in fade-in slide-in-from-bottom-8 duration-700 delay-500 fill-mode-both w-full">
+                       <ReactionCollector 
+                         momentId={moment?.id} 
+                         isPreview={isPreview} 
+                         onActiveChange={setIsReacting} 
+                         onWatchAgain={() => setCurrentSceneIndex(-1)}
+                       />
+                     </motion.div>
                   )}
                </motion.div>
              </motion.div>

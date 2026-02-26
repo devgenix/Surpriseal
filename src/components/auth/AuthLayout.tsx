@@ -49,8 +49,8 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
           >
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent z-10"></div>
             <div 
-              className={`h-full w-full bg-cover bg-center transition-transform duration-[10s] ease-linear ${index === currentSlide ? 'scale-110' : 'scale-100'}`} 
-              style={{ backgroundImage: `url('${slide.image}')` }}
+              className={`h-full w-full bg-cover bg-center transition-transform ease-linear ${index === currentSlide ? 'scale-110' : 'scale-100'}`} 
+              style={{ backgroundImage: `url('${slide.image}')`, transitionDuration: '10s' }}
             ></div>
           </div>
         ))}

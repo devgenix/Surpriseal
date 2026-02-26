@@ -12,6 +12,7 @@ import {
   Plus,
   Trash2,
   Heart,
+  MessageCircleHeart,
   Check,
   MoveUp,
   MoveDown,
@@ -107,7 +108,17 @@ export default function RevealStudio({ draftId, onSave }: RevealStudioProps) {
     }, 0);
     
     const newTotal = basePrice + addonsPrice;
-    await onSave({ selectedAddons: newAddons, totalPrice: newTotal });
+    
+    // Safely disable Reaction Collector if removing Branding Removal
+    if (!isAdding && addonId === "removeBranding" && momentData?.styleConfig) {
+      await onSave({ 
+        selectedAddons: newAddons, 
+        totalPrice: newTotal,
+        styleConfig: { ...momentData.styleConfig, showReactions: false }
+      });
+    } else {
+      await onSave({ selectedAddons: newAddons, totalPrice: newTotal });
+    }
   };
 
   // YouTube Music Search State
@@ -291,7 +302,8 @@ export default function RevealStudio({ draftId, onSave }: RevealStudioProps) {
         const file = files[0];
         const optimized = await optimizeImage(file, 800, 0.7);
         const path = `users/${auth.currentUser.uid}/moments/${draftId}/cover-${Date.now()}.webp`;
-        const downloadURL = await uploadFile(optimized, path);
+        const fileToUpload = new File([optimized], `cover-${Date.now()}.webp`, { type: 'image/webp' });
+        const downloadURL = await uploadFile(fileToUpload, path);
         await onSave({ imageUrl: downloadURL });
       } catch (err) {
         console.error("Cover upload error:", err);
@@ -741,7 +753,7 @@ export default function RevealStudio({ draftId, onSave }: RevealStudioProps) {
                     >
                       {!showBrandingFinal ? (
                         <div className="space-y-6">
-                           <div className="p-6 rounded-2xl bg-primary/5 border border-primary/20 space-y-4">
+                           <div className="p-6 rounded-lg bg-primary/5 border border-primary/20 space-y-4">
                               <div className="size-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary">
                                 <Sparkles size={24} />
                               </div>
@@ -751,12 +763,6 @@ export default function RevealStudio({ draftId, onSave }: RevealStudioProps) {
                                   Your branding removal is active. Instead of seeing our logo, the recipient will be invited to send you a private reaction or note once they finish viewing.
                                 </p>
                               </div>
-                           </div>
-                           
-                           <div className="p-4 rounded-lg border border-dashed border-border bg-black/[0.02]">
-                              <p className="text-[8px] font-black uppercase tracking-widest text-text-muted text-center italic leading-relaxed">
-                                Heartfelt feedback starts here.
-                              </p>
                            </div>
                         </div>
                       ) : (
@@ -798,7 +804,7 @@ export default function RevealStudio({ draftId, onSave }: RevealStudioProps) {
                             onClick={() => toggleAddon("removeBranding")}
                             disabled={momentData?.status === "Published" && momentData?.paidAddons?.includes("removeBranding")}
                             className={cn(
-                              "w-full py-4 border-2 rounded-2xl flex items-center justify-center gap-2 transition-all group",
+                              "w-full py-4 border-2 rounded-lg flex items-center justify-center gap-2 transition-all group",
                               momentData?.status === "Published" && momentData?.paidAddons?.includes("removeBranding")
                                 ? "bg-primary/5 border-border text-text-muted cursor-not-allowed"
                                 : "border-red-500/20 hover:border-red-500 hover:bg-red-50/50 text-red-500"
@@ -826,27 +832,53 @@ export default function RevealStudio({ draftId, onSave }: RevealStudioProps) {
                       )}
 
                       {!showBrandingFinal && (
-                         <section className="space-y-4 pt-6 border-t border-border animate-in fade-in slide-in-from-top-2">
-                           <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                 <Heart size={14} className="text-pink-500" />
-                                 <h4 className="text-[10px] font-black uppercase tracking-widest text-text-main">Reaction Collector</h4>
-                              </div>
-                              <button 
-                                 onClick={() => updateStyle({ showReactions: !style.showReactions })}
-                                 className={cn(
-                                   "px-2 py-1 rounded-full text-[8px] font-black uppercase tracking-widest transition-all",
-                                   style.showReactions 
-                                     ? "bg-pink-500 text-white" 
-                                     : "bg-pink-50 text-pink-400 border border-pink-100"
-                                 )}
-                              >
-                                {style.showReactions ? "Enabled" : "Disabled"}
-                              </button>
+                         <section className="pt-8 border-t border-border animate-in fade-in slide-in-from-top-2">
+                           <div className="mb-4">
+                             <div className="flex items-center gap-2 mb-1">
+                               <MessageCircleHeart size={14} className="text-pink-500" />
+                               <h4 className="text-[10px] font-black uppercase tracking-widest text-text-main">Audience Reactions</h4>
+                             </div>
+                             <p className="text-[10px] font-medium text-text-muted leading-relaxed">
+                               Allow recipients to send voice notes, video selfies, and text directly to your dashboard.
+                             </p>
                            </div>
-                           <p className="text-[10px] font-medium text-text-muted leading-relaxed">
-                             When enabled, we'll add a reaction bar to the final screen.
-                           </p>
+
+                           <button
+                             onClick={() => updateStyle({ showReactions: style.showReactions === false ? true : false })}
+                             className={cn(
+                               "w-full relative overflow-hidden group border-2 rounded-xl transition-all duration-300 flex items-center justify-between p-4",
+                               style.showReactions !== false
+                                 ? "bg-pink-500/5 border-pink-500 shadow-[0_0_30px_rgba(236,72,153,0.1)] hover:bg-pink-500/10"
+                                 : "bg-surface border-border hover:border-text-muted/30 hover:bg-black/[0.02]"
+                             )}
+                           >
+                             <div className="flex items-center gap-4 relative z-10">
+                               <div className={cn(
+                                 "size-10 rounded-full flex items-center justify-center transition-all duration-500",
+                                 style.showReactions !== false ? "bg-pink-500 text-white scale-110" : "bg-black/5 text-text-muted"
+                               )}>
+                                 <Heart size={18} className={cn(style.showReactions !== false && "animate-pulse")} fill={style.showReactions !== false ? "currentColor" : "none"} />
+                               </div>
+                               <div className="flex flex-col items-start gap-1">
+                                 <span className={cn(
+                                   "text-[11px] font-black uppercase tracking-widest transition-colors",
+                                   style.showReactions !== false ? "text-pink-600 dark:text-pink-400" : "text-text-main"
+                                 )}>
+                                   {style.showReactions !== false ? "Collecting Feedback" : "Reactions Disabled"}
+                                 </span>
+                                 <span className="text-[8px] font-bold uppercase tracking-wider text-text-muted">
+                                   {style.showReactions !== false ? "Active on Final Screen" : "Click to Enable Reaction Bar"}
+                                 </span>
+                               </div>
+                             </div>
+                             
+                             <div className={cn(
+                               "relative z-10 size-6 rounded-full border-2 flex items-center justify-center transition-colors",
+                               style.showReactions !== false ? "border-pink-500 bg-pink-500" : "border-border bg-transparent group-hover:border-text-muted/30"
+                             )}>
+                               {style.showReactions !== false && <CheckCircle2 size={12} className="text-white" />}
+                             </div>
+                           </button>
                          </section>
                        )}
 
