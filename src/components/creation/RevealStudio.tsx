@@ -49,7 +49,9 @@ import AudioTrimmer from "./AudioTrimmer";
 import { optimizeImage } from "@/lib/image";
 import { Select } from "@/components/ui/Select";
 import { getMediaLimit } from "@/lib/pricing-utils";
-import { ADDONS } from "@/lib/constants/pricing";
+import { ADDONS, PLANS } from "@/lib/constants/pricing";
+import { useCurrency } from "@/context/CurrencyContext";
+import { formatPrice } from "@/lib/currency";
 import RichTextEditor, { RichTextEditorRef } from "./RichTextEditor";
 import { prepareMomentForEngine, DEFAULT_SCENES } from "../reveal/utilities/RevealEngineUtils";
 
@@ -78,7 +80,35 @@ export default function RevealStudio({ draftId, onSave }: RevealStudioProps) {
   const [thumbnailMode, setThumbnailMode] = useState<"upload" | "library">("upload");
   const [uploadingThumbnail, setUploadingThumbnail] = useState(false);
   const [isSettingGlobalMusic, setIsSettingGlobalMusic] = useState(false);
-  const showBrandingFinal = momentData?.plan !== "premium" && !momentData?.paidAddons?.includes("removeBranding");
+  const { currency } = useCurrency();
+  const showBrandingFinal = momentData?.plan !== "premium" && !momentData?.selectedAddons?.includes("removeBranding") && !momentData?.paidAddons?.includes("removeBranding");
+
+  const toggleAddon = async (addonId: string) => {
+    if (!momentData || momentData.plan === "premium") return;
+    
+    const isPublished = momentData?.status === "Published";
+    const isPaid = momentData?.paidAddons?.includes(addonId);
+    if (isPublished && isPaid) return;
+
+    const currentAddons = momentData.selectedAddons || [];
+    const isAdding = !currentAddons.includes(addonId);
+    
+    let newAddons;
+    if (isAdding) {
+      newAddons = [...currentAddons, addonId];
+    } else {
+      newAddons = currentAddons.filter((id: string) => id !== addonId);
+    }
+    
+    const basePrice = PLANS.find(p => p.id === (momentData.plan || "base"))?.price[currency] || 0;
+    const addonsPrice = newAddons.reduce((acc: number, id: string) => {
+      const addon = ADDONS.find(a => a.id === id);
+      return acc + (addon?.price[currency] || 0);
+    }, 0);
+    
+    const newTotal = basePrice + addonsPrice;
+    await onSave({ selectedAddons: newAddons, totalPrice: newTotal });
+  };
 
   // YouTube Music Search State
   const [ytSearchQuery, setYtSearchQuery] = useState("");
@@ -259,7 +289,7 @@ export default function RevealStudio({ draftId, onSave }: RevealStudioProps) {
       setUploadingThumbnail(true);
       try {
         const file = files[0];
-        const optimized = await optimizeImage(file, 800, 800, 0.7);
+        const optimized = await optimizeImage(file, 800, 0.7);
         const path = `users/${auth.currentUser.uid}/moments/${draftId}/cover-${Date.now()}.webp`;
         const downloadURL = await uploadFile(optimized, path);
         await onSave({ imageUrl: downloadURL });
@@ -457,24 +487,22 @@ export default function RevealStudio({ draftId, onSave }: RevealStudioProps) {
               </div>
             ))}
 
-            {/* 3. Branding Screen (Compulsory if conditions met) */}
-            {showBrandingFinal && (
-              <div
-                onClick={() => setActiveSceneId("branding")}
-                className={cn(
-                  "group flex items-center gap-3 p-3 rounded-lg text-left transition-all cursor-pointer",
-                  activeSceneId === "branding" 
-                    ? "bg-white dark:bg-white/10 shadow-sm border border-border ring-1 ring-primary/20" 
-                    : "hover:bg-black/[0.02]"
-                )}
-              >
-                <div className="size-8 rounded-md bg-primary/10 text-primary flex items-center justify-center font-black text-xs">{scenes.length + 1}</div>
-                <div className="flex-1 overflow-hidden">
-                  <p className="text-xs font-bold text-text-main truncate">Branding Screen</p>
-                  <p className="text-[10px] text-text-muted font-bold truncate">Compulsory End Screen</p>
-                </div>
+            {/* 3. Final Screen (Always shown) */}
+            <div
+              onClick={() => setActiveSceneId("branding")}
+              className={cn(
+                "group flex items-center gap-3 p-3 rounded-lg text-left transition-all cursor-pointer",
+                activeSceneId === "branding" 
+                  ? "bg-white dark:bg-white/10 shadow-sm border border-border ring-1 ring-primary/20" 
+                  : "hover:bg-black/[0.02]"
+              )}
+            >
+              <div className="size-8 rounded-md bg-primary/10 text-primary flex items-center justify-center font-black text-xs">{scenes.length + 1}</div>
+              <div className="flex-1 overflow-hidden">
+                <p className="text-xs font-bold text-text-main truncate">Final Screen</p>
+                <p className="text-[10px] text-text-muted font-bold truncate">Compulsory End Screen</p>
               </div>
-            )}
+            </div>
 
             <div
               onClick={addScene}
@@ -733,7 +761,7 @@ export default function RevealStudio({ draftId, onSave }: RevealStudioProps) {
                         </div>
                       ) : (
                         <div className="space-y-6">
-                           <div className="p-6 rounded-2xl bg-black/[0.02] border border-border space-y-4">
+                           <div className="p-6 rounded-lg bg-black/[0.02] border border-border space-y-4">
                               <div className="size-12 bg-black/5 rounded-2xl flex items-center justify-center text-text-muted">
                                 <Gift size={24} />
                               </div>
@@ -746,13 +774,54 @@ export default function RevealStudio({ draftId, onSave }: RevealStudioProps) {
                            </div>
 
                            <button 
-                             onClick={async () => {
-                                await onSave({ paidAddons: [...(momentData.paidAddons || []), "removeBranding"] });
-                             }}
-                             className="w-full py-4 bg-primary text-white rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] shadow-2xl shadow-primary/40 hover:scale-105 active:scale-95 transition-all"
+                             onClick={() => toggleAddon("removeBranding")}
+                             disabled={momentData?.status === "Published" && momentData?.paidAddons?.includes("removeBranding")}
+                             className={cn(
+                               "w-full py-4 rounded-lg font-black uppercase tracking-[0.2em] text-[10px] shadow-2xl transition-all",
+                               momentData?.status === "Published" && momentData?.paidAddons?.includes("removeBranding")
+                                 ? "text-white bg-green-500 cursor-not-allowed shadow-green-500/40"
+                                 : "bg-primary text-white shadow-primary/40 hover:scale-105 active:scale-95"
+                             )}
                            >
-                             Remove Branding for $1.99
+                             {momentData?.status === "Published" && momentData?.paidAddons?.includes("removeBranding") ? (
+                               <span className="flex justify-center items-center gap-2"><CheckCircle2 size={14} /> Enabled</span>
+                             ) : (
+                               `Remove Branding for ${formatPrice(ADDONS.find(a => a.id === "removeBranding")?.price[currency] || 0, currency)}`
+                             )}
                            </button>
+                        </div>
+                      )}
+
+                      {!showBrandingFinal && momentData?.plan !== "premium" && (
+                        <div className="pt-6 border-t border-border animate-in fade-in slide-in-from-top-2">
+                          <button 
+                            onClick={() => toggleAddon("removeBranding")}
+                            disabled={momentData?.status === "Published" && momentData?.paidAddons?.includes("removeBranding")}
+                            className={cn(
+                              "w-full py-4 border-2 rounded-2xl flex items-center justify-center gap-2 transition-all group",
+                              momentData?.status === "Published" && momentData?.paidAddons?.includes("removeBranding")
+                                ? "bg-primary/5 border-border text-text-muted cursor-not-allowed"
+                                : "border-red-500/20 hover:border-red-500 hover:bg-red-50/50 text-red-500"
+                            )}
+                          >
+                            {momentData?.status === "Published" && momentData?.paidAddons?.includes("removeBranding") ? (
+                              <>
+                                <CheckCircle2 size={16} className="text-green-500" />
+                                <div className="text-left leading-none">
+                                  <p className="text-[10px] font-black uppercase tracking-widest text-text-main">No Branding</p>
+                                  <p className="text-[8px] font-bold opacity-60 uppercase tracking-tight">Enabled & Paid For</p>
+                                </div>
+                              </>
+                            ) : (
+                              <>
+                                <Trash2 size={16} className="text-red-500 group-hover:-rotate-12 transition-transform" />
+                                <div className="text-left leading-none">
+                                  <p className="text-[10px] font-black uppercase tracking-widest">Restore Branding</p>
+                                  <p className="text-[8px] font-bold opacity-60 uppercase tracking-tight">Remove this add-on</p>
+                                </div>
+                              </>
+                            )}
+                          </button>
                         </div>
                       )}
 
@@ -976,7 +1045,7 @@ export default function RevealStudio({ draftId, onSave }: RevealStudioProps) {
                 </AnimatePresence>
                   
                   {/* Shared Media Library (Manage Assets) */}
-                  {activeSceneId !== "splash" && (
+                  {activeSceneId !== "splash" && activeSceneId !== "branding" && (
                     <section ref={mediaLibraryRef} className="mt-8 pt-8 border-t border-border space-y-6 pb-20">
                       <header className="flex items-center justify-between">
                         <div className="space-y-1">

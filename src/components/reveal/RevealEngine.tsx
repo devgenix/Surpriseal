@@ -406,7 +406,7 @@ export default function RevealEngine({ moment, isPreview = false, activeSceneInd
 
         {/* Branding/Final End Screen */}
         {currentSceneIndex === scenes.length && (() => {
-           const showBranding = moment?.plan !== "premium" && !moment?.paidAddons?.includes("removeBranding");
+           const showBranding = moment?.plan !== "premium" && !moment?.paidAddons?.includes("removeBranding") && !moment?.selectedAddons?.includes("removeBranding");
            
            return (
              <motion.div
