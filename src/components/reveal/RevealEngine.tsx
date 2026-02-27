@@ -555,7 +555,7 @@ export default function RevealEngine({ moment, isPreview = false, activeSceneInd
                            <Gift className="text-primary" size={32} />
                          </div>
                          
-                         {showBranding ? (
+                          {showBranding ? (
                            <>
                              <h2 className="text-3xl font-black text-white uppercase tracking-tighter mb-4 leading-tight">
                                This beautiful surprise was created with Surpriseal
@@ -566,7 +566,7 @@ export default function RevealEngine({ moment, isPreview = false, activeSceneInd
                              
                              <button 
                                onClick={() => window.open("/", "_blank")}
-                               className="w-full py-5 bg-primary text-white rounded-lg font-black uppercase tracking-[0.2em] text-xs shadow-2xl shadow-primary/40 hover:scale-105 active:scale-95 transition-all"
+                               className="w-full py-5 bg-primary text-white rounded-2xl font-black uppercase tracking-[0.2em] text-xs shadow-2xl shadow-primary/40 hover:scale-105 active:scale-95 transition-all"
                              >
                                Create your own surprise
                              </button>
@@ -574,15 +574,15 @@ export default function RevealEngine({ moment, isPreview = false, activeSceneInd
                          ) : (
                            <>
                              <h2 className="text-3xl font-black text-white uppercase tracking-tighter mb-4 leading-tight">
-                               The End of this Moment
+                               Surprise Complete!
                              </h2>
                              <p className="text-white/40 font-bold uppercase tracking-widest text-[10px] mb-12">
-                               We hope you enjoyed this surprise!
+                               Let them know how it made you feel below 👇
                              </p>
                              {moment?.styleConfig?.showReactions === false && (
                                <button 
                                  onClick={() => setCurrentSceneIndex(-1)}
-                                 className="w-full py-5 bg-white/10 text-white border border-white/20 rounded-lg font-black uppercase tracking-[0.2em] text-xs hover:bg-white/20 active:scale-95 transition-all mb-8"
+                                 className="w-full py-5 bg-white/10 text-white border border-white/20 rounded-2xl font-black uppercase tracking-[0.2em] text-xs hover:bg-white/20 active:scale-95 transition-all mb-8"
                                >
                                  Watch Again
                                </button>

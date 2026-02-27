@@ -18,9 +18,6 @@ if (!admin.apps.length) {
         privateKey = privateKey.replace(/\\n/g, "\n");
       }
 
-      console.log("Private Key Start:", privateKey?.substring(0, 30));
-      console.log("Private Key End:", privateKey?.substring(privateKey.length - 30));
-
       admin.initializeApp({
         credential: admin.credential.cert({
           projectId,

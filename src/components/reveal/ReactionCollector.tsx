@@ -247,39 +247,39 @@ export default function ReactionCollector({ momentId, isPreview, onActiveChange,
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9 }}
-            className="flex items-center gap-4 bg-white/10 backdrop-blur-md p-3 rounded-lg border border-white/20 shadow-xl pointer-events-auto"
+            className="flex items-center gap-4 bg-white/10 backdrop-blur-md p-3 rounded-2xl border border-white/20 shadow-xl pointer-events-auto"
           >
             <button 
               onClick={() => setMode("text")}
-              className="size-12 rounded-full bg-white/10 hover:bg-white/20 flex flex-col items-center justify-center text-white transition-all active:scale-95 group"
+              className="size-12 rounded-xl bg-white/10 hover:bg-white/20 flex flex-col items-center justify-center text-white transition-all active:scale-95 group"
             >
               <Keyboard size={20} className="group-hover:-translate-y-0.5 transition-transform" />
             </button>
             <div className="w-px h-6 bg-white/20" />
             <button 
               onClick={handleStartVoice}
-              className="size-12 rounded-full bg-white/10 hover:bg-white/20 flex flex-col items-center justify-center text-white transition-all active:scale-95 group"
+              className="size-12 rounded-xl bg-white/10 hover:bg-white/20 flex flex-col items-center justify-center text-white transition-all active:scale-95 group"
             >
               <Mic size={20} className="group-hover:-translate-y-0.5 transition-transform" />
             </button>
             <div className="w-px h-6 bg-white/20" />
             <button 
               onClick={handleStartCamera}
-              className="size-12 rounded-full bg-white/10 hover:bg-white/20 flex flex-col items-center justify-center text-white transition-all active:scale-95 group"
+              className="size-12 rounded-xl bg-white/10 hover:bg-white/20 flex flex-col items-center justify-center text-white transition-all active:scale-95 group"
             >
               <Camera size={20} className="group-hover:-translate-y-0.5 transition-transform" />
             </button>
             {onWatchAgain && (
-              <>
-                <div className="w-px h-6 bg-white/20" />
-                <button 
-                  onClick={onWatchAgain}
-                  className="size-12 rounded-full bg-white/10 hover:bg-white/20 flex flex-col items-center justify-center text-white transition-all active:scale-95 group"
-                  title="Watch Again"
-                >
-                  <RefreshCcw size={20} className="group-hover:-rotate-90 transition-transform" />
-                </button>
-              </>
+               <>
+                 <div className="w-px h-6 bg-white/20" />
+                 <button 
+                   onClick={onWatchAgain}
+                   className="size-12 rounded-xl bg-white/10 hover:bg-white/20 flex flex-col items-center justify-center text-white transition-all active:scale-95 group"
+                   title="Watch Again"
+                 >
+                   <RefreshCcw size={20} className="group-hover:-rotate-90 transition-transform duration-300" />
+                 </button>
+               </>
             )}
           </motion.div>
         )}

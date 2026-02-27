@@ -65,6 +65,14 @@ export default async function PublicViewPage({ params }: Props) {
   };
 
   const serializedMoment = serializeData(moment);
+  
+  // Security Assessment Action: Explicitly strip highly sensitive fields before passing directly to the public client object
+  delete serializedMoment.userId;
+  delete serializedMoment.creatorEmail;
+  delete serializedMoment.paidAmount;
+  delete serializedMoment.lastPaymentDetails;
+  delete serializedMoment.isPaid;
+  delete serializedMoment.stripeSessionId;
 
   return <ViewClient initialMomentData={serializedMoment} momentId={moment.id} />;
 }
