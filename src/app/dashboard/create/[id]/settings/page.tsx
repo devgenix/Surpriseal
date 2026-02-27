@@ -393,26 +393,28 @@ export default function CreationSettingsPage() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  <div className="flex rounded-lg border border-border bg-surface overflow-hidden shadow-sm focus-within:ring-4 focus-within:ring-primary/10 transition-all pr-1">
-                    <div className="bg-primary/5 px-4 flex items-center border-r border-border shrink-0">
+                  <div className="flex flex-col sm:flex-row sm:items-center rounded-lg border border-border bg-surface overflow-hidden shadow-sm focus-within:ring-4 focus-within:ring-primary/10 transition-all sm:pr-1">
+                    <div className="bg-primary/5 px-4 h-10 sm:h-14 flex items-center border-b sm:border-b-0 sm:border-r border-border shrink-0">
                       <span className="text-text-muted font-bold text-xs sm:text-sm">supriseal.com/view/</span>
                     </div>
-                    <input 
-                      value={urlSlug}
-                      onChange={(e) => setUrlSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'))}
-                      className="flex-1 h-14 px-4 bg-transparent border-none text-text-main placeholder:text-text-muted/30 focus:ring-0 outline-none font-bold text-base tracking-tight" 
-                      placeholder="sarahs-big-30"
-                      type="text"
-                    />
-                    <div className="flex items-center gap-1 px-2">
-                      <button onClick={() => copyToClipboard(urlSlug || draftId)} disabled={!urlSlug && !draftId} className="size-10 flex items-center justify-center hover:bg-primary/5 rounded-md transition-colors text-primary">
-                        {copied ? <CheckCircle2 size={18} /> : <Copy size={18} />}
-                      </button>
-                      {(checkingSlug || slugAvailable !== null) && (
-                        <div className="flex items-center w-6 justify-center">
-                          {checkingSlug ? <Loader2 size={18} className="text-primary animate-spin" /> : slugAvailable === true ? <CheckCircle2 size={18} className="text-green-500" /> : <X size={18} className="text-red-500" />}
-                        </div>
-                      )}
+                    <div className="flex flex-1 items-center bg-transparent">
+                      <input 
+                        value={urlSlug}
+                        onChange={(e) => setUrlSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'))}
+                        className="flex-1 min-w-0 w-full h-12 sm:h-14 px-4 bg-transparent border-none text-text-main placeholder:text-text-muted/30 focus:ring-0 outline-none font-bold text-base tracking-tight" 
+                        placeholder="sarahs-big-30"
+                        type="text"
+                      />
+                      <div className="flex items-center justify-end gap-1 px-2 shrink-0">
+                        <button onClick={() => copyToClipboard(urlSlug || draftId)} disabled={!urlSlug && !draftId} className="size-10 flex items-center justify-center hover:bg-primary/5 rounded-md transition-colors text-primary">
+                          {copied ? <CheckCircle2 size={18} /> : <Copy size={18} />}
+                        </button>
+                        {(checkingSlug || slugAvailable !== null) && (
+                          <div className="flex items-center w-6 justify-center">
+                            {checkingSlug ? <Loader2 size={18} className="text-primary animate-spin" /> : slugAvailable === true ? <CheckCircle2 size={18} className="text-green-500" /> : <X size={18} className="text-red-500" />}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                   {slugAvailable === false && <p className="text-[9px] text-red-500 font-extrabold ml-1 uppercase tracking-widest bg-red-50 inline-block px-2 py-0.5 rounded">This link is already taken</p>}

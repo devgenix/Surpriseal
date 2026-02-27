@@ -36,7 +36,8 @@ import {
   Moon,
   Award,
   PenTool,
-  Gift
+  Gift,
+  Maximize2
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -669,7 +670,7 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
             onClick={toggleFullScreen}
             className="size-11 flex items-center justify-center rounded-lg bg-black/5 dark:bg-white/5 text-text-muted active:scale-95 transition-all"
           >
-            <Smartphone size={20} />
+            <Maximize2 size={20} />
           </button>
         </div>
 
