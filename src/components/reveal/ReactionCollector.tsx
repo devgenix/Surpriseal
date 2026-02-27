@@ -292,7 +292,7 @@ export default function ReactionCollector({ momentId, isPreview, onActiveChange,
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
-            className="w-full bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-3 shadow-2xl pointer-events-auto"
+            className="w-full bg-white/10 backdrop-blur-xl border border-white/20 rounded-lg p-3 shadow-2xl pointer-events-auto"
           >
             <div className="flex justify-between items-center mb-3 px-2">
               <span className="text-[10px] uppercase font-black tracking-widest text-white/60">Written Note</span>
@@ -320,7 +320,7 @@ export default function ReactionCollector({ momentId, isPreview, onActiveChange,
               value={textMode}
               onChange={(e) => setTextMode(e.target.value)}
               placeholder="Leave a private note..."
-              className="w-full h-20 bg-black/20 text-white placeholder:text-white/30 rounded-xl p-3 text-sm resize-none outline-none focus:ring-1 focus:ring-primary/50 transition-all font-medium"
+              className="w-full h-20 bg-black/20 text-white placeholder:text-white/30 rounded-lg p-3 text-sm resize-none outline-none focus:ring-1 focus:ring-primary/50 transition-all font-medium"
             />
 
             <button 
@@ -339,7 +339,7 @@ export default function ReactionCollector({ momentId, isPreview, onActiveChange,
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
-            className="w-full bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-3 shadow-2xl relative overflow-hidden pointer-events-auto"
+            className="w-full bg-white/10 backdrop-blur-xl border border-white/20 rounded-lg p-3 shadow-2xl relative overflow-hidden pointer-events-auto"
           >
             <div className="flex justify-between items-center z-10 relative px-2 mb-3">
               <span className="text-[10px] uppercase font-black tracking-widest text-white/60">
@@ -445,7 +445,7 @@ export default function ReactionCollector({ momentId, isPreview, onActiveChange,
             key="submitting"
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="flex flex-col items-center gap-3 bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/20 shadow-xl pointer-events-auto"
+            className="flex flex-col items-center gap-3 bg-white/10 backdrop-blur-md p-4 rounded-lg border border-white/20 shadow-xl pointer-events-auto"
           >
             <Loader2 size={24} className="text-primary animate-spin" />
             <p className="text-white font-black uppercase tracking-widest text-[10px] animate-pulse">Sending Love...</p>
@@ -479,7 +479,7 @@ export default function ReactionCollector({ momentId, isPreview, onActiveChange,
               initial={{ scale: 0.9, y: 20, opacity: 0 }}
               animate={{ scale: 1, y: 0, opacity: 1 }}
               exit={{ scale: 0.9, y: 20, opacity: 0 }}
-              className="w-full max-w-sm bg-surface border border-red-500/20 rounded-3xl shadow-2xl overflow-hidden pointer-events-auto"
+              className="w-full max-w-sm bg-surface border border-red-500/20 rounded-lg shadow-2xl overflow-hidden pointer-events-auto"
             >
               <div className="p-6 text-center space-y-4">
                 <div className="size-16 rounded-2xl bg-red-500/10 flex items-center justify-center text-red-500 mx-auto">
@@ -494,7 +494,7 @@ export default function ReactionCollector({ momentId, isPreview, onActiveChange,
                 <div className="flex gap-2 pt-2">
                   <button 
                     onClick={() => setError(null)}
-                    className="flex-1 py-3 rounded-xl bg-black/5 hover:bg-black/10 dark:bg-white/5 dark:hover:bg-white/10 text-[10px] font-black uppercase tracking-widest transition-all"
+                    className="flex-1 py-3 rounded-lg bg-black/5 hover:bg-black/10 text-dark dark:text-white dark:bg-white/5 dark:hover:bg-white/10 text-[10px] font-black uppercase tracking-widest transition-all"
                   >
                     Dismiss
                   </button>
@@ -505,7 +505,7 @@ export default function ReactionCollector({ momentId, isPreview, onActiveChange,
                         setError(null);
                         retry?.();
                       }}
-                      className="flex-1 py-3 rounded-xl bg-red-500 text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-red-500/20 hover:scale-105 active:scale-95 transition-all"
+                      className="flex-1 py-3 rounded-lg bg-red-500 text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-red-500/20 hover:scale-105 active:scale-95 transition-all"
                     >
                       Try Again
                     </button>
