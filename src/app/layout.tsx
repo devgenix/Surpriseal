@@ -27,6 +27,8 @@ export const viewport = {
 
 import { AuthProvider } from '@/context/AuthContext';
 import { ThemeProvider } from '@/context/ThemeContext';
+import TopProgressBar from '@/components/ui/TopProgressBar';
+import { Suspense } from 'react';
 
 export default function RootLayout({
   children,
@@ -40,6 +42,9 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400..700&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Outfit:wght@100..900&family=Space+Grotesk:wght@300..700&family=Homemade+Apple&family=Cormorant+Garamond:ital,wght@0,300..700;1,300..700&display=swap" rel="stylesheet" />
       </head>
       <body className={font.className}>
+        <Suspense fallback={null}>
+          <TopProgressBar />
+        </Suspense>
         <AuthProvider>
           <ThemeProvider>
             <ThemeRegistry>

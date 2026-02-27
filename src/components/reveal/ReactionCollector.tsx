@@ -2,9 +2,10 @@
 
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { db, storage } from "@/lib/firebase";
+import { db, storage, auth } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { signInAnonymously } from "firebase/auth";
 import { 
   Keyboard, 
   Mic, 
@@ -174,6 +175,14 @@ export default function ReactionCollector({ momentId, isPreview, onActiveChange,
     }
 
     try {
+      if (auth && !auth.currentUser) {
+        try {
+          await signInAnonymously(auth);
+        } catch (authErr) {
+          console.warn("Anonymous auth failed", authErr);
+        }
+      }
+
       let content = textMode;
 
       if ((mode === "voice" || mode === "camera") && mediaBlob) {
