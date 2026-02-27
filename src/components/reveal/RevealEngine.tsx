@@ -164,29 +164,41 @@ export default function RevealEngine({ moment, isPreview = false, activeSceneInd
   }, []);
 
   // Consolidated Audio Management
-  useEffect(() => {
-    if (!isYtReady) return;
+  const isSplash = currentSceneIndex === -1;
+  const isFinal = currentSceneIndex === scenes.length;
 
-    const isSplash = currentSceneIndex === -1;
-    const isFinal = currentSceneIndex === scenes.length;
-    
-    // Determine which music to use for the CURRENT state
-    const prefersGlobal = isSplash 
+  // Helper to determine music state for any index
+  const getMusicState = useCallback((index: number) => {
+    const splash = index === -1;
+    const final = index === scenes.length;
+    const scene = scenes[index];
+
+    const prefersGlobal = splash 
       ? style.splashConfig?.useGlobalMusic !== false 
-      : (isFinal || currentScene?.config?.useGlobalMusic !== false);
+      : (final || scene?.config?.useGlobalMusic !== false);
 
-    const useGlobalMusic = prefersGlobal && !isReacting;
-    const useSceneMusic = !prefersGlobal && !isReacting;
+    return {
+      prefersGlobal,
+      useGlobalMusic: prefersGlobal && !isReacting,
+      useSceneMusic: !prefersGlobal && !isReacting
+    };
+  }, [scenes, style, isReacting]);
 
-    // Track Metadata
-    const globalYtId = style.ytMusicId;
-    const globalUrl = style.musicUrl;
-    
-    const sceneYtId = !prefersGlobal ? (isSplash ? style.splashConfig?.ytMusicId : currentScene?.config?.ytMusicId) : null;
-    const sceneUrl = !prefersGlobal ? (isSplash ? style.splashConfig?.musicUrl : currentScene?.config?.musicUrl) : null;
-    
-    const sceneStart = !prefersGlobal ? (isSplash ? style.splashConfig?.audioStart || 0 : currentScene?.config?.audioStart || 0) : 0;
-    const sceneDuration = !prefersGlobal ? (isSplash ? style.splashConfig?.audioDuration || 0 : currentScene?.config?.audioDuration || 0) : 0;
+  const { useGlobalMusic, useSceneMusic, prefersGlobal } = getMusicState(currentSceneIndex);
+
+  // Track Metadata
+  const globalYtId = style.ytMusicId;
+  const globalUrl = style.musicUrl;
+  
+  const sceneYtId = !prefersGlobal ? (isSplash ? style.splashConfig?.ytMusicId : currentScene?.config?.ytMusicId) : null;
+  const sceneUrl = !prefersGlobal ? (isSplash ? style.splashConfig?.musicUrl : currentScene?.config?.musicUrl) : null;
+  
+  const sceneStart = !prefersGlobal ? (isSplash ? style.splashConfig?.audioStart || 0 : currentScene?.config?.audioStart || 0) : 0;
+  const sceneDuration = !prefersGlobal ? (isSplash ? style.splashConfig?.audioDuration || 0 : currentScene?.config?.audioDuration || 0) : 0;
+
+  // Main Audio Update Effect
+  useEffect(() => {
+    if (!isYtReady && (globalYtId || sceneYtId)) return;
 
     // --- 1. GLOBAL AUDIO MANAGEMENT ---
     if (globalYtId) {
@@ -224,6 +236,9 @@ export default function RevealEngine({ moment, isPreview = false, activeSceneInd
        globalSoundRef.current.mute(isMuted || !useGlobalMusic);
        if (useGlobalMusic && !isPreview && !isMuted) globalSoundRef.current.play();
        else if (!useGlobalMusic) globalSoundRef.current.pause();
+    } else {
+      if (globalYtPlayerRef.current) globalYtPlayerRef.current.stopVideo();
+      if (globalSoundRef.current) globalSoundRef.current.stop();
     }
 
     // --- 2. SCENE AUDIO MANAGEMENT ---
@@ -281,34 +296,50 @@ export default function RevealEngine({ moment, isPreview = false, activeSceneInd
     }, 500);
 
     return () => clearInterval(loopInterval);
-  }, [currentSceneIndex, style, isYtReady, isMuted, isPreview, isReacting]);
+  }, [currentSceneIndex, style, isYtReady, isMuted, isPreview, isReacting, useGlobalMusic, useSceneMusic, globalYtId, sceneYtId, globalUrl, sceneUrl, sceneStart, sceneDuration]);
 
   // Audio Interaction Handler
-  const startAudioOnInteraction = useCallback(() => {
+  const startAudioOnInteraction = useCallback((targetIndex?: number) => {
     // Force set isMuted to false if we're calling this from an interaction
     setIsMuted(false);
     
-    // Explicitly trigger play for all players to catch the user interaction event
-    if (globalYtPlayerRef.current?.playVideo) globalYtPlayerRef.current.playVideo();
-    if (globalSoundRef.current) globalSoundRef.current.play();
-    if (sceneYtPlayerRef.current?.playVideo) sceneYtPlayerRef.current.playVideo();
-    if (sceneSoundRef.current) sceneSoundRef.current.play();
-  }, []);
+    // Determine which music state to activate
+    const indexToUse = targetIndex !== undefined ? targetIndex : currentSceneIndex;
+    const { useGlobalMusic: targetUseGlobal, useSceneMusic: targetUseScene } = getMusicState(indexToUse);
+
+    // Explicitly trigger play for the ACTIVE source ONLY
+    if (targetUseGlobal) {
+      if (globalYtPlayerRef.current?.playVideo) globalYtPlayerRef.current.playVideo();
+      if (globalSoundRef.current) globalSoundRef.current.play();
+      // Ensure scene music is paused
+      if (sceneYtPlayerRef.current?.pauseVideo) sceneYtPlayerRef.current.pauseVideo();
+      if (sceneSoundRef.current) sceneSoundRef.current.pause();
+    } else if (targetUseScene) {
+      if (sceneYtPlayerRef.current?.playVideo) sceneYtPlayerRef.current.playVideo();
+      if (sceneSoundRef.current) sceneSoundRef.current.play();
+      // Ensure global music is paused
+      if (globalYtPlayerRef.current?.pauseVideo) globalYtPlayerRef.current.pauseVideo();
+      if (globalSoundRef.current) globalSoundRef.current.pause();
+    }
+  }, [currentSceneIndex, getMusicState]);
 
   const nextScene = useCallback(() => {
-    // Start music on interaction
-    startAudioOnInteraction();
-
-    if (currentSceneIndex < (scenes.length)) {
-       setCurrentSceneIndex(prev => prev + 1);
+    const nextIndex = currentSceneIndex + 1;
+    if (nextIndex <= scenes.length) {
+       // Start music for the NEXT scene immediately in the interaction loop
+       startAudioOnInteraction(nextIndex);
+       setCurrentSceneIndex(nextIndex);
     }
-  }, [currentSceneIndex, scenes.length, isPreview, startAudioOnInteraction]);
+  }, [currentSceneIndex, scenes.length, startAudioOnInteraction]);
 
   const prevScene = useCallback(() => {
-    if (currentSceneIndex > -1) {
-      setCurrentSceneIndex(prev => prev - 1);
+    const targetIndex = currentSceneIndex - 1;
+    if (targetIndex >= -1) {
+      // Start music for the TARGET scene immediately in the interaction loop
+      startAudioOnInteraction(targetIndex);
+      setCurrentSceneIndex(targetIndex);
     }
-  }, [currentSceneIndex]);
+  }, [currentSceneIndex, startAudioOnInteraction]);
 
   // Map media objects for the current scene
   const sceneData = useMemo(() => {
@@ -515,7 +546,7 @@ export default function RevealEngine({ moment, isPreview = false, activeSceneInd
       {currentSceneIndex >= 0 && currentSceneIndex < scenes.length && (
         <div className="absolute bottom-10 inset-x-0 flex items-center justify-center gap-6 z-50">
            <button 
-             onClick={prevScene}
+             onClick={(e) => { e.stopPropagation(); prevScene(); }}
              className="size-12 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-white/20 transition-all active:scale-90"
            >
              <ChevronLeft size={24} />
@@ -527,14 +558,14 @@ export default function RevealEngine({ moment, isPreview = false, activeSceneInd
 
            {currentSceneIndex < scenes.length - 1 ? (
              <button 
-               onClick={nextScene}
+               onClick={(e) => { e.stopPropagation(); nextScene(); }}
                className="size-12 rounded-full bg-primary text-white flex items-center justify-center shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all active:scale-90"
              >
                <ChevronRight size={24} />
              </button>
            ) : (
              <button 
-                onClick={nextScene}
+                onClick={(e) => { e.stopPropagation(); nextScene(); }}
                 className="px-6 h-12 rounded-full bg-green-500 text-white font-black uppercase tracking-widest text-xs shadow-lg shadow-green-500/20 active:scale-95 transition-all flex items-center gap-1"
              >
                Finish <ChevronRight size={16} />
@@ -546,7 +577,7 @@ export default function RevealEngine({ moment, isPreview = false, activeSceneInd
       {/* Persistence Controls (Mute, etc) */}
       <div className="absolute top-8 left-8 flex items-center gap-3 z-50">
         <button 
-          onClick={() => setIsMuted(!isMuted)}
+          onClick={(e) => { e.stopPropagation(); setIsMuted(!isMuted); }}
           className="size-10 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-white/20 transition-all"
         >
           {isMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}

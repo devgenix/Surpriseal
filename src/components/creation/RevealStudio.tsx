@@ -655,13 +655,19 @@ export default function RevealStudio({ draftId, onSave }: RevealStudioProps) {
                            {momentData?.imageUrl ? (
                              <div className="relative group aspect-video rounded-lg overflow-hidden border border-border bg-black/5">
                                <img src={momentData.imageUrl} className="w-full h-full object-cover" />
-                               <div className="absolute inset-0 bg-black/20 flex items-center justify-center p-2">
+                               <div className="absolute inset-0 bg-black/20 flex flex-col items-center justify-center p-2">
                                  <div className="bg-white/90 backdrop-blur-sm rounded-full px-3 py-1 flex items-center gap-1.5 shadow-lg border border-white/20">
                                    <div className="size-1.5 rounded-full bg-green-500 animate-pulse" />
                                    <p className="text-[8px] font-black text-black uppercase tracking-widest">Active Cover</p>
                                  </div>
                                </div>
-                             </div>
+                               <button
+                                  onClick={() => onSave({ imageUrl: null })}
+                                  className="absolute top-2 right-2 size-8 rounded-full bg-red-500 text-white flex items-center justify-center opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity shadow-lg active:scale-95 z-10"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </div>
                            ) : (
                              <div className="aspect-video rounded-lg border border-dashed border-border bg-black/[0.02] flex items-center justify-center text-center p-4">
                                <p className="text-[9px] font-bold text-text-muted leading-relaxed uppercase">No cover image set.<br/>Recipients see this first.</p>
@@ -1057,7 +1063,7 @@ export default function RevealStudio({ draftId, onSave }: RevealStudioProps) {
                                         </button>
                                         <button 
                                           onClick={() => {
-                                            setIsSettingGlobalMusic(true);
+                                            setIsSettingGlobalMusic(!isSettingGlobalMusic);
                                             setYtSearchQuery("");
                                             togglePlay(null);
                                           }}
@@ -1071,11 +1077,56 @@ export default function RevealStudio({ draftId, onSave }: RevealStudioProps) {
                               ) : (
                                 <button 
                                   onClick={() => {
-                                    setIsSettingGlobalMusic(true);
+                                    setIsSettingGlobalMusic(!isSettingGlobalMusic);
                                     setYtSearchQuery("");
                                   }}
-                                  className="w-full py-3 border border-dashed border-border rounded-lg text-[9px] font-black uppercase tracking-widest text-text-muted hover:bg-primary/5 transition-all"
+                                  className="w-full py-4 border border-dashed border-border rounded-lg bg-black/[0.01] hover:bg-primary/5 hover:border-primary/50 text-[10px] font-black uppercase tracking-widest text-text-muted transition-all"
                                 >Pick Screen Song</button>
+                              )}
+
+                              {isSettingGlobalMusic && (
+                                <div className="space-y-3 pt-2 animate-in fade-in slide-in-from-top-2">
+                                  <div className="relative">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" size={12} />
+                                    <input 
+                                      autoFocus
+                                      type="text" 
+                                      placeholder="Search screen song..."
+                                      className="w-full h-10 pl-9 pr-3 rounded-lg border border-border bg-white text-[10px] font-bold outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                                      value={ytSearchQuery}
+                                      onChange={(e) => setYtSearchQuery(e.target.value)}
+                                    />
+                                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                      {isSearching ? (
+                                        <Loader2 className="animate-spin text-primary" size={12} />
+                                      ) : (
+                                        <button onClick={() => setIsSettingGlobalMusic(false)}>
+                                          <X size={12} className="text-text-muted hover:text-primary transition-colors" />
+                                        </button>
+                                      )}
+                                    </div>
+                                  </div>
+                                  {showSearchResults && ytResults.length > 0 && (
+                                    <div className="bg-white border border-border rounded-lg overflow-hidden max-h-48 overflow-y-auto divide-y divide-border shadow-soft">
+                                      {ytResults.map((song) => (
+                                        <div key={song.videoId} onClick={() => {
+                                          setGlobalMusic(song);
+                                          setIsSettingGlobalMusic(false);
+                                          togglePlay(null);
+                                        }} className="p-2 flex items-center gap-2 cursor-pointer hover:bg-primary/5 transition-colors">
+                                          <img src={song.thumbnail} className="size-8 rounded-lg object-cover" />
+                                          <div className="flex-1 min-w-0">
+                                            <p className="text-[9px] font-black truncate">{song.title}</p>
+                                            <p className="text-[8px] text-text-muted font-bold truncate">{song.author}</p>
+                                          </div>
+                                          <button onClick={(e) => { e.stopPropagation(); togglePlay(song.videoId); }} className="size-6 bg-primary/10 text-primary rounded-lg flex items-center justify-center">
+                                            {playingId === song.videoId ? <Pause size={10} fill="currentColor" /> : <Play size={10} fill="currentColor" className="ml-0.5" />}
+                                          </button>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
                               )}
                             </div>
                           )}
@@ -1307,7 +1358,6 @@ export default function RevealStudio({ draftId, onSave }: RevealStudioProps) {
                               </div>
                             </button>
                           </div>
-
                         </section>
                       </div>
                     </motion.div>
