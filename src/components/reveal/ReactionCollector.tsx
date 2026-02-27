@@ -190,7 +190,8 @@ export default function ReactionCollector({ momentId, isPreview, onActiveChange,
         if (!storage) throw new Error("Storage not initialized");
         // Upload Blob
         const ext = mode === "camera" ? "webm" : "webm"; 
-        const path = `public/reactions/${momentId}/${Date.now()}.${ext}`;
+        const uid = auth?.currentUser?.uid || "anonymous";
+        const path = `users/${uid}/reactions/${momentId}/${Date.now()}.${ext}`;
         const storageRef = ref(storage, path);
         const uploadResult = await uploadBytes(storageRef, mediaBlob, { contentType: mode === "camera" ? 'video/webm' : 'audio/webm' });
         content = await getDownloadURL(uploadResult.ref);

@@ -538,7 +538,7 @@ export default function RevealEngine({ moment, isPreview = false, activeSceneInd
                key="end-branding"
                initial={{ opacity: 0, scale: 0.9 }}
                animate={{ opacity: 1, scale: 1 }}
-               className="absolute inset-0 flex flex-col items-center justify-center z-[100] text-center p-8 bg-black/60 backdrop-blur-3xl"
+               className="absolute inset-0 flex flex-col items-center justify-center z-[100] text-center p-8 bg-black/40 backdrop-blur-md"
              >
                <motion.div 
                  initial={{ opacity: 0, y: 20 }}
