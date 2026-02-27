@@ -42,6 +42,28 @@ export default function Hero() {
                   />
                 </svg>
               </Link>
+
+              <Link
+                href="/view/blessing"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center rounded-lg border-2 border-[#e64c19]/30 bg-white px-8 py-4 text-base font-bold text-[#e64c19] transition-all hover:border-primary hover:bg-primary/5"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                  className="mr-2 h-5 w-5"
+                >
+                  <path d="M10 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z" />
+                  <path
+                    fillRule="evenodd"
+                    d="M.664 10.59a1.651 1.651 0 0 1 0-1.186A10.004 10.004 0 0 1 10 3c4.257 0 7.893 2.66 9.336 6.41.147.381.146.804 0 1.186A10.004 10.004 0 0 1 10 17c-4.257 0-7.893-2.66-9.336-6.41ZM14 10a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                See Example
+              </Link>
             </div>
 
             {/* Social proof */}
@@ -82,44 +104,6 @@ export default function Hero() {
                     alt="Happy person receiving a surprise" 
                     className="w-full h-full object-cover"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
-                </div>
-
-                {/* Confetti dots decoration */}
-                <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                  {[
-                    { top: "10%", left: "15%", size: "h-3 w-3", color: "bg-primary/40" },
-                    { top: "20%", left: "75%", size: "h-2 w-2", color: "bg-purple-400/50" },
-                    { top: "70%", left: "10%", size: "h-2 w-2", color: "bg-rose-400/50" },
-                    { top: "80%", left: "80%", size: "h-3 w-3", color: "bg-amber-400/50" },
-                    { top: "40%", left: "85%", size: "h-2 w-2", color: "bg-primary/30" },
-                  ].map((dot, i) => (
-                    <div
-                      key={i}
-                      className={`absolute ${dot.size} rounded-full ${dot.color} animate-pulse`}
-                      style={{ top: dot.top, left: dot.left, animationDelay: `${i * 0.5}s` }}
-                    />
-                  ))}
-                </div>
-
-                {/* Inner card content - slightly translucent glassmorphism */}
-                <div className="absolute bottom-6 left-0 right-0 flex flex-col items-center justify-center text-center px-8">
-                  <div className="bg-white/80 backdrop-blur-lg p-5 rounded-2xl shadow-xl border border-white/20 max-w-xs transform hover:scale-105 transition-transform">
-                    <div className="flex h-12 w-12 mx-auto mb-3 items-center justify-center rounded-full bg-primary/10">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="currentColor"
-                        className="h-7 w-7 text-primary"
-                      >
-                        <path d="M9.375 3a1.875 1.875 0 0 0 0 3.75h1.875v4.5H3.375A1.875 1.875 0 0 1 1.5 9.375v-.75c0-1.036.84-1.875 1.875-1.875h3.193A3.375 3.375 0 0 1 12 2.753a3.375 3.375 0 0 1 5.432 3.997h3.193c1.035 0 1.875.84 1.875 1.875v.75c0 1.036-.84 1.875-1.875 1.875H13.5v-4.5h1.875a1.875 1.875 0 1 0-1.875-1.875V6.75h-3V4.875C10.5 3.839 9.661 3 8.625 3h.75ZM11.25 12.75H3v6.75a2.25 2.25 0 0 0 2.25 2.25h6v-9ZM12.75 21.75h6a2.25 2.25 0 0 0 2.25-2.25v-6.75h-8.25v9Z" />
-                      </svg>
-                    </div>
-                    <h3 className="text-lg font-bold text-[#1b110e] mb-1">
-                      Surprise for Sarah!
-                    </h3>
-                    <p className="text-xs text-[#97604e] font-medium">Tap to unlock your journey</p>
-                  </div>
                 </div>
               </div>
             </div>

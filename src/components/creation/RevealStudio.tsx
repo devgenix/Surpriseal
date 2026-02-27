@@ -642,45 +642,48 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
     <div className="flex-1 w-full flex flex-col h-full overflow-hidden bg-[#f5f5f7] dark:bg-black/40">
       {/* Mobile Header: Mode Switcher & Forced Fullscreen Trigger */}
       <div className="lg:hidden shrink-0 border-b border-border bg-white/80 dark:bg-black/80 backdrop-blur-xl z-[40]">
-        <div className="p-4 flex items-center justify-between gap-4 max-w-sm mx-auto">
-          <div className="flex-1 flex p-1 bg-black/5 dark:bg-white/5 rounded-lg shadow-inner">
-            <button
-              onClick={() => setActiveMobileMode("edit")}
-              className={cn(
-                "flex-1 flex justify-center items-center py-2.5 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all",
-                activeMobileMode === "edit" ? "bg-white dark:bg-white/10 shadow-lg text-primary scale-[1.02]" : "text-text-muted hover:text-text-main"
-              )}
+        <div className="p-4">
+          <div className="flex items-center gap-2 w-full max-w-sm mx-auto">
+            <div className="flex-1 flex items-stretch bg-black/5 dark:bg-white/5 border border-border/50 rounded-lg p-1 overflow-hidden">
+              <button
+                onClick={() => setActiveMobileMode("edit")}
+                className={cn(
+                  "flex-1 flex justify-center items-center py-2 text-[10px] font-black uppercase tracking-widest rounded-md transition-all",
+                  activeMobileMode === "edit" ? "bg-white dark:bg-white/10 shadow-md text-primary" : "text-text-muted hover:text-text-main hover:bg-black/5 dark:hover:bg-white/5"
+                )}
+              >
+                <PenTool size={14} className="mr-2 shrink-0" /> <span className="truncate">Editor</span>
+              </button>
+              <button
+                onClick={() => {
+                  setActiveMobileMode("preview");
+                  toggleFullScreen(); // Proactively try to go fullscreen for preview
+                }}
+                className={cn(
+                  "flex-1 flex justify-center items-center py-2 text-[10px] font-black uppercase tracking-widest rounded-md transition-all",
+                  activeMobileMode === "preview" ? "bg-white dark:bg-white/10 shadow-md text-primary" : "text-text-muted hover:text-text-main hover:bg-black/5 dark:hover:bg-white/5"
+                )}
+              >
+                <Play size={14} className="mr-2 shrink-0" /> <span className="truncate">Preview</span>
+              </button>
+            </div>
+            
+            <button 
+              onClick={toggleFullScreen}
+              className="size-[42px] shrink-0 flex items-center justify-center rounded-lg bg-black/5 dark:bg-white/5 border border-border/50 text-text-muted hover:text-text-main hover:bg-black/10 dark:hover:bg-white/10 transition-all active:scale-95"
             >
-              <PenTool size={14} className="mr-2" /> Editor
-            </button>
-            <button
-              onClick={() => {
-                setActiveMobileMode("preview");
-                toggleFullScreen(); // Proactively try to go fullscreen for preview
-              }}
-              className={cn(
-                "flex-1 flex justify-center items-center py-2.5 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all",
-                activeMobileMode === "preview" ? "bg-white dark:bg-white/10 shadow-lg text-primary scale-[1.02]" : "text-text-muted hover:text-text-main"
-              )}
-            >
-              <Play size={14} className="mr-2" /> Live Preview
+              <Maximize2 size={16} />
             </button>
           </div>
-          <button 
-            onClick={toggleFullScreen}
-            className="size-11 flex items-center justify-center rounded-lg bg-black/5 dark:bg-white/5 text-text-muted active:scale-95 transition-all"
-          >
-            <Maximize2 size={20} />
-          </button>
         </div>
 
         {/* Mobile Scene Switcher Row (Compact) */}
         {activeMobileMode === "edit" && (
           <div className="px-4 pb-4 animate-in fade-in slide-in-from-top-2">
-            <div className="flex items-center gap-2">
+            <div className="flex items-stretch max-w-sm mx-auto bg-black/5 dark:bg-white/5 border border-border/50 rounded-lg overflow-hidden">
               <button 
                 onClick={() => setIsScenePickerOpen(true)}
-                className="flex-[0.6] flex items-center justify-between px-4 py-3 bg-black/5 dark:bg-white/5 border border-border/50 rounded-lg text-left active:bg-black/10 transition-colors"
+                className="flex-1 flex items-center justify-between px-4 py-3 text-left hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
               >
                 <div className="flex items-center gap-3 overflow-hidden">
                   <div className="shrink-0 size-6 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
@@ -693,9 +696,11 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
                 <ChevronDown size={14} className="text-text-muted shrink-0 ml-2" />
               </button>
               
+              <div className="w-[1px] bg-border/50 shrink-0" />
+              
               <button 
                 onClick={addScene}
-                className="flex-[0.4] flex items-center justify-center gap-2 py-3 bg-primary text-white rounded-lg shadow-lg shadow-primary/20 active:scale-95 transition-all"
+                className="flex items-center justify-center gap-2 px-4 py-3 bg-primary/5 hover:bg-primary/10 text-primary transition-colors active:bg-primary/20 shrink-0"
               >
                 <Plus size={16} />
                 <span className="text-[9px] font-black uppercase tracking-widest whitespace-nowrap">New Screen</span>
