@@ -183,8 +183,8 @@ function GridGallery({ media, onLightboxToggle }: { media: any[], onLightboxTogg
         .custom-scroll { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
       
-      {/* Refined Grid Layout - 1 col Mobile, 2 col Desktop */}
-      <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-8 pt-12 pb-48 px-0 md:px-8 max-w-5xl mx-auto h-max min-h-full">
+      {/* Refined Grid Layout - 2 col Mobile, 2 col Desktop */}
+      <div className="w-full grid grid-cols-2 md:grid-cols-2 gap-2 sm:gap-8 pt-12 pb-48 px-2 md:px-8 max-w-5xl mx-auto h-max min-h-full">
         {media.map((item: any, i: number) => {
           const rotation = (i % 2 === 0) ? -1 : 1; 
           
@@ -197,7 +197,7 @@ function GridGallery({ media, onLightboxToggle }: { media: any[], onLightboxTogg
               viewport={{ once: true, margin: "100px" }}
               transition={{ delay: (i % 4) * 0.1, duration: 0.6 }}
               style={{ rotate: rotation }}
-              className="w-full relative group cursor-zoom-in shadow-2xl border-y md:border-[10px] border-[#f8f8f8] bg-[#f8f8f8] rounded-none md:rounded-sm overflow-hidden"
+              className="w-full relative group cursor-zoom-in shadow-2xl border-[4px] md:border-[10px] border-[#f8f8f8] bg-[#f8f8f8] rounded-lg md:rounded-sm overflow-hidden"
               onClick={(e) => {
                 e.stopPropagation();
                 setSelectedIndex(i);

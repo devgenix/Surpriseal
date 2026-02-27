@@ -144,6 +144,9 @@ export default function RevealEngine({ moment, isPreview = false, activeSceneInd
 
   // Hierarchy Theme Selection
   const activeThemeId = useMemo(() => {
+    // Override with Golden Gala theme specifically for the Final End Screen
+    if (currentSceneIndex === scenes.length) return "golden-gala";
+
     const sceneTheme = currentScene?.config?.themeId;
     const useGlobal = currentScene?.config?.useGlobalTheme !== false;
     
@@ -156,7 +159,7 @@ export default function RevealEngine({ moment, isPreview = false, activeSceneInd
     if (occasion === "wedding") return "elegant-noir";
     if (occasion === "valentine") return "romantic-rose";
     return "surprise-neon";
-  }, [style.themeId, currentScene?.config, moment?.occasionId]);
+  }, [style.themeId, currentScene?.config, moment?.occasionId, currentSceneIndex, scenes.length]);
 
   // Initialize YouTube API
   useEffect(() => {
