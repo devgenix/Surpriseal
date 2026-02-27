@@ -136,11 +136,11 @@ export default function MomentDetailPage() {
         {/* Visual Identity Hub */}
         <div className="bg-white dark:bg-surface-dark rounded-lg border border-[#f3eae7] dark:border-white/5 overflow-hidden shadow-sm">
           <div 
-            className="h-64 bg-cover bg-center relative"
+            className="h-56 sm:h-64 bg-cover bg-center relative"
             style={{ backgroundImage: `url(${moment.imageUrl || 'https://images.unsplash.com/photo-1513201099705-a9746e1e201f?q=80&w=2897&auto=format&fit=crop'})` }}
           >
             <div className="absolute inset-0 bg-gradient-to-t from-[#1b110e] via-[#1b110e]/40 to-transparent"></div>
-            <div className="absolute bottom-8 left-8 right-8">
+            <div className="absolute bottom-6 sm:bottom-8 left-6 sm:left-8 right-6 sm:right-8">
               <div className="flex items-center gap-2 mb-3">
                 <span className={`px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-wider border backdrop-blur-md ${
                   isPublished 
@@ -154,63 +154,64 @@ export default function MomentDetailPage() {
                   {formattedOccasion}
                 </span>
               </div>
-              <h1 className="text-4xl sm:text-5xl font-black text-white leading-tight uppercase tracking-tighter">
+              <h1 className="text-3xl sm:text-5xl font-black text-white leading-tight uppercase tracking-tighter">
                 {moment.recipientName || "Someone"}'s Moment
               </h1>
             </div>
           </div>
 
-          <div className="p-6 sm:p-8 flex flex-col sm:flex-row flex-wrap sm:items-center justify-between gap-6 sm:gap-8">
-            <div className="flex flex-wrap items-center gap-8">
-              <div className="flex items-center gap-4">
-                <div className="size-12 rounded-lg bg-[#f9f5f3] dark:bg-white/5 flex items-center justify-center text-primary shadow-sm">
-                  <Eye size={24} />
+          <div className="p-6 sm:p-8 flex flex-col md:flex-row flex-wrap md:items-center justify-between gap-6 sm:gap-8">
+            <div className="flex flex-wrap items-center gap-6 sm:gap-8">
+              <div className="flex items-center gap-3 sm:gap-4">
+                <div className="size-10 sm:size-12 rounded-lg bg-[#f9f5f3] dark:bg-white/5 flex items-center justify-center text-primary shadow-sm">
+                  <Eye size={20} className="sm:size-[24px]" />
                 </div>
                 <div>
                   <p className="text-[10px] font-black text-text-muted uppercase tracking-widest mb-1">Total Views</p>
-                  <p className="text-2xl font-black text-[#1b110e] dark:text-white leading-none">{moment.views || 0}</p>
+                  <p className="text-xl sm:text-2xl font-black text-[#1b110e] dark:text-white leading-none">{moment.views || 0}</p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-4">
-                <div className="size-12 rounded-lg bg-[#f9f5f3] dark:bg-white/5 flex items-center justify-center text-primary shadow-sm">
-                  <Clock size={24} />
+              <div className="flex items-center gap-3 sm:gap-4">
+                <div className="size-10 sm:size-12 rounded-lg bg-[#f9f5f3] dark:bg-white/5 flex items-center justify-center text-primary shadow-sm">
+                  <Clock size={20} className="sm:size-[24px]" />
                 </div>
                 <div>
                   <p className="text-[10px] font-black text-text-muted uppercase tracking-widest mb-1">Last Updated</p>
-                  <p className="text-2xl font-black text-[#1b110e] dark:text-white leading-none">
+                  <p className="text-xl sm:text-2xl font-black text-[#1b110e] dark:text-white leading-none">
                     {moment.updatedAt ? new Date(moment.updatedAt.toDate()).toLocaleDateString() : 'Just now'}
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto mt-2 sm:mt-0 pt-6 sm:pt-0 border-t sm:border-0 border-[#f3eae7] dark:border-white/5">
+            <div className="grid grid-cols-2 md:flex md:flex-row items-center gap-2 w-full md:w-auto mt-2 sm:mt-0 pt-6 sm:pt-0 border-t md:border-0 border-[#f3eae7] dark:border-white/5">
                <button 
                  onClick={handleShare}
-                 className="w-full sm:w-auto flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 h-12 rounded-lg bg-primary/10 hover:bg-primary text-primary hover:text-white border border-primary/20 text-[10px] font-black uppercase tracking-widest transition-all shadow-sm"
+                 className="flex items-center justify-center gap-2 px-3 sm:px-6 h-12 rounded-lg bg-primary/10 hover:bg-primary text-primary hover:text-white border border-primary/20 text-[10px] font-black uppercase tracking-widest transition-all shadow-sm"
                >
                  {copying ? <CheckCircle2 size={16} /> : <Share2 size={16} />}
                  {copying ? "Copied" : "Copy"}
                </button>
                <button 
                  onClick={() => window.open(`/view/${moment.urlSlug || id}`, '_blank')}
-                 className="w-full sm:w-auto flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 h-12 rounded-lg bg-[#f9f5f3] dark:bg-white/5 hover:bg-[#1b110e] dark:hover:bg-white text-[#1b110e] dark:text-white hover:text-white dark:hover:text-[#1b110e] border border-[#f3eae7] dark:border-white/10 text-[10px] font-black uppercase tracking-widest transition-all shadow-sm"
+                 className="flex items-center justify-center gap-2 px-3 sm:px-6 h-12 rounded-lg bg-[#f9f5f3] dark:bg-white/5 hover:bg-[#1b110e] dark:hover:bg-white text-[#1b110e] dark:text-white hover:text-white dark:hover:text-[#1b110e] border border-[#f3eae7] dark:border-white/10 text-[10px] font-black uppercase tracking-widest transition-all shadow-sm"
                >
                  <ExternalLink size={16} /> View
                </button>
                <button 
                  onClick={() => router.push(`/dashboard/create/${id}?resume=true`)}
-                 className="w-full sm:w-auto flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 h-12 rounded-lg bg-[#f9f5f3] dark:bg-white/5 hover:bg-[#1b110e] dark:hover:bg-white text-[#1b110e] dark:text-white hover:text-white dark:hover:text-[#1b110e] border border-[#f3eae7] dark:border-white/10 text-[10px] font-black uppercase tracking-widest transition-all shadow-sm"
+                 className="col-span-2 md:col-span-1 flex items-center justify-center gap-2 px-3 sm:px-6 h-12 rounded-lg bg-[#f9f5f3] dark:bg-white/5 hover:bg-[#1b110e] dark:hover:bg-white text-[#1b110e] dark:text-white hover:text-white dark:hover:text-[#1b110e] border border-[#f3eae7] dark:border-white/10 text-[10px] font-black uppercase tracking-widest transition-all shadow-sm"
                >
                  <Edit3 size={16} /> Edit
                </button>
+               {/* Explicit Trash icon spacing layout on mobile vs desktop */}
                <button 
                  onClick={() => setShowDeleteConfirm(true)}
-                 className="w-full sm:w-12 sm:flex-none flex items-center justify-center h-12 rounded-lg bg-red-500/5 hover:bg-red-500 text-red-500 hover:text-white border border-red-500/10 transition-all shadow-sm"
+                 className="col-span-2 md:col-span-1 md:w-12 flex items-center justify-center h-12 rounded-lg bg-red-500/5 hover:bg-red-500 text-red-500 hover:text-white border border-red-500/10 transition-all shadow-sm"
                >
-                 <Trash2 size={16} className="sm:mx-auto" />
-                 <span className="sm:hidden text-[10px] font-black uppercase tracking-widest ml-2">Delete</span>
+                 <Trash2 size={16} className="md:mx-auto" />
+                 <span className="md:hidden text-[10px] font-black uppercase tracking-widest ml-2">Delete</span>
                </button>
             </div>
           </div>
@@ -276,8 +277,8 @@ export default function MomentDetailPage() {
         </div>
 
         {/* Reactions Section */}
-        <div className="bg-white dark:bg-surface-dark rounded-lg border border-[#f3eae7] dark:border-white/5 overflow-hidden shadow-sm">
-           <div className="p-8 border-b border-[#f3eae7] dark:border-white/5 flex items-center justify-between">
+        <div className="bg-white dark:bg-surface-dark rounded-xl border border-[#f3eae7] dark:border-white/5 overflow-hidden shadow-sm">
+           <div className="p-6 sm:p-8 border-b border-[#f3eae7] dark:border-white/5 flex items-center justify-between">
               <h3 className="text-xs font-black text-[#1b110e] dark:text-white uppercase tracking-widest flex items-center gap-2">
                 <MessageCircleHeart size={18} className="text-pink-500" />
                 Audience Reactions
@@ -287,44 +288,53 @@ export default function MomentDetailPage() {
               </div>
            </div>
 
-           <div className="p-8">
+           <div className="p-6 sm:p-8 bg-[#fafafa]/50 dark:bg-black/10">
              {reactions.length === 0 ? (
-               <div className="text-center py-12">
-                  <div className="size-16 rounded-full bg-black/[0.02] dark:bg-white/5 flex items-center justify-center mx-auto mb-4 text-text-muted">
-                     <MessageCircleHeart size={24} />
+               <div className="text-center py-16">
+                  <div className="size-20 rounded-[2rem] bg-gradient-to-br from-pink-500/5 to-purple-500/5 border border-pink-500/10 flex items-center justify-center mx-auto mb-6 text-pink-500 shadow-inner">
+                     <MessageCircleHeart size={28} className="drop-shadow-sm" />
                   </div>
-                  <p className="text-sm font-bold text-[#1b110e] dark:text-white mb-2">No reactions yet</p>
-                  <p className="text-xs font-medium text-text-muted max-w-sm mx-auto">
-                    When someone viewing your moment leaves a voice note, video, or message, it will appear here securely.
+                  <p className="text-lg font-black text-[#1b110e] dark:text-white mb-2 uppercase tracking-tighter">Awaiting the magic</p>
+                  <p className="text-xs font-medium text-text-muted max-w-sm mx-auto leading-relaxed">
+                    When someone viewing your moment leaves a voice note, video reaction, or message, it will securely appear right here for your eyes only.
                   </p>
                </div>
              ) : (
-               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                  {reactions.map((reaction) => (
-                   <div key={reaction.id} className="p-6 rounded-lg border border-[#f3eae7] dark:border-white/5 bg-[#fafafa] dark:bg-black/20 flex flex-col items-start gap-4 shadow-sm hover:shadow-md transition-shadow">
+                   <div key={reaction.id} className="p-6 rounded-2xl border border-[#f3eae7] dark:border-white/5 bg-white dark:bg-white/[0.03] flex flex-col items-start gap-4 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] dark:shadow-none hover:-translate-y-1 transition-transform duration-300">
                      <div className="flex items-center justify-between w-full">
-                       <div className="flex items-center gap-2">
-                         <span className="text-2xl">{reaction.emoji || "💬"}</span>
-                         <span className="text-[10px] font-black uppercase tracking-widest text-text-muted">
-                           {reaction.createdAt ? new Date(reaction.createdAt.toDate()).toLocaleDateString() : 'Just now'}
-                         </span>
+                       <div className="flex items-center gap-3">
+                         <div className="size-10 rounded-xl bg-black/5 dark:bg-black/30 flex items-center justify-center text-xl shadow-inner text-center leading-none">
+                           {reaction.emoji || "💬"}
+                         </div>
+                         <div className="flex flex-col">
+                           <span className="text-[12px] font-bold text-foreground capitalize">
+                             {reaction.type === 'voice' ? 'Voice Note' : reaction.type === 'camera' ? 'Video Message' : 'Text Message'}
+                           </span>
+                           <span className="text-[9px] font-black uppercase tracking-widest text-text-muted">
+                             {reaction.createdAt ? new Date(reaction.createdAt.toDate()).toLocaleDateString() : 'Just now'}
+                           </span>
+                         </div>
                        </div>
-                       {reaction.type === 'voice' && <Mic size={14} className="text-blue-500" />}
-                       {reaction.type === 'camera' && <Video size={14} className="text-purple-500" />}
+                       {reaction.type === 'voice' && <div className="p-2 rounded-full bg-blue-500/10 text-blue-500"><Mic size={14} /></div>}
+                       {reaction.type === 'camera' && <div className="p-2 rounded-full bg-purple-500/10 text-purple-500"><Video size={14} /></div>}
                      </div>
                      
                      {reaction.type === 'text' && (
-                       <p className="text-sm font-medium text-[#1b110e] dark:text-white leading-relaxed italic">"{reaction.content}"</p>
+                       <div className="w-full bg-[#f9f5f3] dark:bg-black/20 p-4 rounded-xl border border-black/5 dark:border-white/5">
+                         <p className="text-sm font-medium text-[#1b110e] dark:text-white leading-relaxed italic">"{reaction.content}"</p>
+                       </div>
                      )}
 
                      {reaction.type === 'voice' && (
-                       <div className="w-full">
-                         <audio src={reaction.content} controls className="w-full h-8 outline-none" />
+                       <div className="w-full bg-[#f9f5f3] dark:bg-black/20 p-2 rounded-xl border border-black/5 dark:border-white/5">
+                         <audio src={reaction.content} controls className="w-full h-10 outline-none" />
                        </div>
                      )}
 
                      {reaction.type === 'camera' && (
-                       <div className="w-full aspect-[3/4] rounded-lg overflow-hidden bg-black relative border border-border">
+                       <div className="w-full aspect-[3/4] rounded-xl overflow-hidden bg-black relative shadow-inner ring-1 ring-white/10">
                          <video src={reaction.content} controls className="w-full h-full object-cover" />
                        </div>
                      )}
