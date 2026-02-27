@@ -9,6 +9,10 @@ const font = Plus_Jakarta_Sans({ subsets: ['latin'] })
 export const metadata: Metadata = {
   title: 'Supriseal - Create Unforgettable Digital Surprises',
   description: 'Turn birthdays and anniversaries into a structured digital journey.',
+  icons: {
+    icon: '/favicon.svg',
+    apple: '/favicon.svg',
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
