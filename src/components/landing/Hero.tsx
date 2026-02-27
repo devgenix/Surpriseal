@@ -44,7 +44,7 @@ export default function Hero() {
               </Link>
 
               <Link
-                href="/view/blessing"
+                href="/view/example"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center justify-center rounded-lg border-2 border-[#e64c19]/30 bg-white px-8 py-4 text-base font-bold text-[#e64c19] transition-all hover:border-primary hover:bg-primary/5"
