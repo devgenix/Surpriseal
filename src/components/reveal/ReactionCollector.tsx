@@ -170,6 +170,7 @@ export default function ReactionCollector({ momentId, isPreview, onActiveChange,
       setTimeout(() => {
         stopStreams();
         setMode("success");
+        setTimeout(() => reset(), 3000);
       }, 1500);
       return;
     }
@@ -209,6 +210,7 @@ export default function ReactionCollector({ momentId, isPreview, onActiveChange,
       }
       stopStreams();
       setMode("success");
+      setTimeout(() => reset(), 3000);
     } catch (err) {
       console.error("Reaction submission failed", err);
       setMode("idle");
@@ -455,7 +457,7 @@ export default function ReactionCollector({ momentId, isPreview, onActiveChange,
             key="success"
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="flex flex-col items-center gap-2 bg-green-500/10 backdrop-blur-md p-4 rounded-2xl border border-green-500/30 shadow-xl pointer-events-auto text-center"
+            className="flex flex-col items-center gap-2 bg-green-500/10 backdrop-blur-md p-4 rounded-lg border border-green-500/30 shadow-xl pointer-events-auto text-center"
           >
             <CheckCircle2 size={32} className="text-green-500 mx-auto" />
             <p className="text-green-100 font-black uppercase tracking-widest text-[10px]">Reaction Sent!</p>

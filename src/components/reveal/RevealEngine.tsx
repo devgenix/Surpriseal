@@ -656,7 +656,7 @@ export default function RevealEngine({ moment, isPreview = false, activeSceneInd
       )}
 
       {/* Persistence Controls (Mute, etc) */}
-      <div className="absolute top-8 left-8 flex items-center gap-3 z-50">
+      <div className="absolute top-8 left-8 flex items-center gap-3 z-[110]">
         <button 
           onClick={(e) => { e.stopPropagation(); setIsMuted(!isMuted); }}
           className="size-10 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-white/20 transition-all shadow-lg"
