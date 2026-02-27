@@ -70,13 +70,16 @@ interface RevealStudioProps {
 }
 
 export default function RevealStudio({ draftId, onSave, onContinue }: RevealStudioProps) {
-  const { momentData, setCanContinue, setOnSave, setOnContinue } = useCreation();
+  const { momentData, setCanContinue, setOnSave, setOnContinue, setIsCinematic } = useCreation();
   
   const [scenes, setScenes] = useState<Scene[]>(
     momentData?.styleConfig?.scenes || DEFAULT_SCENES
   );
   const [activeSceneId, setActiveSceneId] = useState<string>("splash");
   const [previewDevice, setPreviewDevice] = useState<"mobile" | "desktop">("mobile");
+  
+  const [activeMobileMode, setActiveMobileMode] = useState<"edit" | "preview">("edit");
+  const [isScenePickerOpen, setIsScenePickerOpen] = useState(false);
   
   // Aesthetics Settings State
   const [thumbnailMode, setThumbnailMode] = useState<"upload" | "library">("upload");
@@ -254,6 +257,11 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
   };
 
 
+
+  useEffect(() => {
+    setIsCinematic(activeMobileMode === "preview");
+    return () => setIsCinematic(false);
+  }, [activeMobileMode, setIsCinematic]);
 
   const addScene = () => {
     const newScene: Scene = {
@@ -614,12 +622,94 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
     }
   }), [momentData, scenes]);
 
+  const toggleFullScreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    } else if (document.exitFullscreen) {
+      document.exitFullscreen();
+    }
+  };
+
+  const activeSceneInfo = useMemo(() => {
+    if (activeSceneId === "splash") return { title: "Splash Screen", icon: Heart };
+    if (activeSceneId === "branding") return { title: "Final Screen", icon: Award };
+    const idx = scenes.findIndex(s => s.id === activeSceneId);
+    return { title: `Scene ${idx + 1}`, icon: scenes[idx]?.type === "gallery" ? ImageIcon : Scroll };
+  }, [activeSceneId, scenes]);
+
   return (
-    <div className="flex-1 w-full flex flex-col h-full overflow-hidden">
-      <div className="flex-1 flex overflow-hidden">
-        
-        {/* Left Sidebar: Timeline */}
-        <div className="w-64 border-r border-border bg-[#fafafa] dark:bg-black/20 flex flex-col shrink-0 overflow-y-auto">
+    <div className="flex-1 w-full flex flex-col h-full overflow-hidden bg-[#f5f5f7] dark:bg-black/40">
+      {/* Mobile Header: Mode Switcher & Forced Fullscreen Trigger */}
+      <div className="lg:hidden shrink-0 border-b border-border bg-white/80 dark:bg-black/80 backdrop-blur-xl z-[40]">
+        <div className="p-4 flex items-center justify-between gap-4 max-w-sm mx-auto">
+          <div className="flex-1 flex p-1 bg-black/5 dark:bg-white/5 rounded-lg shadow-inner">
+            <button
+              onClick={() => setActiveMobileMode("edit")}
+              className={cn(
+                "flex-1 flex justify-center items-center py-2.5 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all",
+                activeMobileMode === "edit" ? "bg-white dark:bg-white/10 shadow-lg text-primary scale-[1.02]" : "text-text-muted hover:text-text-main"
+              )}
+            >
+              <PenTool size={14} className="mr-2" /> Editor
+            </button>
+            <button
+              onClick={() => {
+                setActiveMobileMode("preview");
+                toggleFullScreen(); // Proactively try to go fullscreen for preview
+              }}
+              className={cn(
+                "flex-1 flex justify-center items-center py-2.5 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all",
+                activeMobileMode === "preview" ? "bg-white dark:bg-white/10 shadow-lg text-primary scale-[1.02]" : "text-text-muted hover:text-text-main"
+              )}
+            >
+              <Play size={14} className="mr-2" /> Live Preview
+            </button>
+          </div>
+          <button 
+            onClick={toggleFullScreen}
+            className="size-11 flex items-center justify-center rounded-lg bg-black/5 dark:bg-white/5 text-text-muted active:scale-95 transition-all"
+          >
+            <Smartphone size={20} />
+          </button>
+        </div>
+
+        {/* Mobile Scene Switcher Row (Compact) */}
+        {activeMobileMode === "edit" && (
+          <div className="px-4 pb-4 animate-in fade-in slide-in-from-top-2">
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={() => setIsScenePickerOpen(true)}
+                className="flex-[0.6] flex items-center justify-between px-4 py-3 bg-black/5 dark:bg-white/5 border border-border/50 rounded-lg text-left active:bg-black/10 transition-colors"
+              >
+                <div className="flex items-center gap-3 overflow-hidden">
+                  <div className="shrink-0 size-6 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                    <activeSceneInfo.icon size={14} />
+                  </div>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-text-main truncate">
+                    {activeSceneInfo.title}
+                  </span>
+                </div>
+                <ChevronDown size={14} className="text-text-muted shrink-0 ml-2" />
+              </button>
+              
+              <button 
+                onClick={addScene}
+                className="flex-[0.4] flex items-center justify-center gap-2 py-3 bg-primary text-white rounded-lg shadow-lg shadow-primary/20 active:scale-95 transition-all"
+              >
+                <Plus size={16} />
+                <span className="text-[9px] font-black uppercase tracking-widest whitespace-nowrap">New Screen</span>
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="flex-1 flex overflow-hidden relative">
+        {/* Left Sidebar: Timeline (Desktop Only, or hidden on mobile mobile preview) */}
+        <div className={cn(
+          "w-64 border-r border-border bg-[#fafafa] dark:bg-black/20 flex flex-col shrink-0 overflow-y-auto z-10",
+          "hidden lg:flex" // Hide on mobile entirely, replaced by bottom rail & sidebar settings
+        )}>
           {/* Device Preview Toggle */}
           <div className="p-4 border-b border-border">
             <h2 className="text-[10px] font-black uppercase tracking-widest text-text-muted mb-2 flex items-center gap-2">
@@ -735,34 +825,112 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
           </div>
         </div>
 
-        {/* Main Stage */}
-        <div className="flex-1 bg-[#f5f5f7] dark:bg-black/40 overflow-hidden relative">
-          <div className="h-full flex flex-col lg:flex-row overflow-hidden">
-            <div className="flex-1 flex flex-col items-center justify-center p-8 relative">
-              <div 
-                className={cn(
-                  "bg-[#fafafa] dark:bg-black/5 border border-border shadow-2xl flex flex-col overflow-hidden relative transition-all duration-500 ease-in-out",
-                  previewDevice === "mobile" 
-                    ? "aspect-[9/16] h-full max-h-[700px] w-full max-w-[400px] rounded-[32px]" 
-                    : "h-full w-full rounded-lg"
-                )}
+        {/* Scene Picker Bottom Sheet (Mobile Only) */}
+        <AnimatePresence>
+          {isScenePickerOpen && (
+            <div className="lg:hidden fixed inset-0 z-[100] flex items-end justify-center px-4 pb-4">
+              <motion.div 
+                initial={{ opacity: 0 }} 
+                animate={{ opacity: 1 }} 
+                exit={{ opacity: 0 }}
+                onClick={() => setIsScenePickerOpen(false)}
+                className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              />
+              <motion.div 
+                initial={{ y: "100%" }} 
+                animate={{ y: 0 }} 
+                exit={{ y: "100%" }}
+                className="relative w-full max-w-sm bg-white dark:bg-zinc-900 rounded-[2.5rem] shadow-2xl overflow-hidden border border-white/10 p-6 pb-safe"
               >
-                <RevealEngine 
-                  moment={previewMoment} 
-                  isPreview={true} 
-                  activeSceneIndex={
-                    activeSceneId === "splash" 
-                      ? -1 
-                      : activeSceneId === "branding" 
-                        ? scenes.length 
-                        : scenes.findIndex(s => s.id === activeSceneId)
-                  } 
-                />
-              </div>
-            </div>
+                <div className="w-12 h-1.5 bg-black/10 dark:bg-white/10 rounded-full mx-auto mb-6" />
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-text-muted">Jump to Screen</h3>
+                  <button onClick={() => setIsScenePickerOpen(false)} className="text-text-muted hover:text-text-main p-1">
+                    <X size={16} />
+                  </button>
+                </div>
+                <div className="space-y-2 max-h-[60vh] overflow-y-auto no-scrollbar pb-6 px-1">
+                  {/* Splash */}
+                  <button 
+                    onClick={() => { setActiveSceneId("splash"); setIsScenePickerOpen(false); }}
+                    className={cn(
+                      "w-full flex items-center gap-4 p-4 rounded-lg transition-all",
+                      activeSceneId === "splash" ? "bg-primary text-white shadow-lg shadow-primary/20" : "bg-black/5 dark:bg-white/5 text-text-main"
+                    )}
+                  >
+                    <Heart size={18} />
+                    <span className="text-xs font-bold uppercase tracking-widest">Splash Screen</span>
+                    {activeSceneId === "splash" && <Check size={16} className="ml-auto" />}
+                  </button>
 
-            {/* Right Sidebar: Properties */}
-            <div className="w-80 border-l border-border bg-surface shrink-0 p-6 overflow-y-auto scrollbar-none">
+                  {/* Scenes */}
+                  {scenes.map((scene, index) => (
+                    <button 
+                      key={scene.id}
+                      onClick={() => { setActiveSceneId(scene.id); setIsScenePickerOpen(false); }}
+                      className={cn(
+                        "w-full flex items-center gap-4 p-4 rounded-lg transition-all",
+                        activeSceneId === scene.id ? "bg-primary text-white shadow-lg shadow-primary/20" : "bg-black/5 dark:bg-white/5 text-text-main"
+                      )}
+                    >
+                      {scene.type === "gallery" ? <ImageIcon size={18} /> : <Scroll size={18} />}
+                      <span className="text-xs font-bold uppercase tracking-widest">Scene {index + 1}</span>
+                      {activeSceneId === scene.id && <Check size={16} className="ml-auto" />}
+                    </button>
+                  ))}
+
+                  {/* Final */}
+                  <button 
+                    onClick={() => { setActiveSceneId("branding"); setIsScenePickerOpen(false); }}
+                    className={cn(
+                      "w-full flex items-center gap-4 p-4 rounded-lg transition-all",
+                      activeSceneId === "branding" ? "bg-primary text-white shadow-lg shadow-primary/20" : "bg-black/5 dark:bg-white/5 text-text-main"
+                    )}
+                  >
+                    <Award size={18} />
+                    <span className="text-xs font-bold uppercase tracking-widest">Final Screen</span>
+                    {activeSceneId === "branding" && <Check size={16} className="ml-auto" />}
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        {/* Main Stage */}
+        <div className="flex-1 lg:bg-[#f5f5f7] dark:lg:bg-black/40 overflow-hidden relative flex flex-col lg:flex-row">
+          <div className={cn(
+            "flex-1 flex flex-col items-center justify-center p-0 lg:p-8 relative transition-all",
+            activeMobileMode === "edit" && "hidden lg:flex"
+          )}>
+            <div 
+              className={cn(
+                "bg-[#fafafa] dark:bg-black/5 flex flex-col overflow-hidden relative transition-all duration-500 ease-in-out",
+                previewDevice === "mobile" || (typeof window !== 'undefined' && window.innerWidth < 1024)
+                  ? "aspect-[9/16] h-full lg:max-h-[700px] w-full lg:max-w-[400px] lg:rounded-[32px] lg:shadow-2xl lg:border lg:border-border" 
+                  : "h-full w-full rounded-lg shadow-2xl border border-border"
+              )}
+            >
+              <RevealEngine 
+                moment={previewMoment} 
+                isPreview={true} 
+                activeSceneIndex={
+                  activeSceneId === "splash" 
+                    ? -1 
+                    : activeSceneId === "branding" 
+                      ? scenes.length 
+                      : scenes.findIndex(s => s.id === activeSceneId)
+                } 
+              />
+            </div>
+          </div>
+
+            {/* Content Properties (Edit Area) */}
+            <div className={cn(
+              "flex-1 lg:w-[380px] lg:border-l lg:border-border lg:bg-surface lg:shrink-0 p-6 lg:p-6 overflow-y-auto scrollbar-none transition-all",
+              activeMobileMode === "preview" && "hidden lg:block",
+              activeMobileMode === "edit" && "w-full"
+            )}>
               <div className="flex flex-col gap-8">
                 <AnimatePresence mode="wait">
                   {/* CASE 1: SPLASH SCREEN SETTINGS */}
@@ -1008,7 +1176,7 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
                       {!showBrandingFinal ? (
                         <div className="space-y-6">
                            <div className="p-6 rounded-lg bg-primary/5 border border-primary/20 space-y-4">
-                              <div className="size-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary">
+                              <div className="size-12 bg-primary/10 rounded-lg flex items-center justify-center text-primary">
                                 <Sparkles size={24} />
                               </div>
                               <div className="space-y-2">
@@ -1022,7 +1190,7 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
                       ) : (
                         <div className="space-y-6">
                            <div className="p-6 rounded-lg bg-black/[0.02] border border-border space-y-4">
-                              <div className="size-12 bg-black/5 rounded-2xl flex items-center justify-center text-text-muted">
+                              <div className="size-12 bg-black/5 rounded-lg flex items-center justify-center text-text-muted">
                                 <Gift size={24} />
                               </div>
                               <div className="space-y-2">
@@ -1100,7 +1268,7 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
                            <button
                              onClick={() => updateStyle({ showReactions: style.showReactions === false ? true : false })}
                              className={cn(
-                               "w-full relative overflow-hidden group border-2 rounded-xl transition-all duration-300 flex items-center justify-between p-4",
+                               "w-full relative overflow-hidden group border-2 rounded-lg transition-all duration-300 flex items-center justify-between p-4",
                                style.showReactions !== false
                                  ? "bg-pink-500/5 border-pink-500 shadow-[0_0_30px_rgba(236,72,153,0.1)] hover:bg-pink-500/10"
                                  : "bg-surface border-border hover:border-text-muted/30 hover:bg-black/[0.02]"
@@ -1559,11 +1727,11 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
                   initial={{ scale: 0.9, y: 20 }}
                   animate={{ scale: 1, y: 0 }}
                   exit={{ scale: 0.9, y: 20 }}
-                  className="w-full max-w-5xl h-full max-h-[90vh] bg-background border border-border rounded-3xl shadow-2xl overflow-hidden flex flex-col"
+                  className="w-full max-w-5xl h-full max-h-[90vh] bg-background border border-border rounded-lg shadow-2xl overflow-hidden flex flex-col"
                 >
                   <header className="p-6 border-b border-border flex items-center justify-between bg-surface/50">
                     <div className="flex items-center gap-3">
-                      <div className="size-10 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
+                      <div className="size-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
                         <Settings size={20} />
                       </div>
                       <div>
@@ -1639,7 +1807,7 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
                             
                             {(!momentData?.media || momentData.media.length === 0) && (
                               <div className="h-full flex flex-col items-center justify-center text-center p-6 space-y-4">
-                                 <div className="size-12 rounded-2xl bg-black/5 flex items-center justify-center text-text-muted/30">
+                                 <div className="size-12 rounded-lg bg-black/5 flex items-center justify-center text-text-muted/30">
                                     <ImageIcon size={24} />
                                  </div>
                                  <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest">No media found</p>
@@ -1663,7 +1831,6 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
               </motion.div>
             )}
           </AnimatePresence>
-        </div>
         {/* Limit Exhausted Modal */}
       <AnimatePresence>
         {showLimitModal && (
@@ -1677,10 +1844,10 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="relative w-full max-w-sm bg-white dark:bg-zinc-900 rounded-xl overflow-hidden shadow-2xl border border-white/10"
+              className="relative w-full max-w-sm bg-white dark:bg-zinc-900 rounded-lg overflow-hidden shadow-2xl border border-white/10"
             >
               <div className="p-8 text-center space-y-6">
-                <div className="size-16 rounded-3xl bg-orange-500/10 flex items-center justify-center mx-auto text-orange-500">
+                <div className="size-16 rounded-lg bg-orange-500/10 flex items-center justify-center mx-auto text-orange-500">
                   <Lock size={32} />
                 </div>
                 <div className="space-y-2">
@@ -1732,7 +1899,7 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
               className="relative w-full max-w-sm bg-white dark:bg-zinc-900 rounded-[32px] overflow-hidden shadow-2xl border border-white/10"
             >
               <div className="p-8 text-center space-y-6">
-                <div className="size-16 rounded-3xl bg-red-500/10 flex items-center justify-center mx-auto text-red-500">
+                <div className="size-16 rounded-lg bg-red-500/10 flex items-center justify-center mx-auto text-red-500">
                   <Trash2 size={32} />
                 </div>
                 <div className="space-y-2">
@@ -1745,7 +1912,7 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
                 <div className="pt-2">
                   <button 
                     onClick={() => setShowMediaRemovalModal(false)}
-                    className="w-full py-4 bg-primary text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                    className="w-full py-4 bg-primary text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-lg shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
                   >
                     Got it, I'll Delete Some
                   </button>
@@ -1774,7 +1941,7 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
               className="relative w-full max-w-sm bg-white dark:bg-zinc-900 rounded-lg overflow-hidden shadow-2xl border border-white/10"
             >
               <div className="p-8 text-center space-y-6">
-                <div className="size-20 rounded-3xl bg-red-500/10 flex items-center justify-center mx-auto text-red-500 relative overflow-hidden">
+                <div className="size-20 rounded-lg bg-red-500/10 flex items-center justify-center mx-auto text-red-500 relative overflow-hidden">
                    {isDeleting ? (
                      <Loader2 size={32} className="animate-spin" />
                    ) : (
@@ -1797,7 +1964,7 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
                 </div>
 
                 {deleteError && (
-                  <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-[10px] font-bold text-red-500 uppercase tracking-widest animate-in fade-in slide-in-from-top-1">
+                  <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-[10px] font-bold text-red-500 uppercase tracking-widest animate-in fade-in slide-in-from-top-1">
                     {deleteError}
                   </div>
                 )}

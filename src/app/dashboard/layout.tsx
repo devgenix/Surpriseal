@@ -49,7 +49,7 @@ export default function DashboardLayout({
       {!isCreationFlow && <DashboardHeader />}
       <main className={cn(
         "flex-1 w-full mx-auto",
-        !isCreationFlow ? "py-10 px-4 pb-24" : "h-screen"
+        !isCreationFlow ? "py-10 px-4 sm:px-6 lg:px-8 pb-24 max-w-6xl" : "h-screen"
       )}>
         {children}
       </main>

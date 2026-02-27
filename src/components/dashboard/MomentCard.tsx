@@ -1,4 +1,5 @@
-import { Share2, Eye, Calendar, Cake, Heart, Users, Trash2, Loader2, AlertCircle, Edit3 } from "lucide-react";
+import { Share2, Eye, Calendar, Cake, Heart, Users, Trash2, Loader2, AlertCircle, Edit3, Play } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { db } from "@/lib/firebase";
 import { doc, deleteDoc } from "firebase/firestore";
@@ -14,6 +15,7 @@ interface MomentProps {
     expiryDate: string;
     imageUrl?: string;
     updatedAt?: string;
+    urlSlug?: string;
 }
 
 const occasionIcons: Record<string, any> = {
@@ -32,6 +34,7 @@ export default function MomentCard({ moment }: { moment: MomentProps }) {
   const isPublished = moment.status === "Published";
   const [isDeleting, setIsDeleting] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const router = useRouter();
 
   const handleDelete = async () => {
     if (!db) return;
@@ -46,7 +49,10 @@ export default function MomentCard({ moment }: { moment: MomentProps }) {
   };
   
   return (
-    <div className="group relative flex flex-col bg-white dark:bg-surface-dark rounded-lg border border-[#f3eae7] dark:border-white/5 shadow-sm hover:shadow-md hover:border-primary/20 transition-all duration-300 overflow-hidden">
+    <div 
+      onClick={() => router.push(`/dashboard/${moment.id}`)}
+      className="group relative flex flex-col bg-white dark:bg-surface-dark rounded-lg border border-[#f3eae7] dark:border-white/5 shadow-sm hover:shadow-md hover:border-primary/20 transition-all duration-300 overflow-hidden cursor-pointer"
+    >
       {/* Card Image/Cover */}
       <div 
         className={cn(
@@ -94,13 +100,13 @@ export default function MomentCard({ moment }: { moment: MomentProps }) {
             <p className="text-[10px] font-bold text-white uppercase tracking-tighter text-center">Permanently delete?</p>
             <div className="flex gap-2 w-full">
               <button 
-                onClick={() => setShowConfirm(false)}
+                onClick={(e) => { e.stopPropagation(); setShowConfirm(false); }}
                 className="flex-1 py-1.5 rounded-md bg-white/10 hover:bg-white/20 text-white text-[10px] font-bold uppercase transition-colors"
               >
                 No
               </button>
               <button 
-                onClick={handleDelete}
+                onClick={(e) => { e.stopPropagation(); handleDelete(); }}
                 className="flex-1 py-1.5 rounded-md bg-red-600 hover:bg-red-700 text-white text-[10px] font-bold uppercase transition-colors"
               >
                 Yes
@@ -139,24 +145,25 @@ export default function MomentCard({ moment }: { moment: MomentProps }) {
           <div className="flex items-center gap-1.5">
             <button 
               className="p-1.5 rounded-md text-[#97604e] hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all"
-              onClick={() => setShowConfirm(true)}
+              onClick={(e) => { e.stopPropagation(); setShowConfirm(true); }}
               title="Delete"
             >
               <Trash2 size={16} />
             </button>
-            <Link href={`/dashboard/${moment.id}`}>
-              <button className="px-3 py-1.5 rounded-md bg-transparent hover:bg-primary/5 text-primary text-[10px] font-extrabold uppercase tracking-wider transition-all border border-primary/20">
-                View
-              </button>
-            </Link>
-            <Link href={`/dashboard/create/${moment.id}?resume=true`}>
-              <button 
-                className="p-1.5 rounded-md text-[#97604e] hover:text-primary hover:bg-primary/5 transition-all"
-                title="Edit"
-              >
-                <Edit3 size={16} />
-              </button>
-            </Link>
+            <button 
+              className="p-1.5 rounded-md text-[#97604e] hover:text-primary hover:bg-primary/5 transition-all text-primary"
+              onClick={(e) => { e.stopPropagation(); window.open(`/view/${moment.urlSlug || moment.id}`, '_blank'); }}
+              title="Live Preview"
+            >
+              <Play size={16} />
+            </button>
+            <button 
+              className="p-1.5 rounded-md text-[#97604e] hover:text-primary hover:bg-primary/5 transition-all"
+              onClick={(e) => { e.stopPropagation(); router.push(`/dashboard/create/${moment.id}?resume=true`); }}
+              title="Edit"
+            >
+              <Edit3 size={16} />
+            </button>
           </div>
         </div>
       </div>

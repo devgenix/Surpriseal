@@ -269,7 +269,7 @@ export default function CreationDetailsPage() {
               </div>
             )}
 
-            <div className="flex flex-col gap-4 p-6 bg-primary/5 rounded-xl border border-primary/10">
+            <div className="flex flex-col gap-4 p-6 bg-primary/5 rounded-lg border border-primary/10">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <label className="text-sm font-bold text-[#1b110e] dark:text-white ml-1">Who is sending this?</label>
                 <div className="flex items-center p-1 bg-surface border border-border rounded-lg shrink-0">

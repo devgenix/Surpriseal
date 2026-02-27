@@ -24,6 +24,8 @@ interface CreationContextType {
   onContinue: (() => Promise<void>) | null;
   setOnContinue: Dispatch<SetStateAction<(() => Promise<void>) | null>>;
   completeStep: (stepId: string) => void;
+  isCinematic: boolean;
+  setIsCinematic: Dispatch<SetStateAction<boolean>>;
 }
 
 const CreationContext = createContext<CreationContextType | undefined>(undefined);
@@ -39,6 +41,7 @@ export function CreationProvider({ children }: { children: ReactNode }) {
   
   const [onSave, setOnSave] = useState<(() => Promise<void>) | null>(null);
   const [onContinue, setOnContinue] = useState<(() => Promise<void>) | null>(null);
+  const [isCinematic, setIsCinematic] = useState(false);
 
   const completeStep = useCallback((stepId: string) => {
     setMomentData((prev: any) => {
@@ -60,11 +63,12 @@ export function CreationProvider({ children }: { children: ReactNode }) {
     canContinue, setCanContinue,
     onSave, setOnSave,
     onContinue, setOnContinue,
-    completeStep
+    completeStep,
+    isCinematic, setIsCinematic
   }), [
     momentData, sidebarOpen, saving, saveError, 
     lastSaved, canContinue, onSave, onContinue,
-    completeStep
+    completeStep, isCinematic
   ]);
 
   return (

@@ -68,7 +68,7 @@ const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>(({
         // Create image element
         const img = document.createElement('img');
         img.src = url;
-        img.className = 'max-w-full h-auto rounded-xl my-6 block shadow-lg mx-auto transition-all hover:scale-[1.02]';
+        img.className = 'max-w-full h-auto rounded-lg my-6 block shadow-lg mx-auto transition-all hover:scale-[1.02]';
         img.style.display = 'block';
         
         // Insert at range
@@ -90,7 +90,7 @@ const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>(({
         lastRange.current = newRange;
       } else {
         // Fallback: append to end if no selection found
-        editor.innerHTML += `<img src="${url}" class="max-w-full h-auto rounded-xl my-6 block shadow-lg mx-auto transition-all hover:scale-[1.02]" /><p><br></p>`;
+        editor.innerHTML += `<img src="${url}" class="max-w-full h-auto rounded-lg my-6 block shadow-lg mx-auto transition-all hover:scale-[1.02]" /><p><br></p>`;
       }
       
       onChange(editor.innerHTML);

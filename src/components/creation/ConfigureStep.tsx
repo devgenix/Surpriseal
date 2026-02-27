@@ -257,7 +257,7 @@ export default function ConfigureStep({ draftId: initialDraftId }: ConfigureStep
 
         {/* Add-ons */}
         <div className={cn(
-          "rounded-xl p-6 lg:p-8 transition-all duration-500",
+          "rounded-lg p-6 lg:p-8 transition-all duration-500",
           selectedPlanId === "premium" 
             ? "bg-surface/50 border-2 border-border opacity-60 pointer-events-none" 
             : "bg-surface border-2 border-border shadow-sm"

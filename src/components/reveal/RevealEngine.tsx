@@ -375,6 +375,11 @@ export default function RevealEngine({ moment, isPreview = false, activeSceneInd
   }, [moment?.unlockConfig, inputValue, startAudioOnInteraction]);
 
   const nextScene = useCallback(() => {
+    // Proactively request full-screen on mobile when opening the surprise
+    if (typeof window !== "undefined" && window.innerWidth < 1024 && !document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    }
+
     if (currentSceneIndex === -1 && !isUnlocked) {
       setShowUnlockUI(true);
       return;
@@ -654,9 +659,24 @@ export default function RevealEngine({ moment, isPreview = false, activeSceneInd
       <div className="absolute top-8 left-8 flex items-center gap-3 z-50">
         <button 
           onClick={(e) => { e.stopPropagation(); setIsMuted(!isMuted); }}
-          className="size-10 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-white/20 transition-all"
+          className="size-10 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-white/20 transition-all shadow-lg"
+          title={isMuted ? "Unmute" : "Mute"}
         >
           {isMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}
+        </button>
+        <button 
+          onClick={(e) => { 
+            e.stopPropagation(); 
+            if (!document.fullscreenElement) {
+              document.documentElement.requestFullscreen().catch(() => {});
+            } else if (document.exitFullscreen) {
+              document.exitFullscreen();
+            }
+          }}
+          className="size-10 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-white/20 transition-all shadow-lg lg:hidden"
+          title="Toggle Fullscreen"
+        >
+          <Maximize2 size={18} />
         </button>
       </div>
 
@@ -853,24 +873,24 @@ function UnlockOverlay({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-6 bg-black/40 backdrop-blur-2xl px-4"
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl"
     >
       <div className="absolute inset-0" onClick={onClose} />
       <motion.div
-        initial={{ y: "100%", opacity: 0 }}
+        initial={{ scale: 0.9, opacity: 0 }}
         animate={{ 
-          y: 0, 
+          scale: 1, 
           opacity: 1,
           x: shake ? [-6, 6, -6, 6, 0] : 0 
         }}
-        exit={{ y: "100%", opacity: 0 }}
+        exit={{ scale: 0.9, opacity: 0 }}
         transition={{ 
           type: "spring", 
           damping: 25, 
           stiffness: 200,
           x: { duration: 0.4 }
         }}
-        className="w-full max-w-md bg-white/10 dark:bg-black/40 backdrop-blur-xl border-t sm:border border-white/20 rounded-t-[2.5rem] sm:rounded-3xl shadow-2xl overflow-hidden pointer-events-auto pb-10 sm:pb-0 relative"
+        className="w-full max-w-md bg-surface/10 dark:bg-black/40 backdrop-blur-2xl border border-white/10 rounded-[2.5rem] shadow-2xl overflow-hidden pointer-events-auto relative"
       >
         <button 
           onClick={onClose}

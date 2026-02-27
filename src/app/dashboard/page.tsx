@@ -4,11 +4,11 @@ import Link from "next/link";
 import { db } from "@/lib/firebase";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
-import Container from "@/components/ui/Container";
 import MomentCard from "@/components/dashboard/MomentCard";
 import { Plus, ListFilter, ArrowDownAZ, Loader2, Calendar, LayoutGrid, CheckCircle2, Clock  } from "lucide-react";
 import { Select } from "@/components/ui/Select";
 import { collection, query, where, onSnapshot, orderBy } from "firebase/firestore";
+import { occasions as SHARED_OCCASIONS } from "@/lib/constants/occasions";
 
 
 
@@ -36,12 +36,13 @@ export default function DashboardPage() {
         return {
           id: doc.id,
           recipient: data.recipientName || "Someone",
-          occasion: data.occasionId || "Celebration",
+          occasion: SHARED_OCCASIONS.find(o => o.id === data.occasionId)?.title || data.customOccasion || data.occasionId || "Celebration",
           status: (data.status?.charAt(0).toUpperCase() + data.status?.slice(1)) || "Draft",
           views: data.views || 0,
           updatedAtRaw: data.updatedAt?.toDate() || new Date(0),
           updatedAt: data.updatedAt ? new Date(data.updatedAt.toDate()).toLocaleDateString() : "Just now",
           imageUrl: data.imageUrl,
+          urlSlug: data.urlSlug,
           expiryDate: data.expiryDate ? data.expiryDate.toDate().toLocaleDateString() : "-",
         };
       });
@@ -76,7 +77,7 @@ export default function DashboardPage() {
   if (!user) return null;
 
   return (
-    <Container>
+    <div className="animate-in fade-in duration-700">
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
         <div className="flex flex-col gap-2">
@@ -129,6 +130,6 @@ export default function DashboardPage() {
           <MomentCard key={moment.id} moment={moment} />
         ))}
       </div>
-    </Container>
+    </div>
   );
 }

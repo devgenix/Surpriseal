@@ -97,7 +97,7 @@ export default function ProfilePage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Column: Avatar & Quick Actions */}
           <div className="lg:col-span-1 space-y-6">
-            <div className="bg-white dark:bg-white/5 rounded-2xl p-8 border border-[#e7d6d0] shadow-sm flex flex-col items-center">
+            <div className="bg-white dark:bg-white/5 rounded-lg p-8 border border-[#e7d6d0] shadow-sm flex flex-col items-center">
               <div className="relative group mb-6">
                 <div className="size-32 rounded-full bg-primary/10 border-4 border-white dark:border-[#2a1d19] shadow-md flex items-center justify-center text-primary overflow-hidden">
                   {photoURL ? (
@@ -127,7 +127,7 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            <div className="bg-gradient-to-br from-primary to-orange-600 rounded-2xl p-6 text-white shadow-lg overflow-hidden relative">
+            <div className="bg-gradient-to-br from-primary to-orange-600 rounded-lg p-6 text-white shadow-lg overflow-hidden relative">
               <Sparkles className="absolute -right-4 -top-4 size-24 opacity-20 rotate-12" />
               <h3 className="font-bold mb-2 relative z-10">Premium Experience</h3>
               <p className="text-sm text-white/80 mb-4 relative z-10 leading-relaxed font-medium">
@@ -141,7 +141,7 @@ export default function ProfilePage() {
 
           {/* Right Column: Profile Form */}
           <div className="lg:col-span-2 space-y-6">
-            <div className="bg-white dark:bg-white/5 rounded-2xl border border-[#e7d6d0] shadow-sm overflow-hidden">
+            <div className="bg-white dark:bg-white/5 rounded-lg border border-[#e7d6d0] shadow-sm overflow-hidden">
               <div className="px-8 py-6 border-b border-[#f3eae7] dark:border-white/10 flex items-center justify-between">
                 <div>
                   <h3 className="text-lg font-bold text-[#1b110e] dark:text-white">Profile Settings</h3>
@@ -170,7 +170,7 @@ export default function ProfilePage() {
                         type="text"
                         value={displayName}
                         onChange={(e) => setDisplayName(e.target.value)}
-                        className="w-full h-14 pl-12 pr-4 bg-[#fcf9f8] dark:bg-white/5 border border-[#e7d6d0] rounded-xl text-[#1b110e] dark:text-white placeholder:text-[#97604e]/40 focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all outline-none font-medium"
+                        className="w-full h-14 pl-12 pr-4 bg-[#fcf9f8] dark:bg-white/5 border border-[#e7d6d0] rounded-lg text-[#1b110e] dark:text-white placeholder:text-[#97604e]/40 focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all outline-none font-medium"
                         placeholder="e.g. Sarah Jenkins"
                       />
                     </div>
@@ -189,7 +189,7 @@ export default function ProfilePage() {
                         type="email"
                         value={user?.email || ""}
                         readOnly
-                        className="w-full h-14 pl-12 pr-4 bg-[#fcf9f8] dark:bg-white/5 border border-[#e7d6d0] rounded-xl text-[#1b110e] dark:text-white outline-none font-medium cursor-not-allowed"
+                        className="w-full h-14 pl-12 pr-4 bg-[#fcf9f8] dark:bg-white/5 border border-[#e7d6d0] rounded-lg text-[#1b110e] dark:text-white outline-none font-medium cursor-not-allowed"
                       />
                     </div>
                     <p className="text-[10px] text-[#97604e] font-medium ml-1">Email cannot be changed directly. Contact support for assistance.</p>
@@ -208,7 +208,7 @@ export default function ProfilePage() {
                         type="url"
                         value={photoURL}
                         onChange={(e) => setPhotoURL(e.target.value)}
-                        className="w-full h-14 pl-12 pr-4 bg-[#fcf9f8] dark:bg-white/5 border border-[#e7d6d0] rounded-xl text-[#1b110e] dark:text-white placeholder:text-[#97604e]/40 focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all outline-none font-medium"
+                        className="w-full h-14 pl-12 pr-4 bg-[#fcf9f8] dark:bg-white/5 border border-[#e7d6d0] rounded-lg text-[#1b110e] dark:text-white placeholder:text-[#97604e]/40 focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all outline-none font-medium"
                         placeholder="https://example.com/avatar.jpg"
                       />
                     </div>
@@ -216,7 +216,7 @@ export default function ProfilePage() {
                 </div>
 
                 {error && (
-                  <div className="p-4 rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 flex items-center gap-3 text-red-600 text-sm font-medium">
+                  <div className="p-4 rounded-lg bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 flex items-center gap-3 text-red-600 text-sm font-medium">
                     <AlertCircle size={20} />
                     {error}
                   </div>
@@ -226,7 +226,7 @@ export default function ProfilePage() {
                   <Button 
                     type="submit"
                     disabled={saving}
-                    className="h-12 px-8 rounded-xl bg-primary hover:bg-primary-dark text-white font-bold shadow-lg shadow-primary/20 transform active:scale-[0.98] transition-all flex items-center gap-2"
+                    className="h-12 px-8 rounded-lg bg-primary hover:bg-primary-dark text-white font-bold shadow-lg shadow-primary/20 transform active:scale-[0.98] transition-all flex items-center gap-2"
                   >
                     {saving ? (
                       <>
@@ -245,9 +245,9 @@ export default function ProfilePage() {
             </div>
 
             {/* Security Section Placeholder */}
-            <div className="bg-white dark:bg-white/5 rounded-2xl border border-[#e7d6d0] shadow-sm p-8 flex items-center justify-between">
+            <div className="bg-white dark:bg-white/5 rounded-lg border border-[#e7d6d0] shadow-sm p-8 flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <div className="size-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                <div className="size-12 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
                   <Shield size={24} />
                 </div>
                 <div>

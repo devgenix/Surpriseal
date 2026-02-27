@@ -22,6 +22,7 @@ import { formatPrice } from "@/lib/currency";
 import { calculateMomentPrice } from "@/lib/pricing-utils";
 import { useCurrency } from "@/context/CurrencyContext";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 const STEPS = [
   { id: "configure", title: "Configure", icon: Settings },
@@ -42,6 +43,7 @@ function CreationLayoutInner({ children }: { children: React.ReactNode }) {
     canContinue,
     onSave,
     onContinue,
+    isCinematic,
   } = useCreation();
 
   const { user, logout } = useAuth();
@@ -115,7 +117,10 @@ function CreationLayoutInner({ children }: { children: React.ReactNode }) {
       <main className="flex-1 flex flex-col h-full overflow-hidden relative">
 
         {/* ================= HEADER ================= */}
-        <header className="shrink-0 z-40 bg-white/80 dark:bg-[#2a1d19]/80 backdrop-blur-md border-b border-[#e7d6d0] px-4 h-[72px] flex flex-col justify-center">
+        <header className={cn(
+          "shrink-0 z-40 bg-white/80 dark:bg-[#2a1d19]/80 backdrop-blur-md border-b border-[#e7d6d0] px-4 h-[72px] flex flex-col justify-center transition-all",
+          isCinematic && "hidden lg:flex"
+        )}>
           <div className="w-full max-w-4xl mx-auto flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between px-2">
 
             {/* MOBILE ROW */}
@@ -210,7 +215,10 @@ function CreationLayoutInner({ children }: { children: React.ReactNode }) {
         </div>
 
         {/* ================= FOOTER ================= */}
-        <footer className="shrink-0 z-40 bg-white/95 dark:bg-[#211511]/95 backdrop-blur-md border-t border-[#e7d6d0] px-4 py-5">
+        <footer className={cn(
+          "shrink-0 z-40 bg-white/95 dark:bg-[#211511]/95 backdrop-blur-md border-t border-[#e7d6d0] px-4 py-5 transition-all",
+          isCinematic && "hidden lg:block"
+        )}>
           <div className="max-w-4xl mx-auto">
 
             {/* ================= DESKTOP LAYOUT ================= */}

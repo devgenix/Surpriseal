@@ -26,7 +26,7 @@ import {
   Mic
 } from "lucide-react";
 import Link from "next/link";
-import Container from "@/components/ui/Container";
+import { occasions as SHARED_OCCASIONS } from "@/lib/constants/occasions";
 
 export default function MomentDetailPage() {
   const { id } = useParams();
@@ -95,7 +95,7 @@ export default function MomentDetailPage() {
   };
 
   const handleShare = () => {
-    const url = `${window.location.origin}/view/${id}`;
+    const url = `${window.location.origin}/view/${moment?.urlSlug || id}`;
     navigator.clipboard.writeText(url);
     setCopying(true);
     setTimeout(() => setCopying(false), 2000);
@@ -113,10 +113,13 @@ export default function MomentDetailPage() {
   if (!moment) return null;
 
   const isPublished = moment.status === "published" || moment.status === "Published";
+  const formattedOccasion = SHARED_OCCASIONS.find(o => o.id === moment.occasionId)?.title || moment.customOccasion || moment.occasionId || "Special Occasion";
+  const hasLock = moment.unlockConfig?.type && moment.unlockConfig.type !== "none";
 
   return (
-    <Container className="py-8 max-w-5xl">
+    <div className="mx-auto max-w-5xl animate-in fade-in duration-700">
       {/* Navigation Header */}
+
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <Link 
           href="/dashboard"
@@ -127,35 +130,11 @@ export default function MomentDetailPage() {
           </div>
           BACK TO DASHBOARD
         </Link>
-        
-        <div className="flex items-center gap-2">
-          <button 
-            onClick={() => setShowDeleteConfirm(true)}
-            className="flex items-center justify-center size-10 rounded-lg bg-red-500/5 hover:bg-red-500 text-red-500 hover:text-white border border-red-500/10 transition-all"
-            title="Delete Moment"
-          >
-            <Trash2 size={18} />
-          </button>
-          
-          <Link href={`/dashboard/create/${id}?resume=true`} className="flex-1 sm:flex-none">
-            <button className="flex items-center justify-center gap-2 px-6 h-10 w-full rounded-lg bg-[#1b110e] dark:bg-white text-white dark:text-[#1b110e] text-[10px] font-black uppercase tracking-widest hover:opacity-90 transition-all">
-              <Edit3 size={14} />
-              Edit Moment
-            </button>
-          </Link>
-
-          <Link href={`/view/${id}`} target="_blank" className="flex-1 sm:flex-none">
-            <button className="flex items-center justify-center gap-2 px-6 h-10 w-full rounded-lg bg-primary hover:bg-primary-hover text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-primary/20 transition-all">
-              <ExternalLink size={14} />
-              Live Preview
-            </button>
-          </Link>
-        </div>
       </div>
 
       <div className="space-y-8">
         {/* Visual Identity Hub */}
-        <div className="bg-white dark:bg-surface-dark rounded-xl border border-[#f3eae7] dark:border-white/5 overflow-hidden shadow-sm">
+        <div className="bg-white dark:bg-surface-dark rounded-lg border border-[#f3eae7] dark:border-white/5 overflow-hidden shadow-sm">
           <div 
             className="h-64 bg-cover bg-center relative"
             style={{ backgroundImage: `url(${moment.imageUrl || 'https://images.unsplash.com/photo-1513201099705-a9746e1e201f?q=80&w=2897&auto=format&fit=crop'})` }}
@@ -172,7 +151,7 @@ export default function MomentDetailPage() {
                   {moment.status}
                 </span>
                 <span className="px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-wider border bg-white/10 border-white/20 text-white/90">
-                  {moment.occasionId || "Special Occasion"}
+                  {formattedOccasion}
                 </span>
               </div>
               <h1 className="text-4xl sm:text-5xl font-black text-white leading-tight uppercase tracking-tighter">
@@ -181,10 +160,10 @@ export default function MomentDetailPage() {
             </div>
           </div>
 
-          <div className="p-8 flex flex-wrap items-center justify-between gap-8">
+          <div className="p-6 sm:p-8 flex flex-col sm:flex-row flex-wrap sm:items-center justify-between gap-6 sm:gap-8">
             <div className="flex flex-wrap items-center gap-8">
               <div className="flex items-center gap-4">
-                <div className="size-12 rounded-xl bg-[#f9f5f3] dark:bg-white/5 flex items-center justify-center text-primary shadow-sm">
+                <div className="size-12 rounded-lg bg-[#f9f5f3] dark:bg-white/5 flex items-center justify-center text-primary shadow-sm">
                   <Eye size={24} />
                 </div>
                 <div>
@@ -194,7 +173,7 @@ export default function MomentDetailPage() {
               </div>
 
               <div className="flex items-center gap-4">
-                <div className="size-12 rounded-xl bg-[#f9f5f3] dark:bg-white/5 flex items-center justify-center text-primary shadow-sm">
+                <div className="size-12 rounded-lg bg-[#f9f5f3] dark:bg-white/5 flex items-center justify-center text-primary shadow-sm">
                   <Clock size={24} />
                 </div>
                 <div>
@@ -206,19 +185,40 @@ export default function MomentDetailPage() {
               </div>
             </div>
 
-            <button 
-              onClick={handleShare}
-              className="flex items-center gap-3 px-8 h-12 rounded-xl bg-primary/10 hover:bg-primary text-primary hover:text-white border border-primary/20 text-xs font-black uppercase tracking-widest transition-all shadow-sm"
-            >
-              {copying ? <CheckCircle2 size={18} /> : <Share2 size={18} />}
-              {copying ? "Link Copied!" : "Share Moment"}
-            </button>
+            <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto mt-2 sm:mt-0 pt-6 sm:pt-0 border-t sm:border-0 border-[#f3eae7] dark:border-white/5">
+               <button 
+                 onClick={handleShare}
+                 className="w-full sm:w-auto flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 h-12 rounded-lg bg-primary/10 hover:bg-primary text-primary hover:text-white border border-primary/20 text-[10px] font-black uppercase tracking-widest transition-all shadow-sm"
+               >
+                 {copying ? <CheckCircle2 size={16} /> : <Share2 size={16} />}
+                 {copying ? "Copied" : "Copy"}
+               </button>
+               <button 
+                 onClick={() => window.open(`/view/${moment.urlSlug || id}`, '_blank')}
+                 className="w-full sm:w-auto flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 h-12 rounded-lg bg-[#f9f5f3] dark:bg-white/5 hover:bg-[#1b110e] dark:hover:bg-white text-[#1b110e] dark:text-white hover:text-white dark:hover:text-[#1b110e] border border-[#f3eae7] dark:border-white/10 text-[10px] font-black uppercase tracking-widest transition-all shadow-sm"
+               >
+                 <ExternalLink size={16} /> View
+               </button>
+               <button 
+                 onClick={() => router.push(`/dashboard/create/${id}?resume=true`)}
+                 className="w-full sm:w-auto flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 h-12 rounded-lg bg-[#f9f5f3] dark:bg-white/5 hover:bg-[#1b110e] dark:hover:bg-white text-[#1b110e] dark:text-white hover:text-white dark:hover:text-[#1b110e] border border-[#f3eae7] dark:border-white/10 text-[10px] font-black uppercase tracking-widest transition-all shadow-sm"
+               >
+                 <Edit3 size={16} /> Edit
+               </button>
+               <button 
+                 onClick={() => setShowDeleteConfirm(true)}
+                 className="w-full sm:w-12 sm:flex-none flex items-center justify-center h-12 rounded-lg bg-red-500/5 hover:bg-red-500 text-red-500 hover:text-white border border-red-500/10 transition-all shadow-sm"
+               >
+                 <Trash2 size={16} className="sm:mx-auto" />
+                 <span className="sm:hidden text-[10px] font-black uppercase tracking-widest ml-2">Delete</span>
+               </button>
+            </div>
           </div>
         </div>
 
         {/* Quick Management Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="bg-white dark:bg-surface-dark rounded-xl border border-[#f3eae7] dark:border-white/5 p-8 shadow-sm">
+          <div className="bg-white dark:bg-surface-dark rounded-lg border border-[#f3eae7] dark:border-white/5 p-8 shadow-sm">
             <h3 className="text-xs font-black text-[#1b110e] dark:text-white uppercase tracking-widest mb-6 flex items-center gap-2">
               <Globe size={18} className="text-primary" />
               Public Settings
@@ -227,10 +227,16 @@ export default function MomentDetailPage() {
               <div className="flex justify-between items-center group">
                 <div>
                   <p className="text-[10px] font-black text-text-muted uppercase tracking-widest mb-1">Privacy</p>
-                  <p className="text-sm font-bold text-[#1b110e] dark:text-white uppercase">Visible to anyone with link</p>
+                  <p className="text-sm font-bold text-[#1b110e] dark:text-white uppercase">
+                    {hasLock ? "Password Protected" : "Visible to anyone with link"}
+                  </p>
                 </div>
                 <div className="size-8 rounded-full border border-[#f3eae7] dark:border-white/10 flex items-center justify-center">
-                  <Lock size={14} className="text-emerald-500" />
+                  {hasLock ? (
+                    <Lock size={14} className="text-amber-500" />
+                  ) : (
+                    <Globe size={14} className="text-emerald-500" />
+                  )}
                 </div>
               </div>
               <div className="flex justify-between items-center group">
@@ -245,7 +251,7 @@ export default function MomentDetailPage() {
             </div>
           </div>
 
-          <div className="bg-white dark:bg-surface-dark rounded-xl border border-[#f3eae7] dark:border-white/5 p-8 shadow-sm">
+          <div className="bg-white dark:bg-surface-dark rounded-lg border border-[#f3eae7] dark:border-white/5 p-8 shadow-sm">
             <h3 className="text-xs font-black text-[#1b110e] dark:text-white uppercase tracking-widest mb-6 flex items-center gap-2">
               <Calendar size={18} className="text-primary" />
               Event Timeline
@@ -270,7 +276,7 @@ export default function MomentDetailPage() {
         </div>
 
         {/* Reactions Section */}
-        <div className="bg-white dark:bg-surface-dark rounded-xl border border-[#f3eae7] dark:border-white/5 overflow-hidden shadow-sm">
+        <div className="bg-white dark:bg-surface-dark rounded-lg border border-[#f3eae7] dark:border-white/5 overflow-hidden shadow-sm">
            <div className="p-8 border-b border-[#f3eae7] dark:border-white/5 flex items-center justify-between">
               <h3 className="text-xs font-black text-[#1b110e] dark:text-white uppercase tracking-widest flex items-center gap-2">
                 <MessageCircleHeart size={18} className="text-pink-500" />
@@ -295,7 +301,7 @@ export default function MomentDetailPage() {
              ) : (
                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                  {reactions.map((reaction) => (
-                   <div key={reaction.id} className="p-6 rounded-2xl border border-[#f3eae7] dark:border-white/5 bg-[#fafafa] dark:bg-black/20 flex flex-col items-start gap-4 shadow-sm hover:shadow-md transition-shadow">
+                   <div key={reaction.id} className="p-6 rounded-lg border border-[#f3eae7] dark:border-white/5 bg-[#fafafa] dark:bg-black/20 flex flex-col items-start gap-4 shadow-sm hover:shadow-md transition-shadow">
                      <div className="flex items-center justify-between w-full">
                        <div className="flex items-center gap-2">
                          <span className="text-2xl">{reaction.emoji || "💬"}</span>
@@ -318,7 +324,7 @@ export default function MomentDetailPage() {
                      )}
 
                      {reaction.type === 'camera' && (
-                       <div className="w-full aspect-[3/4] rounded-xl overflow-hidden bg-black relative border border-border">
+                       <div className="w-full aspect-[3/4] rounded-lg overflow-hidden bg-black relative border border-border">
                          <video src={reaction.content} controls className="w-full h-full object-cover" />
                        </div>
                      )}
@@ -333,7 +339,7 @@ export default function MomentDetailPage() {
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-300">
-          <div className="bg-white dark:bg-surface-dark w-full max-w-sm rounded-xl border border-[#f3eae7] dark:border-white/5 p-8 shadow-2xl animate-in zoom-in-95 duration-200">
+          <div className="bg-white dark:bg-surface-dark w-full max-w-sm rounded-lg border border-[#f3eae7] dark:border-white/5 p-8 shadow-2xl animate-in zoom-in-95 duration-200">
             <div className="size-16 rounded-full bg-red-50 dark:bg-red-500/10 flex items-center justify-center text-red-500 mb-6 mx-auto">
               <AlertCircle size={32} />
             </div>
@@ -359,6 +365,6 @@ export default function MomentDetailPage() {
           </div>
         </div>
       )}
-    </Container>
+    </div>
   );
 }
