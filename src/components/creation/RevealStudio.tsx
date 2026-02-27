@@ -66,10 +66,11 @@ interface Scene {
 interface RevealStudioProps {
   draftId: string;
   onSave: (updates: any) => Promise<void>;
+  onContinue: () => Promise<void>;
 }
 
-export default function RevealStudio({ draftId, onSave }: RevealStudioProps) {
-  const { momentData, setCanContinue } = useCreation();
+export default function RevealStudio({ draftId, onSave, onContinue }: RevealStudioProps) {
+  const { momentData, setCanContinue, setOnSave, setOnContinue } = useCreation();
   
   const [scenes, setScenes] = useState<Scene[]>(
     momentData?.styleConfig?.scenes || DEFAULT_SCENES
@@ -148,6 +149,12 @@ export default function RevealStudio({ draftId, onSave }: RevealStudioProps) {
   const [isMasterExpanded, setIsMasterExpanded] = useState(true);
   const [isScreenExpanded, setIsScreenExpanded] = useState(true);
   const [insertingToEditor, setInsertingToEditor] = useState(false);
+
+  // Asset Deletion Modal State
+  const [assetToDelete, setAssetToDelete] = useState<any>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
   const [isEditorModalOpen, setIsEditorModalOpen] = useState(false);
   const [isMediaPickerOpenInModal, setIsMediaPickerOpenInModal] = useState(false);
   const [showLimitModal, setShowLimitModal] = useState(false);
@@ -165,6 +172,7 @@ export default function RevealStudio({ draftId, onSave }: RevealStudioProps) {
   }, [isAudioLoading]);
 
   const editorRef = useRef<RichTextEditorRef>(null);
+  const modalEditorRef = useRef<RichTextEditorRef>(null);
   const mediaLibraryRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -176,15 +184,67 @@ export default function RevealStudio({ draftId, onSave }: RevealStudioProps) {
   const imageUrl = momentData?.imageUrl || "";
   const activeScene = scenes.find(s => s.id === activeSceneId);
 
-  const handleUpdateScenes = async (newScenes: Scene[]) => {
+  const handleUpdateScenes = (newScenes: Scene[]) => {
     setScenes(newScenes);
-    await onSave({
-      styleConfig: {
-        ...momentData?.styleConfig,
-        scenes: newScenes
-      }
-    });
   };
+
+  const forceSave = useCallback(async () => {
+    try {
+      await onSave({
+        styleConfig: {
+          ...momentData?.styleConfig,
+          scenes: scenes
+        }
+      });
+    } catch (err) {
+      console.error("Manual save failed:", err);
+    }
+  }, [onSave, momentData?.styleConfig, scenes]);
+
+  useEffect(() => {
+    setOnSave(() => forceSave);
+    setOnContinue(() => async () => {
+      await forceSave();
+      await onContinue();
+    });
+    return () => {
+      setOnSave(null);
+      setOnContinue(null);
+    };
+  }, [forceSave, onContinue, setOnSave, setOnContinue]);
+
+
+  // Debounced auto-save for scenes
+  const debouncedScenes = useDebounce(scenes, 1000);
+  const isFirstRender = useRef(true);
+  const lastSavedScenesRef = useRef<string>("");
+
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+
+    const currentScenesStr = JSON.stringify(debouncedScenes);
+    if (lastSavedScenesRef.current === currentScenesStr) return;
+
+    const saveUpdatedScenes = async () => {
+      try {
+        lastSavedScenesRef.current = currentScenesStr;
+        await onSave({
+          styleConfig: {
+            ...momentData?.styleConfig,
+            scenes: debouncedScenes
+          }
+        });
+      } catch (err) {
+        console.error("Auto-save scenes failed:", err);
+      }
+    };
+
+    saveUpdatedScenes();
+  }, [debouncedScenes]);
+
 
 
   const updateStyle = async (updates: any) => {
@@ -222,7 +282,22 @@ export default function RevealStudio({ draftId, onSave }: RevealStudioProps) {
 
   const changeSceneType = (id: string, type: Scene["type"]) => {
     const newScenes = scenes.map(s => 
-      s.id === id ? { ...s, type, config: getDefaultConfig(type) } : s
+      s.id === id ? { 
+        ...s, 
+        type, 
+        config: {
+          ...getDefaultConfig(type),
+          // Preserving music and theme related config
+          ytMusicId: s.config?.ytMusicId,
+          musicMetadata: s.config?.musicMetadata,
+          musicUrl: s.config?.musicUrl,
+          useGlobalMusic: s.config?.useGlobalMusic,
+          audioStart: s.config?.audioStart,
+          audioDuration: s.config?.audioDuration,
+          themeId: s.config?.themeId,
+          useGlobalTheme: s.config?.useGlobalTheme,
+        }
+      } : s
     );
     handleUpdateScenes(newScenes);
   };
@@ -241,10 +316,14 @@ export default function RevealStudio({ draftId, onSave }: RevealStudioProps) {
     // For Composition scenes, clicking an image should ONLY insert it into the editor
     if (insertingToEditor || isComposition) {
       const media = momentData?.media?.find((m: any) => m.id === mediaId);
-      if (media && editorRef.current) {
-        editorRef.current.insertImage(media.url);
-        // Only turn off the "special insertion" mode if it was explicitly turned on
-        if (insertingToEditor) setInsertingToEditor(false);
+      if (media) {
+        // Try to insert into either the modal editor or the small editor
+        const targetEditor = isEditorModalOpen ? modalEditorRef.current : editorRef.current;
+        if (targetEditor) {
+          targetEditor.insertImage(media.url);
+          // Only turn off the "special insertion" mode if it was explicitly turned on
+          if (insertingToEditor) setInsertingToEditor(false);
+        }
       }
       // If it's a composition scene, we strictly don't want to update the gallery mediaIds
       if (isComposition) return;
@@ -318,6 +397,18 @@ export default function RevealStudio({ draftId, onSave }: RevealStudioProps) {
   };
 
   // Thumbnail Management
+  const initiateUpload = useCallback((mode: 'upload' | 'library') => {
+    if ((momentData?.media?.length || 0) >= maxAllowed) {
+      setShowLimitModal(true);
+      return;
+    }
+    setThumbnailMode(mode);
+    // Force a small delay to ensure React state update propagates to the input's multiple/accept attributes
+    setTimeout(() => {
+      fileInputRef.current?.click();
+    }, 10);
+  }, [momentData?.media?.length, maxAllowed]);
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0 || !auth.currentUser) return;
@@ -425,6 +516,64 @@ export default function RevealStudio({ draftId, onSave }: RevealStudioProps) {
       setIsProcessingThumbnail(null);
     }
   };
+
+  const handleDeleteAsset = async (media: any) => {
+    setAssetToDelete(media);
+    setDeleteError(null);
+  };
+
+  const confirmDeleteAsset = async () => {
+    if (!assetToDelete) return;
+    setIsDeleting(true);
+    setDeleteError(null);
+    
+    try {
+      // Remove from moment media
+      const newMedia = (momentData?.media || []).filter((m: any) => m.id !== assetToDelete.id);
+      
+      // Remove from all scenes
+      const newScenes = scenes.map(s => ({
+        ...s,
+        config: {
+          ...s.config,
+          mediaIds: (s.config.mediaIds || []).filter((id: string) => id !== assetToDelete.id)
+        }
+      }));
+
+      const updates: any = { 
+        media: newMedia,
+        styleConfig: {
+          ...style,
+          scenes: newScenes
+        }
+      };
+
+      // If it was the cover, clear it
+      if (momentData.imageUrl === assetToDelete.url) {
+        updates.imageUrl = null;
+      }
+
+      await onSave(updates);
+      setScenes(newScenes);
+      setAssetToDelete(null);
+      
+      // Attempt to delete from storage as well if we have a path
+      try {
+        if (assetToDelete.path) {
+          await deleteFile(assetToDelete.path);
+        }
+      } catch (e) {
+        console.error("Storage deletion failed:", e);
+      }
+
+    } catch (err: any) {
+      console.error("Error deleting asset:", err);
+      setDeleteError(err.message || "Failed to delete memory. Please try again.");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
 
   const handleYTSearch = useCallback(async (query: string) => {
     if (!query.trim()) return;
@@ -675,20 +824,9 @@ export default function RevealStudio({ draftId, onSave }: RevealStudioProps) {
                            )}
                            
                            <div className="flex gap-2">
-                              <input 
-                                type="file" 
-                                id="splash-upload" 
-                                ref={fileInputRef}
-                                className="hidden" 
-                                accept="image/*"
-                                multiple={thumbnailMode !== "upload"}
-                                onChange={handleFileUpload}
-                              />
+                              {/* File input moved to a global location bottom of sidebar to ensure it's always mounted */}
                               <button 
-                                onClick={() => {
-                                  setThumbnailMode("upload");
-                                  fileInputRef.current?.click();
-                                }}
+                                onClick={() => initiateUpload("upload")}
                                 className="flex-1 py-3 bg-primary/10 text-primary text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-primary/20 transition-all border border-primary/20"
                               >
                                  <div className="flex items-center justify-center gap-2">
@@ -725,6 +863,30 @@ export default function RevealStudio({ draftId, onSave }: RevealStudioProps) {
                               </div>
                            )}
                         </div>
+
+                        {momentData?.selectedAddons?.includes("extraMedia") && momentData.plan !== "premium" && !momentData.paidAddons?.includes("extraMedia") && (
+                          <div className="p-4 rounded-lg bg-black/[0.02] dark:bg-white/[0.02] border border-border space-y-3">
+                            <div className="flex items-center gap-2 text-text-muted">
+                              <Lock size={14} />
+                              <h4 className="text-[10px] font-black uppercase tracking-widest">Extra Slots Active</h4>
+                            </div>
+                            <p className="text-[9px] font-medium text-text-muted/70 leading-relaxed">
+                              You have extra media slots added to your plan.
+                            </p>
+                            <button
+                              onClick={() => {
+                                if ((momentData?.media?.length || 0) > 10) {
+                                  setShowMediaRemovalModal(true);
+                                } else {
+                                  toggleAddon("extraMedia");
+                                }
+                              }}
+                              className="w-full py-2 bg-black/5 hover:bg-black/10 text-text-muted text-[9px] font-black uppercase tracking-widest rounded-md transition-all active:scale-95"
+                            >
+                              Remove Extra Slots
+                            </button>
+                          </div>
+                        )}
                       </section>
 
                       {/* Splash Audio */}
@@ -984,385 +1146,390 @@ export default function RevealStudio({ draftId, onSave }: RevealStudioProps) {
                        initial={{ opacity: 0, x: 20 }}
                        animate={{ opacity: 1, x: 0 }}
                        exit={{ opacity: 0, x: -20 }}
-                       className="space-y-8"
                      >
-                      <div className="space-y-8 pb-32">
-                        {/* Theme Override */}
-                        <section className="space-y-4">
-                           <h3 className="text-[10px] font-black uppercase tracking-widest text-text-muted flex items-center gap-2">
-                            <Palette size={12} /> Screen Style
-                          </h3>
-                          <div className="flex p-1 bg-black/5 dark:bg-white/5 rounded-lg">
-                            <button
-                              onClick={() => updateSceneConfig(activeSceneId, { useGlobalTheme: true })}
-                              className={cn("flex-1 py-1.5 text-[10px] font-bold rounded-md transition-all", activeScene?.config?.useGlobalTheme !== false ? "bg-white shadow-sm text-primary" : "text-text-muted")}
-                            >Global</button>
-                            <button
-                              onClick={() => updateSceneConfig(activeSceneId, { useGlobalTheme: false })}
-                              className={cn("flex-1 py-1.5 text-[10px] font-bold rounded-md transition-all", activeScene?.config?.useGlobalTheme === false ? "bg-white shadow-sm text-primary" : "text-text-muted")}
-                            >Custom</button>
-                          </div>
-                          {activeScene?.config?.useGlobalTheme === false && (
-                            <Select
-                              options={[
-                                { id: "birthday-classic", title: "Birthday Classic", icon: Gift },
-                                { id: "anniversary-gold", title: "Anniversary Gold", icon: Award },
-                                { id: "surprise-neon", title: "Surprise Neon", icon: Sparkles },
-                                { id: "elegant-noir", title: "Elegant Noir", icon: Moon },
-                                { id: "romantic-rose", title: "Romantic Rose", icon: Heart },
-                                { id: "party-popper", title: "Party Popper 🎊", icon: Sparkles },
-                                { id: "golden-gala", title: "Golden Gala ✨", icon: Sparkles },
-                                { id: "midnight-aurora", title: "Midnight Aurora 🌌", icon: Moon },
-                              ]}
-                              value={activeScene.config.themeId || style.themeId || "birthday-classic"}
-                              onChange={onSaveTheme}
-                            />
-                          )}
-                        </section>
-
-                        {/* Screen Music Override for Custom Scenes */}
-                        <div className="space-y-4 pt-4 border-t border-border">
+                      {/* Theme Override */}
+                      <section className="pb-8 space-y-4">
                           <h3 className="text-[10px] font-black uppercase tracking-widest text-text-muted flex items-center gap-2">
-                            <Music size={12} /> Screen Music
-                          </h3>
-                          <div className="flex p-1 bg-black/5 dark:bg-white/5 rounded-lg">
-                            <button
-                              onClick={() => updateSceneConfig(activeSceneId, { useGlobalMusic: true })}
-                              className={cn("flex-1 py-1.5 text-[10px] font-bold rounded-md transition-all", activeScene.config.useGlobalMusic !== false ? "bg-white shadow-sm text-primary" : "text-text-muted")}
-                            >Global</button>
-                            <button
-                              onClick={() => updateSceneConfig(activeSceneId, { useGlobalMusic: false })}
-                              className={cn("flex-1 py-1.5 text-[10px] font-bold rounded-md transition-all", activeScene.config.useGlobalMusic === false ? "bg-white shadow-sm text-primary" : "text-text-muted")}
-                            >Custom</button>
-                          </div>
-                          
-                          {activeScene.config.useGlobalMusic === false && (
-                            <div className="space-y-3">
-                              {activeScene.config.musicMetadata ? (
-                                <div className="space-y-3">
-                                  <div className="p-2.5 rounded-lg bg-primary/5 border border-primary/20 flex items-center gap-2.5 group relative">
-                                      <div className="size-8 rounded-md overflow-hidden shrink-0">
-                                        <img src={activeScene.config.musicMetadata.thumbnail} className="w-full h-full object-cover" />
-                                      </div>
-                                      <div className="flex-1 min-w-0">
-                                        <p className="text-[9px] font-black truncate">{activeScene.config.musicMetadata.title}</p>
-                                        <p className="text-[8px] text-text-muted font-bold truncate">
-                                          {activeScene.config.musicMetadata.artist}
-                                          {activeScene.config.musicMetadata.duration && ` • ${activeScene.config.musicMetadata.duration}`}
-                                        </p>
-                                      </div>
-                                      <div className="flex gap-1 shrink-0">
-                                        <button 
-                                          onClick={() => {
-                                            updateSceneConfig(activeSceneId, { ytMusicId: null, musicMetadata: null, musicUrl: null });
-                                            if (playingId === activeScene.config.ytMusicId) togglePlay(null);
-                                          }}
-                                          className="p-1.5 hover:bg-red-500/10 hover:text-red-500 rounded-md transition-all text-text-muted"
-                                        >
-                                          <Trash2 size={10} />
-                                        </button>
-                                        <button 
-                                          onClick={() => {
-                                            setIsSettingGlobalMusic(!isSettingGlobalMusic);
-                                            setYtSearchQuery("");
-                                            togglePlay(null);
-                                          }}
-                                          className="p-1.5 hover:bg-primary/10 rounded-md transition-all text-primary"
-                                        >
-                                          <RefreshCcw size={10} />
-                                        </button>
-                                      </div>
-                                  </div>
-                                  </div>
-                              ) : (
-                                <button 
-                                  onClick={() => {
-                                    setIsSettingGlobalMusic(!isSettingGlobalMusic);
-                                    setYtSearchQuery("");
-                                  }}
-                                  className="w-full py-4 border border-dashed border-border rounded-lg bg-black/[0.01] hover:bg-primary/5 hover:border-primary/50 text-[10px] font-black uppercase tracking-widest text-text-muted transition-all"
-                                >Pick Screen Song</button>
-                              )}
-
-                              {isSettingGlobalMusic && (
-                                <div className="space-y-3 pt-2 animate-in fade-in slide-in-from-top-2">
-                                  <div className="relative">
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" size={12} />
-                                    <input 
-                                      autoFocus
-                                      type="text" 
-                                      placeholder="Search screen song..."
-                                      className="w-full h-10 pl-9 pr-3 rounded-lg border border-border bg-white text-[10px] font-bold outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
-                                      value={ytSearchQuery}
-                                      onChange={(e) => setYtSearchQuery(e.target.value)}
-                                    />
-                                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                                      {isSearching ? (
-                                        <Loader2 className="animate-spin text-primary" size={12} />
-                                      ) : (
-                                        <button onClick={() => setIsSettingGlobalMusic(false)}>
-                                          <X size={12} className="text-text-muted hover:text-primary transition-colors" />
-                                        </button>
-                                      )}
-                                    </div>
-                                  </div>
-                                  {showSearchResults && ytResults.length > 0 && (
-                                    <div className="bg-white border border-border rounded-lg overflow-hidden max-h-48 overflow-y-auto divide-y divide-border shadow-soft">
-                                      {ytResults.map((song) => (
-                                        <div key={song.videoId} onClick={() => {
-                                          setGlobalMusic(song);
-                                          setIsSettingGlobalMusic(false);
-                                          togglePlay(null);
-                                        }} className="p-2 flex items-center gap-2 cursor-pointer hover:bg-primary/5 transition-colors">
-                                          <img src={song.thumbnail} className="size-8 rounded-lg object-cover" />
-                                          <div className="flex-1 min-w-0">
-                                            <p className="text-[9px] font-black truncate">{song.title}</p>
-                                            <p className="text-[8px] text-text-muted font-bold truncate">{song.author}</p>
-                                          </div>
-                                          <button onClick={(e) => { e.stopPropagation(); togglePlay(song.videoId); }} className="size-6 bg-primary/10 text-primary rounded-lg flex items-center justify-center">
-                                            {playingId === song.videoId ? <Pause size={10} fill="currentColor" /> : <Play size={10} fill="currentColor" className="ml-0.5" />}
-                                          </button>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  )}
-                                </div>
-                              )}
-                            </div>
-                          )}
+                          <Palette size={12} /> Screen Style
+                        </h3>
+                        <div className="flex p-1 bg-black/5 dark:bg-white/5 rounded-lg">
+                          <button
+                            onClick={() => updateSceneConfig(activeSceneId, { useGlobalTheme: true })}
+                            className={cn("flex-1 py-1.5 text-[10px] font-bold rounded-md transition-all", activeScene?.config?.useGlobalTheme !== false ? "bg-white shadow-sm text-primary" : "text-text-muted")}
+                          >Global</button>
+                          <button
+                            onClick={() => updateSceneConfig(activeSceneId, { useGlobalTheme: false })}
+                            className={cn("flex-1 py-1.5 text-[10px] font-bold rounded-md transition-all", activeScene?.config?.useGlobalTheme === false ? "bg-white shadow-sm text-primary" : "text-text-muted")}
+                          >Custom</button>
                         </div>
-
-                        {/* Screen Type Selector */}
-                        <section className="space-y-4 pt-4 border-t border-border">
-                          <h3 className="text-[10px] font-black uppercase tracking-widest text-text-muted flex items-center gap-2">
-                            <Laptop size={12} /> Screen Type
-                          </h3>
+                        {activeScene?.config?.useGlobalTheme === false && (
                           <Select
                             options={[
-                              { id: "gallery", title: "Memory Gallery", icon: Layout },
-                              { id: "composition", title: "Message Scene", icon: Settings },
+                              { id: "birthday-classic", title: "Birthday Classic", icon: Gift },
+                              { id: "anniversary-gold", title: "Anniversary Gold", icon: Award },
+                              { id: "surprise-neon", title: "Surprise Neon", icon: Sparkles },
+                              { id: "elegant-noir", title: "Elegant Noir", icon: Moon },
+                              { id: "romantic-rose", title: "Romantic Rose", icon: Heart },
+                              { id: "party-popper", title: "Party Popper 🎊", icon: Sparkles },
+                              { id: "golden-gala", title: "Golden Gala ✨", icon: Sparkles },
+                              { id: "midnight-aurora", title: "Midnight Aurora 🌌", icon: Moon },
                             ]}
-                            value={activeScene?.type || "composition"}
-                            onChange={(value) => changeSceneType(activeSceneId, value as Scene["type"])}
+                            value={activeScene.config.themeId || style.themeId || "birthday-classic"}
+                            onChange={onSaveTheme}
                           />
-                        </section>
+                        )}
+                      </section>
 
-                        {/* Screen Configuration */}
-                        <section className="space-y-4 pt-4 border-t border-border">
-                          <h3 className="text-[10px] font-black uppercase tracking-widest text-text-muted flex items-center gap-2">
-                            <Settings size={12} /> Configuration
-                          </h3>
-
-                          {activeScene.type === "composition" && (
-                            <div className="space-y-4">
-                              <div className="space-y-2">
-                                <p className="text-[10px] font-black text-text-muted uppercase tracking-widest">Message Paper Style</p>
-                                <Select
-                                  value={activeScene.config.paperStyle || "glass"}
-                                  onChange={(val: string) => updateSceneConfig(activeSceneId, { paperStyle: val })}
-                                  options={[
-                                    { id: "none", title: "Direct (No Paper)", icon: ImageIcon },
-                                    { id: "glass", title: "Modern Glass", icon: Layers },
-                                    { id: "midnight", title: "Midnight Silk", icon: Moon },
-                                    { id: "parchment", title: "Vintage Parchment", icon: Scroll },
-                                    { id: "golden", title: "Royal Gold", icon: Award },
-                                    { id: "aurora", title: "Aurora Flow", icon: Sparkles },
-                                    { id: "typewriter", title: "Typewriter Page", icon: Laptop },
-                                    { id: "velvet", title: "Red Velvet", icon: Heart },
-                                  ]}
-                                />
-                              </div>
-                              <RichTextEditor 
-                                initialValue={activeScene.config.text || ""}
-                                onChange={(html) => updateSceneConfig(activeSceneId, { text: html })}
-                                placeholder="Type your message here..."
-                                onExpand={() => setIsEditorModalOpen(true)}
-                                onOpenMediaLibrary={() => {
-                                  mediaLibraryRef.current?.scrollIntoView({ behavior: 'smooth' });
-                                }}
-                              />
-                            </div>
-                          )}
-
-                          {activeScene.type === "gallery" && (
-                            <div className="space-y-4">
-                              <Select 
-                                value={activeScene.config.layout || "grid"}
-                                onChange={(val: string) => updateSceneConfig(activeSceneId, { layout: val })}
-                                options={[
-                                  { id: "grid", title: "Masonry Grid", icon: Layout },
-                                  { id: "stack", title: "Card Stack", icon: Layers },
-                                  { id: "slideshow", title: "Slideshow", icon: Play }
-                                ]}
-                              />
-                              
+                      {/* Screen Music Override for Custom Scenes */}
+                      <div className="py-8 space-y-4 border-t border-border">
+                        <h3 className="text-[10px] font-black uppercase tracking-widest text-text-muted flex items-center gap-2">
+                          <Music size={12} /> Screen Music
+                        </h3>
+                        <div className="flex p-1 bg-black/5 dark:bg-white/5 rounded-lg">
+                          <button
+                            onClick={() => updateSceneConfig(activeSceneId, { useGlobalMusic: true })}
+                            className={cn("flex-1 py-1.5 text-[10px] font-bold rounded-md transition-all", activeScene.config.useGlobalMusic !== false ? "bg-white shadow-sm text-primary" : "text-text-muted")}
+                          >Global</button>
+                          <button
+                            onClick={() => updateSceneConfig(activeSceneId, { useGlobalMusic: false })}
+                            className={cn("flex-1 py-1.5 text-[10px] font-bold rounded-md transition-all", activeScene.config.useGlobalMusic === false ? "bg-white shadow-sm text-primary" : "text-text-muted")}
+                          >Custom</button>
+                        </div>
+                        
+                        {activeScene.config.useGlobalMusic === false && (
+                          <div className="space-y-3">
+                            {activeScene.config.musicMetadata ? (
                               <div className="space-y-3">
-                                  <div className="flex items-center justify-between">
-                                    <label className="text-[9px] font-black uppercase tracking-widest text-text-muted">Selected Media</label>
-                                    <span className="text-[9px] font-black text-primary">{(activeScene.config.mediaIds || []).length} items</span>
-                                  </div>
-                                  <div className="grid grid-cols-4 gap-2">
-                                    {momentData?.media?.filter((m: any) => isMediaSelected(m.id)).map((m: any) => (
-                                      <div key={m.id} className="aspect-square rounded-lg overflow-hidden border border-primary relative group">
-                                          <img src={m.url} className="w-full h-full object-cover" />
-                                          <button 
-                                            onClick={() => toggleMedia(m.id)}
-                                            className="absolute top-1 right-1 size-5 bg-red-500 text-white rounded-md flex items-center justify-center shadow-lg active:scale-95 transition-all"
-                                          >
-                                            <Trash2 size={10} />
-                                          </button>
-                                      </div>
-                                    ))}
-                                    <button 
-                                      onClick={() => mediaLibraryRef.current?.scrollIntoView({ behavior: 'smooth' })}
-                                      className="aspect-square rounded-lg border border-dashed border-border bg-black/[0.01] hover:bg-primary/5 hover:border-primary/50 flex items-center justify-center text-text-muted transition-all"
-                                    >
-                                        <Plus size={14} />
-                                    </button>
-                                  </div>
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Shared Media Library (Manage Assets) */}
-                          {activeSceneId !== "splash" && activeSceneId !== "branding" && (
-                            <section ref={mediaLibraryRef} className="mt-8 pt-8 border-t border-border space-y-6 pb-20">
-                              <header className="flex items-center justify-between">
-                                <div className="space-y-1">
-                                  <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-text-main flex items-center gap-2">
-                                    <ImageIcon size={12} className="text-primary" />
-                                    Asset Library {momentData?.media?.length || 0}/{maxAllowed}
-                                  </h3>
-                                  <div className="flex items-center gap-2">
-                                    <p className="text-[8px] font-bold text-text-muted uppercase tracking-widest">Manage Your Memories</p>
-                                    {momentData?.selectedAddons?.includes("extraMedia") && momentData.plan !== "premium" && !momentData.paidAddons?.includes("extraMedia") && (
+                                <div className="p-2.5 rounded-lg bg-primary/5 border border-primary/20 flex items-center gap-2.5 group relative">
+                                    <div className="size-8 rounded-md overflow-hidden shrink-0">
+                                      <img src={activeScene.config.musicMetadata.thumbnail} className="w-full h-full object-cover" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-[9px] font-black truncate">{activeScene.config.musicMetadata.title}</p>
+                                      <p className="text-[8px] text-text-muted font-bold truncate">
+                                        {activeScene.config.musicMetadata.artist}
+                                        {activeScene.config.musicMetadata.duration && ` • ${activeScene.config.musicMetadata.duration}`}
+                                      </p>
+                                    </div>
+                                    <div className="flex gap-1 shrink-0">
                                       <button 
                                         onClick={() => {
-                                          if ((momentData?.media?.length || 0) > 10) {
-                                            setShowMediaRemovalModal(true);
-                                          } else {
-                                            toggleAddon("extraMedia");
-                                          }
+                                          updateSceneConfig(activeSceneId, { ytMusicId: null, musicMetadata: null, musicUrl: null });
+                                          if (playingId === activeScene.config.ytMusicId) togglePlay(null);
                                         }}
-                                        className="text-[8px] font-black text-red-500 hover:text-red-600 uppercase tracking-widest flex items-center gap-1 bg-red-500/5 px-2 py-0.5 rounded-full border border-red-500/10 transition-colors"
+                                        className="p-1.5 hover:bg-red-500/10 hover:text-red-500 rounded-md transition-all text-text-muted"
                                       >
-                                        Remove Extra Slots
+                                        <Trash2 size={10} />
+                                      </button>
+                                      <button 
+                                        onClick={() => {
+                                          setIsSettingGlobalMusic(!isSettingGlobalMusic);
+                                          setYtSearchQuery("");
+                                          togglePlay(null);
+                                        }}
+                                        className="p-1.5 hover:bg-primary/10 rounded-md transition-all text-primary"
+                                      >
+                                        <RefreshCcw size={10} />
+                                      </button>
+                                    </div>
+                                </div>
+                                </div>
+                            ) : (
+                              <button 
+                                onClick={() => {
+                                  setIsSettingGlobalMusic(!isSettingGlobalMusic);
+                                  setYtSearchQuery("");
+                                }}
+                                className="w-full py-4 border border-dashed border-border rounded-lg bg-black/[0.01] hover:bg-primary/5 hover:border-primary/50 text-[10px] font-black uppercase tracking-widest text-text-muted transition-all"
+                              >Pick Screen Song</button>
+                            )}
+
+                            {isSettingGlobalMusic && (
+                              <div className="space-y-3 pt-2 animate-in fade-in slide-in-from-top-2">
+                                <div className="relative">
+                                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" size={12} />
+                                  <input 
+                                    autoFocus
+                                    type="text" 
+                                    placeholder="Search screen song..."
+                                    className="w-full h-10 pl-9 pr-3 rounded-lg border border-border bg-white text-[10px] font-bold outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                                    value={ytSearchQuery}
+                                    onChange={(e) => setYtSearchQuery(e.target.value)}
+                                  />
+                                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                    {isSearching ? (
+                                      <Loader2 className="animate-spin text-primary" size={12} />
+                                    ) : (
+                                      <button onClick={() => setIsSettingGlobalMusic(false)}>
+                                        <X size={12} className="text-text-muted hover:text-primary transition-colors" />
                                       </button>
                                     )}
                                   </div>
                                 </div>
-                                <button 
-                                  onClick={() => {
-                                    if ((momentData?.media?.length || 0) >= maxAllowed) {
-                                      setShowLimitModal(true);
-                                    } else {
-                                      setThumbnailMode('library');
-                                      fileInputRef.current?.click();
-                                    }
-                                  }}
-                                  className="size-8 rounded-lg bg-primary text-white flex items-center justify-center shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
-                                >
-                                  <Plus size={16} />
-                                </button>
-                              </header>
-
-                              <div className="grid grid-cols-3 gap-2">
-                                {momentData?.media?.map((m: any) => (
-                                  <div 
-                                  key={m.id} 
-                                  className={cn(
-                                    "aspect-square rounded-lg overflow-hidden border-2 transition-all relative group cursor-pointer",
-                                    isMediaSelected(m.id) ? "border-primary shadow-md scale-95" : "border-transparent bg-black/5 hover:border-primary/30"
-                                  )}
-                                  onClick={() => toggleMedia(m.id)}
-                                  >
-                                    <img src={m.url} className="w-full h-full object-cover" />
-                                    
-                                    {/* Selection Overlay */}
-                                    <div className={cn(
-                                      "absolute inset-0 flex items-center justify-center transition-opacity",
-                                      isMediaSelected(m.id) ? "bg-primary/20 opacity-100" : "bg-black/20 backdrop-blur-[2px] opacity-100"
-                                    )}>
-                                      {isMediaSelected(m.id) ? (
-                                        <div className="size-6 rounded-full bg-white text-primary flex items-center justify-center shadow-sm">
-                                          <Check size={14} />
+                                {showSearchResults && ytResults.length > 0 && (
+                                  <div className="bg-white border border-border rounded-lg overflow-hidden max-h-48 overflow-y-auto divide-y divide-border shadow-soft">
+                                    {ytResults.map((song) => (
+                                      <div key={song.videoId} onClick={() => {
+                                        setGlobalMusic(song);
+                                        setIsSettingGlobalMusic(false);
+                                        togglePlay(null);
+                                      }} className="p-2 flex items-center gap-2 cursor-pointer hover:bg-primary/5 transition-colors">
+                                        <img src={song.thumbnail} className="size-8 rounded-lg object-cover" />
+                                        <div className="flex-1 min-w-0">
+                                          <p className="text-[9px] font-black truncate">{song.title}</p>
+                                          <p className="text-[8px] text-text-muted font-bold truncate">{song.author}</p>
                                         </div>
-                                      ) : (
-                                        <p className="text-[8px] font-black text-white uppercase tracking-widest">Select</p>
-                                      )}
-                                    </div>
-
-                                    {/* Action Hover */}
-                                    <div className="absolute top-1 right-1 transition-opacity">
-                                      <button 
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          handleSetThumbnail(m);
-                                        }}
-                                        className={cn(
-                                          "size-5 rounded-md flex items-center justify-center transition-all",
-                                          momentData.imageUrl === m.url ? "bg-orange-500 text-white" : "bg-white/90 text-text-muted hover:text-orange-500"
-                                        )}
-                                        title="Set as Cover"
-                                        >
-                                        <Sparkles size={10} />
-                                      </button>
-                                    </div>
-                                  </div>
-                                ))}
-                                
-                                {Object.entries(uploadingFiles).map(([id, progress]) => (
-                                  <div key={id} className="aspect-square rounded-lg border border-dashed border-primary/30 bg-primary/5 flex flex-col items-center justify-center gap-1">
-                                    <Loader2 size={14} className="animate-spin text-primary" />
-                                    <span className="text-[8px] font-black text-primary">{progress}%</span>
-                                  </div>
-                                ))}
-
-                                {(!momentData?.media || momentData.media.length === 0) && (
-                                  <div className="col-span-3 py-10 flex flex-col items-center justify-center gap-2 border border-dashed border-border rounded-2xl bg-black/[0.01]">
-                                    <div className="size-10 rounded-full bg-black/5 flex items-center justify-center text-text-muted/30">
-                                      <ImageIcon size={20} />
-                                    </div>
-                                    <p className="text-[9px] font-bold text-text-muted uppercase tracking-widest">Library is empty</p>
+                                        <button onClick={(e) => { e.stopPropagation(); togglePlay(song.videoId); }} className="size-6 bg-primary/10 text-primary rounded-lg flex items-center justify-center">
+                                          {playingId === song.videoId ? <Pause size={10} fill="currentColor" /> : <Play size={10} fill="currentColor" className="ml-0.5" />}
+                                        </button>
+                                      </div>
+                                    ))}
                                   </div>
                                 )}
                               </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
 
-                            {momentData?.media?.length >= maxAllowed && (
-                                <div className="p-4 rounded-2xl bg-orange-50 dark:bg-orange-500/10 border border-orange-100 dark:border-orange-500/20 space-y-3">
-                                  <div className="flex items-center gap-2 text-orange-600">
-                                    <Lock size={14} />
-                                    <h4 className="text-[10px] font-black uppercase tracking-widest">Storage Limit Reached</h4>
-                                  </div>
-                                  <p className="text-[9px] font-medium text-orange-700/70 leading-relaxed">
-                                    You've used all {maxAllowed} slots. Upgrade to Plus for unlimited memories and 4K uploads.
-                                  </p>
-                                  <button className="w-full py-2 bg-orange-500 text-white text-[9px] font-black uppercase tracking-widest rounded-lg transition-transform active:scale-95 shadow-lg shadow-orange-500/30">
-                                    Upgrade Now
+                      {/* Screen Type Selector */}
+                      <section className="py-8 space-y-4 border-t border-border">
+                        <h3 className="text-[10px] font-black uppercase tracking-widest text-text-muted flex items-center gap-2">
+                          <Laptop size={12} /> Screen Type
+                        </h3>
+                        <Select
+                          options={[
+                            { id: "gallery", title: "Memory Gallery", icon: Layout },
+                            { id: "composition", title: "Message Scene", icon: Settings },
+                          ]}
+                          value={activeScene?.type || "composition"}
+                          onChange={(value) => changeSceneType(activeSceneId, value as Scene["type"])}
+                        />
+                      </section>
+
+                      {/* Dependent Screen Configuration */}
+                      <section className="py-8 border-t border-border">
+                        {activeScene.type === "composition" && (
+                          <div className="space-y-4">
+                            <div className="space-y-2">
+                              <p className="text-[10px] font-black text-text-muted uppercase tracking-widest">Message Paper Style</p>
+                              <Select
+                                value={activeScene.config.paperStyle || "glass"}
+                                onChange={(val: string) => updateSceneConfig(activeSceneId, { paperStyle: val })}
+                                options={[
+                                  { id: "none", title: "Direct (No Paper)", icon: ImageIcon },
+                                  { id: "glass", title: "Modern Glass", icon: Layers },
+                                  { id: "midnight", title: "Midnight Silk", icon: Moon },
+                                  { id: "parchment", title: "Vintage Parchment", icon: Scroll },
+                                  { id: "golden", title: "Royal Gold", icon: Award },
+                                  { id: "aurora", title: "Aurora Flow", icon: Sparkles },
+                                  { id: "typewriter", title: "Typewriter Page", icon: Laptop },
+                                  { id: "velvet", title: "Red Velvet", icon: Heart },
+                                ]}
+                              />
+                            </div>
+                            <RichTextEditor 
+                              ref={editorRef}
+                              initialValue={activeScene.config.text || ""}
+                              onChange={(html) => updateSceneConfig(activeSceneId, { text: html })}
+                              placeholder="Type your message here..."
+                              onExpand={() => setIsEditorModalOpen(true)}
+                              onOpenMediaLibrary={() => {
+                                mediaLibraryRef.current?.scrollIntoView({ behavior: 'smooth' });
+                              }}
+                            />
+                          </div>
+                        )}
+
+                        {activeScene.type === "gallery" && (
+                          <div className="space-y-4">
+                            <Select 
+                              value={activeScene.config.layout || "grid"}
+                              onChange={(val: string) => updateSceneConfig(activeSceneId, { layout: val })}
+                              options={[
+                                { id: "grid", title: "Masonry Grid", icon: Layout },
+                                { id: "stack", title: "Card Stack", icon: Layers },
+                                { id: "slideshow", title: "Slideshow", icon: Play }
+                              ]}
+                            />
+                            
+                            <div className="space-y-3">
+                                <div className="flex items-center justify-between">
+                                  <label className="text-[9px] font-black uppercase tracking-widest text-text-muted">Selected Media</label>
+                                  <span className="text-[9px] font-black text-primary">{(activeScene.config.mediaIds || []).length} items</span>
+                                </div>
+                                <div className="grid grid-cols-4 gap-2">
+                                  {momentData?.media?.filter((m: any) => isMediaSelected(m.id)).map((m: any) => (
+                                    <div key={m.id} className="aspect-square rounded-lg overflow-hidden border border-primary relative group">
+                                        <img src={m.url} className="w-full h-full object-cover" />
+                                        <button 
+                                          onClick={() => toggleMedia(m.id)}
+                                          className="absolute top-1 right-1 size-5 bg-red-500 text-white rounded-md flex items-center justify-center shadow-lg active:scale-95 transition-all"
+                                        >
+                                          <Trash2 size={10} />
+                                        </button>
+                                    </div>
+                                  ))}
+                                  <button 
+                                    onClick={() => mediaLibraryRef.current?.scrollIntoView({ behavior: 'smooth' })}
+                                    className="aspect-square rounded-lg border border-dashed border-border bg-black/[0.01] hover:bg-primary/5 hover:border-primary/50 flex items-center justify-center text-text-muted transition-all"
+                                  >
+                                      <Plus size={14} />
                                   </button>
                                 </div>
+                            </div>
+                          </div>
+                        )}
+                      </section>
+
+                      {/* Shared Media Library (Manage Assets) */}
+                      {activeSceneId !== "splash" && activeSceneId !== "branding" && (
+                        <section ref={mediaLibraryRef} className="py-8 border-t border-border space-y-6">
+                          <header className="flex items-center justify-between">
+                            <div className="space-y-1">
+                              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-text-main flex items-center gap-2">
+                                <ImageIcon size={12} className="text-primary" />
+                                Asset Library {momentData?.media?.length || 0}/{maxAllowed}
+                              </h3>
+                              <div className="flex items-center gap-2">
+                                <p className="text-[8px] font-bold text-text-muted uppercase tracking-widest">Manage Your Memories</p>
+                              </div>
+                            </div>
+                            <button 
+                              onClick={() => initiateUpload('library')}
+                              className="size-10 rounded-md bg-primary text-white flex items-center justify-center shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
+                            >
+                              <Plus size={20} />
+                            </button>
+                          </header>
+
+                          <div className="grid grid-cols-3 gap-2 max-h-48 overflow-y-auto scrollbar-none">
+                            {momentData?.media?.map((m: any) => (
+                              <div 
+                              key={m.id} 
+                              className={cn(
+                                "aspect-square rounded-lg overflow-hidden border-2 transition-all relative group cursor-pointer",
+                                isMediaSelected(m.id) ? "border-primary shadow-md scale-95" : "border-transparent bg-black/5 hover:border-primary/30"
                               )}
-                            </section>
+                              onClick={() => toggleMedia(m.id)}
+                              >
+                                <img src={m.url} className="w-full h-full object-cover" />
+                                
+                                {/* Selection Overlay */}
+                                <div className={cn(
+                                  "absolute inset-0 flex items-center justify-center transition-opacity",
+                                  isMediaSelected(m.id) ? "bg-primary/20 opacity-100" : "bg-black/20 backdrop-blur-[2px] opacity-100"
+                                )}>
+                                  {isMediaSelected(m.id) ? (
+                                    <div className="size-6 rounded-full bg-white text-primary flex items-center justify-center shadow-sm">
+                                      <Check size={14} />
+                                    </div>
+                                  ) : (
+                                    <p className="text-[8px] font-black text-white uppercase tracking-widest">Select</p>
+                                  )}
+                                </div>
+
+                                {/* Action Hover - Delete Button */}
+                                <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity z-20">
+                                  <button 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDeleteAsset(m);
+                                    }}
+                                    className="size-5 rounded-md bg-red-500 text-white flex items-center justify-center shadow-lg active:scale-95 transition-all"
+                                    title="Delete Memory"
+                                    >
+                                    <Trash2 size={10} />
+                                  </button>
+                                </div>
+
+
+                              </div>
+                            ))}
+                            
+                            {Object.entries(uploadingFiles).map(([id, progress]) => (
+                              <div key={id} className="aspect-square rounded-lg border border-dashed border-primary/30 bg-primary/5 flex flex-col items-center justify-center gap-1">
+                                <Loader2 size={14} className="animate-spin text-primary" />
+                                <span className="text-[8px] font-black text-primary">{progress}%</span>
+                              </div>
+                            ))}
+
+                            {(!momentData?.media || momentData.media.length === 0) && (
+                              <div className="col-span-3 py-10 flex flex-col items-center justify-center gap-2 border border-dashed border-border rounded-lg bg-black/[0.01]">
+                                <div className="size-10 rounded-full bg-black/5 flex items-center justify-center text-text-muted/30">
+                                  <ImageIcon size={20} />
+                                </div>
+                                <p className="text-[9px] font-bold text-text-muted uppercase tracking-widest">Library is empty</p>
+                              </div>
+                            )}
+                          </div>
+
+                          {momentData?.media?.length >= maxAllowed && (
+                            <div className="p-4 rounded-lg bg-orange-50 dark:bg-orange-500/10 border border-orange-100 dark:border-orange-500/20 space-y-3">
+                              <div className="flex items-center gap-2 text-orange-600">
+                                <Lock size={14} />
+                                <h4 className="text-[10px] font-black uppercase tracking-widest">Storage Limit Reached</h4>
+                              </div>
+                              <p className="text-[9px] font-medium text-orange-700/70 leading-relaxed">
+                                You've used all {maxAllowed} media slots.
+                              </p>
+                            </div>
                           )}
 
-                          {/* Delete Screen Section */}
-                          <div className="pt-6 border-t border-border animate-in fade-in slide-in-from-top-2">
-                            <button 
-                              onClick={() => deleteScene(activeSceneId)}
-                              className="w-full py-4 border-2 border-red-500/20 hover:border-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg flex items-center justify-center gap-3 transition-all group text-red-500"
-                            >
-                              <Trash2 size={16} className="text-red-500 group-hover:-rotate-12 transition-transform" />
-                              <div className="text-left leading-none">
-                                <p className="text-[10px] font-black uppercase tracking-widest">Delete Screen</p>
-                                <p className="text-[8px] font-bold opacity-80 uppercase tracking-tight">Remove this screen entirely</p>
+                          {momentData?.selectedAddons?.includes("extraMedia") && momentData.plan !== "premium" && !momentData.paidAddons?.includes("extraMedia") && (
+                            <div className="p-4 rounded-lg bg-black/[0.02] dark:bg-white/[0.02] border border-border space-y-3">
+                              <div className="flex items-center gap-2 text-text-muted">
+                                <Lock size={14} />
+                                <h4 className="text-[10px] font-black uppercase tracking-widest">Extra Slots Active</h4>
                               </div>
-                            </button>
-                          </div>
+                              <p className="text-[9px] font-medium text-text-muted/70 leading-relaxed">
+                                You have extra media slots added to your plan.
+                              </p>
+                              <button
+                                onClick={() => {
+                                  if ((momentData?.media?.length || 0) > 10) {
+                                    setShowMediaRemovalModal(true);
+                                  } else {
+                                    toggleAddon("extraMedia");
+                                  }
+                                }}
+                                className="w-full py-2 bg-black/5 hover:bg-black/10 text-text-muted text-[9px] font-black uppercase tracking-widest rounded-md transition-all active:scale-95"
+                              >
+                                Remove Extra Slots
+                              </button>
+                            </div>
+                          )}
+
                         </section>
-                      </div>
+                      )}
+
+                      {/* Delete Screen Section */}
+                      <section className="pt-6 border-t border-border animate-in fade-in slide-in-from-top-2">
+                        <button 
+                          onClick={() => deleteScene(activeSceneId)}
+                          className="w-full py-4 border-2 border-red-500/20 hover:border-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg flex items-center justify-center gap-3 transition-all group text-red-500"
+                        >
+                          <Trash2 size={16} className="text-red-500 group-hover:-rotate-12 transition-transform" />
+                          <div className="text-left leading-none">
+                            <p className="text-[10px] font-black uppercase tracking-widest">Delete Screen</p>
+                            <p className="text-[8px] font-bold opacity-80 uppercase tracking-tight">Remove this screen entirely</p>
+                          </div>
+                        </button>
+                      </section>
                     </motion.div>
                   )}
                 </AnimatePresence>
+
+                {/* Global Hidden File Input - ensure it's always mounted for all screens */}
+                <input 
+                  type="file" 
+                  ref={fileInputRef}
+                  className="hidden" 
+                  accept={thumbnailMode === "upload" ? "image/*" : "image/*,video/*"}
+                  multiple={thumbnailMode !== "upload"}
+                  onChange={handleFileUpload}
+                />
+
                 </div>
               </div>
             </div>
@@ -1415,7 +1582,7 @@ export default function RevealStudio({ draftId, onSave }: RevealStudioProps) {
                   <div className="flex-1 flex overflow-hidden">
                     <div className="flex-1 overflow-hidden p-6 bg-surface/30">
                       <RichTextEditor 
-                        ref={editorRef}
+                        ref={modalEditorRef}
                         isModal={true}
                         initialValue={activeScene?.config.text || ""}
                         onChange={(html) => updateSceneConfig(activeSceneId, { text: html })}
@@ -1439,7 +1606,7 @@ export default function RevealStudio({ draftId, onSave }: RevealStudioProps) {
                             <div className="flex items-center gap-2">
                               <h3 className="text-[10px] font-black uppercase tracking-widest text-text-muted">Insert Media</h3>
                               <button 
-                                onClick={() => fileInputRef.current?.click()}
+                                onClick={() => initiateUpload('library')}
                                 className="size-6 rounded-lg bg-primary/10 text-primary flex items-center justify-center hover:bg-primary/20 transition-colors"
                                 title="Upload New"
                               >
@@ -1459,11 +1626,7 @@ export default function RevealStudio({ draftId, onSave }: RevealStudioProps) {
                                {momentData?.media?.map((m: any) => (
                                  <div 
                                    key={m.id} 
-                                   onClick={() => {
-                                     if (editorRef.current) {
-                                       editorRef.current.insertImage(m.url);
-                                     }
-                                   }}
+                                   onClick={() => toggleMedia(m.id)}
                                    className="aspect-square rounded-lg overflow-hidden border-2 border-transparent hover:border-primary cursor-pointer transition-all hover:scale-[1.02] shadow-sm relative group"
                                  >
                                    <img src={m.url} className="w-full h-full object-cover" />
@@ -1514,7 +1677,7 @@ export default function RevealStudio({ draftId, onSave }: RevealStudioProps) {
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="relative w-full max-w-sm bg-white dark:bg-zinc-900 rounded-[32px] overflow-hidden shadow-2xl border border-white/10"
+              className="relative w-full max-w-sm bg-white dark:bg-zinc-900 rounded-xl overflow-hidden shadow-2xl border border-white/10"
             >
               <div className="p-8 text-center space-y-6">
                 <div className="size-16 rounded-3xl bg-orange-500/10 flex items-center justify-center mx-auto text-orange-500">
@@ -1534,15 +1697,15 @@ export default function RevealStudio({ draftId, onSave }: RevealStudioProps) {
                         toggleAddon("extraMedia");
                         setShowLimitModal(false);
                       }}
-                      className="w-full py-4 bg-primary text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex flex-col items-center justify-center leading-tight"
+                      className="w-full py-4 bg-primary text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-lg shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex flex-col items-center justify-center leading-tight"
                     >
-                      Unlock 25 Slots
+                      Add 15 more Media files
                       <span className="text-[8px] opacity-60 mt-1">ONLY {formatPrice(ADDONS.find(a => a.id === "extraMedia")?.price[currency] || 0, currency)}</span>
                     </button>
                   )}
                   <button 
                     onClick={() => setShowLimitModal(false)}
-                    className="w-full py-4 bg-black/5 dark:bg-white/5 text-text-muted text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl hover:bg-black/10 transition-all"
+                    className="w-full py-4 bg-black/5 dark:bg-white/5 text-text-muted text-[10px] font-black uppercase tracking-[0.2em] rounded-lg hover:bg-black/10 transition-all"
                   >
                     Maybe Later
                   </button>
@@ -1592,6 +1755,75 @@ export default function RevealStudio({ draftId, onSave }: RevealStudioProps) {
           </div>
         )}
       </AnimatePresence>
+
+      {/* Delete Asset Confirmation Modal */}
+      <AnimatePresence>
+        {assetToDelete && (
+          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }} 
+              animate={{ opacity: 1 }} 
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              onClick={() => !isDeleting && setAssetToDelete(null)}
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative w-full max-w-sm bg-white dark:bg-zinc-900 rounded-lg overflow-hidden shadow-2xl border border-white/10"
+            >
+              <div className="p-8 text-center space-y-6">
+                <div className="size-20 rounded-3xl bg-red-500/10 flex items-center justify-center mx-auto text-red-500 relative overflow-hidden">
+                   {isDeleting ? (
+                     <Loader2 size={32} className="animate-spin" />
+                   ) : (
+                     <div className="relative">
+                        <Trash2 size={32} className="relative z-10" />
+                        <motion.div 
+                          animate={{ scale: [1, 1.2, 1], rotate: [0, 10, -10, 0] }}
+                          transition={{ repeat: Infinity, duration: 3 }}
+                          className="absolute inset-0 bg-red-500/20 blur-xl rounded-full"
+                        />
+                     </div>
+                   )}
+                </div>
+                
+                <div className="space-y-2">
+                  <h3 className="text-xl font-black text-text-main uppercase tracking-tight">Delete Memory?</h3>
+                  <p className="text-sm font-medium text-text-muted leading-relaxed px-4">
+                    This will permanently remove this item from your library and all scenes.
+                  </p>
+                </div>
+
+                {deleteError && (
+                  <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-[10px] font-bold text-red-500 uppercase tracking-widest animate-in fade-in slide-in-from-top-1">
+                    {deleteError}
+                  </div>
+                )}
+
+                <div className="grid grid-cols-2 gap-3 pt-2">
+                  <button 
+                    disabled={isDeleting}
+                    onClick={() => setAssetToDelete(null)}
+                    className="w-full py-4 bg-black/5 dark:bg-white/5 text-text-muted text-[10px] font-black uppercase tracking-[0.2em] rounded-lg hover:bg-black/10 transition-all disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    disabled={isDeleting}
+                    onClick={confirmDeleteAsset}
+                    className="w-full py-4 bg-red-500 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-lg shadow-xl shadow-red-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center disabled:opacity-50"
+                  >
+                    {isDeleting ? <Loader2 size={14} className="animate-spin" /> : "Delete"}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
+

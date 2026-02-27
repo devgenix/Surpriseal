@@ -9,6 +9,20 @@ import { useState, useEffect, useCallback } from "react";
 import RevealStudio from "@/components/creation/RevealStudio";
 import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 
+const cleanObject = (obj: any): any => {
+  if (Array.isArray(obj)) {
+    return obj.map(cleanObject);
+  } else if (obj !== null && typeof obj === "object") {
+    return Object.entries(obj).reduce((acc: any, [key, value]) => {
+      if (value !== undefined) {
+        acc[key] = cleanObject(value);
+      }
+      return acc;
+    }, {});
+  }
+  return obj;
+};
+
 export default function CreationStylePage() {
   const router = useRouter();
   const params = useParams();
@@ -67,8 +81,9 @@ export default function CreationStylePage() {
     setSaveError(false);
     try {
       const docRef = doc(db!, "moments", draftId);
+      const cleanedUpdates = cleanObject(updates);
       await updateDoc(docRef, {
-        ...updates,
+        ...cleanedUpdates,
         updatedAt: serverTimestamp(),
       });
       
@@ -115,12 +130,11 @@ export default function CreationStylePage() {
 
   useEffect(() => {
     setOnContinue(() => onContinueAction);
-    setOnSave(() => async () => { await saveDraft(); });
     return () => {
       setOnContinue(null);
       setOnSave(null);
     };
-  }, [onContinueAction, saveDraft, setOnContinue, setOnSave]);
+  }, [onContinueAction, setOnContinue, setOnSave]);
 
   if (loading) {
     return (
@@ -130,5 +144,5 @@ export default function CreationStylePage() {
     );
   }
 
-  return <RevealStudio draftId={draftId} onSave={saveDraft} />;
+  return <RevealStudio draftId={draftId} onSave={saveDraft} onContinue={onContinueAction} />;
 }

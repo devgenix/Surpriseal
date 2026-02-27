@@ -53,15 +53,47 @@ const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>(({
   // Expose insertion method to parent
   useImperativeHandle(ref, () => ({
     insertImage: (url: string) => {
-      contentRef.current?.focus();
+      const editor = contentRef.current;
+      if (!editor) return;
+
+      editor.focus();
       restoreSelection();
-      document.execCommand('insertImage', false, url);
-      // After image insertion, update the stored range to the new position
-      saveSelection();
       
-      if (contentRef.current) {
-        onChange(contentRef.current.innerHTML);
+      const sel = window.getSelection();
+      const isSelectionInEditor = sel && sel.rangeCount > 0 && contentRef.current?.contains(sel.getRangeAt(0).commonAncestorContainer);
+      
+      if (isSelectionInEditor || lastRange.current) {
+        const range = isSelectionInEditor ? sel!.getRangeAt(0) : lastRange.current!;
+        
+        // Create image element
+        const img = document.createElement('img');
+        img.src = url;
+        img.className = 'max-w-full h-auto rounded-xl my-6 block shadow-lg mx-auto transition-all hover:scale-[1.02]';
+        img.style.display = 'block';
+        
+        // Insert at range
+        range.deleteContents();
+        range.insertNode(img);
+        
+        // Add a line break after the image for easier continued typing
+        const br = document.createElement('p');
+        br.innerHTML = '<br>';
+        img.after(br);
+        
+        // Move cursor after the image
+        const newRange = document.createRange();
+        newRange.setStart(br, 0);
+        newRange.collapse(true);
+        sel.removeAllRanges();
+        sel.addRange(newRange);
+        
+        lastRange.current = newRange;
+      } else {
+        // Fallback: append to end if no selection found
+        editor.innerHTML += `<img src="${url}" class="max-w-full h-auto rounded-xl my-6 block shadow-lg mx-auto transition-all hover:scale-[1.02]" /><p><br></p>`;
       }
+      
+      onChange(editor.innerHTML);
     }
   }));
 
@@ -91,7 +123,7 @@ const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>(({
 
   return (
     <div className={cn(
-        "flex flex-col rounded-xl border border-border bg-white dark:bg-black/40 overflow-hidden transition-all duration-200 shadow-sm",
+        "flex flex-col rounded-lg border border-border bg-white dark:bg-black/40 overflow-hidden transition-all duration-200 shadow-sm",
         isFocused ? "ring-4 ring-primary/5 border-primary/50" : "",
         isModal ? "h-full flex-1" : ""
     )}>
@@ -205,6 +237,7 @@ export default RichTextEditor;
 function ToolbarButton({ onClick, icon, title, active, className }: any) {
   return (
     <button
+      onMouseDown={(e) => e.preventDefault()}
       onClick={(e) => { e.preventDefault(); onClick(); }}
       className={cn(
         "size-8 flex items-center justify-center rounded-md transition-colors",

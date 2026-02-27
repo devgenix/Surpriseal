@@ -22,6 +22,20 @@ import { uploadFile } from "@/lib/upload";
 import { getMediaLimit } from "@/lib/pricing-utils";
 import { ADDONS, PLANS } from "@/lib/constants/pricing";
 
+const cleanObject = (obj: any): any => {
+  if (Array.isArray(obj)) {
+    return obj.map(cleanObject);
+  } else if (obj !== null && typeof obj === "object") {
+    return Object.entries(obj).reduce((acc: any, [key, value]) => {
+      if (value !== undefined) {
+        acc[key] = cleanObject(value);
+      }
+      return acc;
+    }, {});
+  }
+  return obj;
+};
+
 export default function CreationSettingsPage() {
   const router = useRouter();
   const params = useParams();
@@ -119,8 +133,9 @@ export default function CreationSettingsPage() {
 
     try {
       const docRef = doc(db!, "moments", draftId);
+      const cleanedUpdates = cleanObject(updates);
       await updateDoc(docRef, {
-        ...updates,
+        ...cleanedUpdates,
         updatedAt: serverTimestamp()
       });
 
@@ -257,7 +272,7 @@ export default function CreationSettingsPage() {
       saveDraft(updates);
     }
   }, [
-    loading, localMomentData, debouncedUrlSlug, slugAvailable, unlockType, 
+    loading, debouncedUrlSlug, slugAvailable, unlockType, 
     debouncedUnlockPassword, debouncedUnlockQuestion, debouncedUnlockAnswer, 
     debouncedUnlockHint, unlockFaceRef, saveDraft
   ]);
@@ -422,18 +437,25 @@ export default function CreationSettingsPage() {
                 { id: "none", title: "None", desc: "Open Instantly", icon: CheckCircle2 },
                 { id: "password", title: "Password", desc: "Static Pin", icon: Lock },
                 { id: "qa", title: "Q & A", desc: "Riddle or Question", icon: HelpCircle },
-                { id: "face", title: "Face Match", desc: "AI Recognition", icon: Camera },
+                { id: "face", title: "Face Match", desc: "Coming Soon", icon: Camera, disabled: true },
               ].map((m) => (
                 <button
                   key={m.id}
+                  disabled={m.disabled}
                   onClick={() => setUnlockType(m.id as any)}
                   className={cn(
-                    "flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all",
+                    "flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all relative",
                     unlockType === m.id 
                       ? "bg-primary/5 border-primary shadow-sm text-primary" 
-                      : "bg-surface border-border text-text-muted hover:border-primary/20"
+                      : "bg-surface border-border text-text-muted hover:border-primary/20",
+                    m.disabled && "opacity-50 cursor-not-allowed grayscale"
                   )}
                 >
+                  {m.disabled && (
+                    <div className="absolute top-2 right-2 bg-text-muted/10 text-[6px] font-black uppercase px-1.5 py-0.5 rounded-full text-text-muted tracking-widest border border-border">
+                      Soon
+                    </div>
+                  )}
                   <m.icon size={24} className={unlockType === m.id ? "text-primary" : "text-text-muted"} />
                   <span className="text-xs font-black mt-1 uppercase tracking-widest">{m.title}</span>
                   <span className="text-[9px] font-bold text-center leading-tight opacity-60 uppercase tracking-tighter">{m.desc}</span>
@@ -443,7 +465,7 @@ export default function CreationSettingsPage() {
 
             <div className="pt-4 border-t border-border">
               {unlockType === "none" && (
-                <div className="flex items-center gap-3 text-sm text-text-muted font-bold bg-primary/[0.03] p-5 rounded-xl border border-primary/10">
+                <div className="flex items-center gap-3 text-sm text-text-muted font-bold bg-primary/[0.03] p-5 rounded-lg border border-primary/10">
                   <CheckCircle2 className="text-primary shrink-0" size={18} />
                   <p className="opacity-80">The moment will open immediately when the recipient clicks the link.</p>
                 </div>
@@ -458,7 +480,18 @@ export default function CreationSettingsPage() {
                       value={unlockPassword}
                       onChange={(e) => setUnlockPassword(e.target.value)}
                       placeholder="e.g. 1994 or secretword"
-                      className="w-full h-14 px-5 bg-white border-2 border-border rounded-xl text-text-main font-bold placeholder:text-text-muted/30 focus:border-primary focus:ring-4 focus:ring-primary/5 outline-none transition-all"
+                      className="w-full h-14 px-5 bg-white border-2 border-border rounded-lg text-text-main font-bold placeholder:text-text-muted/30 focus:border-primary focus:ring-4 focus:ring-primary/5 outline-none transition-all"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2 pt-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-text-muted">Security Hint (Optional)</label>
+                    <textarea 
+                      rows={2}
+                      value={unlockHint}
+                      onChange={(e) => setUnlockHint(e.target.value)}
+                      placeholder="e.g. Our anniversary date..."
+                      className="w-full p-4 bg-white border-2 border-border rounded-lg text-text-main font-bold placeholder:text-text-muted/30 focus:border-primary focus:ring-4 focus:ring-primary/5 outline-none transition-all resize-none"
                     />
                   </div>
                 </div>
@@ -473,7 +506,7 @@ export default function CreationSettingsPage() {
                       value={unlockQuestion}
                       onChange={(e) => setUnlockQuestion(e.target.value)}
                       placeholder="e.g. What's the name of our first pet?"
-                      className="w-full h-14 px-5 bg-white border-2 border-border rounded-xl text-text-main font-bold placeholder:text-text-muted/30 focus:border-primary focus:ring-4 focus:ring-primary/5 outline-none transition-all"
+                      className="w-full h-14 px-5 bg-white border-2 border-border rounded-lg text-text-main font-bold placeholder:text-text-muted/30 focus:border-primary focus:ring-4 focus:ring-primary/5 outline-none transition-all"
                     />
                   </div>
                   <div className="space-y-2">
@@ -483,52 +516,33 @@ export default function CreationSettingsPage() {
                       value={unlockAnswer}
                       onChange={(e) => setUnlockAnswer(e.target.value.toLowerCase())}
                       placeholder="e.g. fluffy"
-                      className="w-full h-14 px-5 bg-white border-2 border-border rounded-xl text-text-main font-bold placeholder:text-text-muted/30 focus:border-primary focus:ring-4 focus:ring-primary/5 outline-none transition-all"
+                      className="w-full h-14 px-5 bg-white border-2 border-border rounded-lg text-text-main font-bold placeholder:text-text-muted/30 focus:border-primary focus:ring-4 focus:ring-primary/5 outline-none transition-all"
+                    />
+                  </div>
+
+                  <div className="space-y-2 pt-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-text-muted">Security Hint (Optional)</label>
+                    <textarea 
+                      rows={2}
+                      value={unlockHint}
+                      onChange={(e) => setUnlockHint(e.target.value)}
+                      placeholder="e.g. Think back to 5 years ago..."
+                      className="w-full p-4 bg-white border-2 border-border rounded-lg text-text-main font-bold placeholder:text-text-muted/30 focus:border-primary focus:ring-4 focus:ring-primary/5 outline-none transition-all resize-none"
                     />
                   </div>
                 </div>
               )}
 
               {unlockType === "face" && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in fade-in slide-in-from-top-2">
-                  <div className="space-y-3">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-text-muted">Target Face Reference</label>
-                    {unlockFaceRef ? (
-                      <div className="relative aspect-square max-w-[180px] rounded-2xl border-2 border-border overflow-hidden group shadow-lg">
-                        <img src={unlockFaceRef} alt="Face Ref" className="w-full h-full object-cover" />
-                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-4">
-                           <p className="text-[9px] text-white font-black uppercase text-center mb-3">Clear face required for AI match</p>
-                           <button onClick={() => setUnlockFaceRef("")} className="bg-red-500 hover:bg-red-600 text-white text-[9px] font-black uppercase px-4 py-2 rounded-lg flex items-center gap-1.5 shadow-xl transition-transform active:scale-95">
-                            <Trash2 size={12} /> Remove
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <label className="aspect-square max-w-[180px] w-full rounded-2xl border-2 border-dashed border-border flex flex-col items-center justify-center gap-3 bg-primary/[0.02] cursor-pointer hover:bg-primary/[0.05] hover:border-primary/50 transition-all group shadow-sm">
-                        {uploadingFace ? (
-                          <Loader2 className="animate-spin text-primary" size={24} />
-                        ) : (
-                          <>
-                            <div className="size-12 rounded-full bg-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                              <Camera className="text-primary" size={24} />
-                            </div>
-                            <span className="text-[10px] font-black text-primary uppercase tracking-widest">Upload Face</span>
-                          </>
-                        )}
-                        <input type="file" accept="image/*" onChange={handleFaceUpload} className="hidden" />
-                      </label>
-                    )}
+                <div className="p-8 text-center bg-primary/[0.03] rounded-lg border border-dashed border-primary/20 space-y-4">
+                  <div className="size-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto text-primary">
+                    <Camera size={32} />
                   </div>
-
-                  <div className="space-y-3">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-text-muted">Security Hint (Optional)</label>
-                    <textarea 
-                      rows={5}
-                      value={unlockHint}
-                      onChange={(e) => setUnlockHint(e.target.value)}
-                      placeholder="e.g. Make sure you're in good lighting!"
-                      className="w-full p-5 bg-white border-2 border-border rounded-2xl text-text-main font-bold placeholder:text-text-muted/30 focus:border-primary focus:ring-4 focus:ring-primary/5 outline-none transition-all resize-none shadow-sm"
-                    />
+                  <div className="space-y-1">
+                    <h3 className="text-sm font-black uppercase tracking-widest text-text-main">Face Match is Coming Soon</h3>
+                    <p className="text-[10px] font-medium text-text-muted max-w-xs mx-auto leading-relaxed">
+                      We're currently perfecting our AI Face Recognition to ensure maximum privacy and accuracy for your surprises.
+                    </p>
                   </div>
                 </div>
               )}

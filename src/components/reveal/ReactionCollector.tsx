@@ -15,7 +15,9 @@ import {
   CheckCircle2, 
   Loader2,
   Video,
-  RefreshCcw
+  RefreshCcw,
+  AlertCircle,
+  ShieldAlert
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -35,6 +37,12 @@ export default function ReactionCollector({ momentId, isPreview, onActiveChange,
   const [isRecording, setIsRecording] = useState(false);
   const [mediaBlob, setMediaBlob] = useState<Blob | null>(null);
   const [recordingTime, setRecordingTime] = useState(0);
+  const [error, setError] = useState<{ 
+    title: string;
+    message: string; 
+    type: 'permission' | 'generic'; 
+    onRetry?: () => void;
+  } | null>(null);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -69,7 +77,12 @@ export default function ReactionCollector({ momentId, isPreview, onActiveChange,
       setMode("voice");
     } catch (err) {
       console.error("Mic access denied", err);
-      alert("Microphone access is required to send a voice note.");
+      setError({
+        title: "Microphone Access Required",
+        message: "We need your microphone to record voice notes. Please enable it in your browser settings.",
+        type: 'permission',
+        onRetry: handleStartVoice
+      });
     }
   };
 
@@ -87,7 +100,12 @@ export default function ReactionCollector({ momentId, isPreview, onActiveChange,
       }, 100);
     } catch (err) {
       console.error("Camera access denied", err);
-      alert("Camera access is required to send a video reaction.");
+      setError({
+        title: "Camera Access Required",
+        message: "We need your camera to record video reactions. Please enable it in your browser settings.",
+        type: 'permission',
+        onRetry: handleStartCamera
+      });
     }
   };
 
@@ -186,7 +204,12 @@ export default function ReactionCollector({ momentId, isPreview, onActiveChange,
       console.error("Reaction submission failed", err);
       setMode("idle");
       const errorMessage = err instanceof Error ? err.message : "Unknown error";
-      alert(`Failed to send reaction: ${errorMessage}`);
+      setError({
+        title: "Upload Failed",
+        message: errorMessage,
+        type: 'generic',
+        onRetry: handleSubmit
+      });
     }
   };
 
@@ -215,7 +238,7 @@ export default function ReactionCollector({ momentId, isPreview, onActiveChange,
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9 }}
-            className="flex items-center gap-4 bg-white/10 backdrop-blur-md p-3 rounded-full border border-white/20 shadow-xl pointer-events-auto"
+            className="flex items-center gap-4 bg-white/10 backdrop-blur-md p-3 rounded-lg border border-white/20 shadow-xl pointer-events-auto"
           >
             <button 
               onClick={() => setMode("text")}
@@ -430,6 +453,57 @@ export default function ReactionCollector({ momentId, isPreview, onActiveChange,
           </motion.div>
         )}
 
+      </AnimatePresence>
+      
+      {/* Custom Error Modal */}
+      <AnimatePresence>
+        {error && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md"
+          >
+            <motion.div 
+              initial={{ scale: 0.9, y: 20, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              exit={{ scale: 0.9, y: 20, opacity: 0 }}
+              className="w-full max-w-sm bg-surface border border-red-500/20 rounded-3xl shadow-2xl overflow-hidden pointer-events-auto"
+            >
+              <div className="p-6 text-center space-y-4">
+                <div className="size-16 rounded-2xl bg-red-500/10 flex items-center justify-center text-red-500 mx-auto">
+                  {error.type === 'permission' ? <ShieldAlert size={32} /> : <AlertCircle size={32} />}
+                </div>
+                
+                <div className="space-y-1">
+                  <h3 className="text-lg font-black uppercase tracking-tight">{error.title}</h3>
+                  <p className="text-xs text-text-muted font-bold leading-relaxed">{error.message}</p>
+                </div>
+
+                <div className="flex gap-2 pt-2">
+                  <button 
+                    onClick={() => setError(null)}
+                    className="flex-1 py-3 rounded-xl bg-black/5 hover:bg-black/10 dark:bg-white/5 dark:hover:bg-white/10 text-[10px] font-black uppercase tracking-widest transition-all"
+                  >
+                    Dismiss
+                  </button>
+                  {error.onRetry && (
+                    <button 
+                      onClick={() => {
+                        const retry = error.onRetry;
+                        setError(null);
+                        retry?.();
+                      }}
+                      className="flex-1 py-3 rounded-xl bg-red-500 text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-red-500/20 hover:scale-105 active:scale-95 transition-all"
+                    >
+                      Try Again
+                    </button>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
       </AnimatePresence>
     </div>
   );

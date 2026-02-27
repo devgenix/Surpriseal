@@ -24,7 +24,8 @@ import {
   Play,
   Pause,
   Maximize2,
-  Minimize2
+  Minimize2,
+  ShieldAlert
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ScratchUtility, GalleryUtility, CompositionUtility } from "./utilities/RevealUtilities";
@@ -100,12 +101,17 @@ function Confetti3D({ count = 100, colors = ["#ff0000", "#00ff00", "#0000ff"] })
 
 export default function RevealEngine({ moment, isPreview = false, activeSceneIndex }: RevealEngineProps) {
   const [currentSceneIndex, setCurrentSceneIndex] = useState(activeSceneIndex ?? -1); // -1 for splash
-  const [isLocked, setIsLocked] = useState(false);
+  const [isUnlocked, setIsUnlocked] = useState(isPreview || !moment?.unlockConfig || moment?.unlockConfig?.type === "none");
+  const [showUnlockUI, setShowUnlockUI] = useState(false);
   const [isReacting, setIsReacting] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [unlockError, setUnlockError] = useState<string | null>(null);
   const [inputValue, setInputValue] = useState("");
+  const [showHint, setShowHint] = useState(false);
+  const [shake, setShake] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
+  const [isAudioBlocked, setIsAudioBlocked] = useState(false);
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   
   // Audio Refs
   const globalSoundRef = useRef<Howl | null>(null);
@@ -130,6 +136,11 @@ export default function RevealEngine({ moment, isPreview = false, activeSceneInd
       setCurrentSceneIndex(activeSceneIndex);
     }
   }, [activeSceneIndex]);
+
+  // Reset lightbox state when changing scenes
+  useEffect(() => {
+    setIsLightboxOpen(false);
+  }, [currentSceneIndex]);
 
   // Hierarchy Theme Selection
   const activeThemeId = useMemo(() => {
@@ -308,29 +319,73 @@ export default function RevealEngine({ moment, isPreview = false, activeSceneInd
     const { useGlobalMusic: targetUseGlobal, useSceneMusic: targetUseScene } = getMusicState(indexToUse);
 
     // Explicitly trigger play for the ACTIVE source ONLY
-    if (targetUseGlobal) {
-      if (globalYtPlayerRef.current?.playVideo) globalYtPlayerRef.current.playVideo();
-      if (globalSoundRef.current) globalSoundRef.current.play();
-      // Ensure scene music is paused
-      if (sceneYtPlayerRef.current?.pauseVideo) sceneYtPlayerRef.current.pauseVideo();
-      if (sceneSoundRef.current) sceneSoundRef.current.pause();
-    } else if (targetUseScene) {
-      if (sceneYtPlayerRef.current?.playVideo) sceneYtPlayerRef.current.playVideo();
-      if (sceneSoundRef.current) sceneSoundRef.current.play();
-      // Ensure global music is paused
-      if (globalYtPlayerRef.current?.pauseVideo) globalYtPlayerRef.current.pauseVideo();
-      if (globalSoundRef.current) globalSoundRef.current.pause();
+    try {
+      if (targetUseGlobal) {
+        if (globalYtPlayerRef.current?.playVideo) globalYtPlayerRef.current.playVideo();
+        if (globalSoundRef.current) globalSoundRef.current.play();
+        // Ensure scene music is paused
+        if (sceneYtPlayerRef.current?.pauseVideo) sceneYtPlayerRef.current.pauseVideo();
+        if (sceneSoundRef.current) sceneSoundRef.current.pause();
+      } else if (targetUseScene) {
+        if (sceneYtPlayerRef.current?.playVideo) sceneYtPlayerRef.current.playVideo();
+        if (sceneSoundRef.current) sceneSoundRef.current.play();
+        // Ensure global music is paused
+        if (globalYtPlayerRef.current?.pauseVideo) globalYtPlayerRef.current.pauseVideo();
+        if (globalSoundRef.current) globalSoundRef.current.pause();
+      }
+      setIsAudioBlocked(false);
+    } catch (err) {
+      console.warn("Audio playback was blocked by browser", err);
+      setIsAudioBlocked(true);
     }
   }, [currentSceneIndex, getMusicState]);
 
+  const handleUnlock = useCallback(async () => {
+    const config = moment?.unlockConfig;
+    if (!config) {
+      setIsUnlocked(true);
+      setCurrentSceneIndex(0);
+      return;
+    }
+
+    setIsVerifying(true);
+    setUnlockError(null);
+
+    // Simulate a slight delay for "Security Feel"
+    await new Promise(r => setTimeout(r, 800));
+
+    let correct = false;
+    if (config.type === "password") {
+      correct = inputValue.trim().toLowerCase() === String(config.password).trim().toLowerCase();
+    } else if (config.type === "qa") {
+      correct = inputValue.trim().toLowerCase() === String(config.answer).trim().toLowerCase();
+    }
+
+    if (correct) {
+      setIsUnlocked(true);
+      setShowUnlockUI(false);
+      setCurrentSceneIndex(0);
+      startAudioOnInteraction(0);
+    } else {
+      setUnlockError("Incorrect entry. Please try again.");
+      setShake(true);
+      setTimeout(() => setShake(false), 500);
+    }
+    setIsVerifying(false);
+  }, [moment?.unlockConfig, inputValue, startAudioOnInteraction]);
+
   const nextScene = useCallback(() => {
+    if (currentSceneIndex === -1 && !isUnlocked) {
+      setShowUnlockUI(true);
+      return;
+    }
+
     const nextIndex = currentSceneIndex + 1;
     if (nextIndex <= scenes.length) {
-       // Start music for the NEXT scene immediately in the interaction loop
        startAudioOnInteraction(nextIndex);
        setCurrentSceneIndex(nextIndex);
     }
-  }, [currentSceneIndex, scenes.length, startAudioOnInteraction]);
+  }, [currentSceneIndex, scenes.length, startAudioOnInteraction, isUnlocked]);
 
   const prevScene = useCallback(() => {
     const targetIndex = currentSceneIndex - 1;
@@ -359,7 +414,7 @@ export default function RevealEngine({ moment, isPreview = false, activeSceneInd
   return (
     <div 
       className="relative w-full h-full bg-black overflow-hidden font-display select-none"
-      onClick={startAudioOnInteraction}
+      onClick={() => startAudioOnInteraction()}
     >
       
       {/* Background Layer */}
@@ -393,14 +448,32 @@ export default function RevealEngine({ moment, isPreview = false, activeSceneInd
             <motion.div 
               animate={{ opacity: [0.4, 1, 0.4] }}
               transition={{ repeat: Infinity, duration: 2 }}
-              className="mt-12 text-white/40 text-[10px] font-black uppercase tracking-[0.3em] bg-white/5 px-8 py-4 rounded-2xl border border-white/10 backdrop-blur-md cursor-pointer hover:bg-white/10 transition-colors"
+              className="mt-12 text-white/40 text-[10px] font-black uppercase tracking-[0.3em] bg-white/5 px-8 py-4 rounded-lg border border-white/10 backdrop-blur-md cursor-pointer hover:bg-white/10 transition-colors"
               onClick={(e) => {
                 e.stopPropagation();
-                nextScene();
-              }}
-            >
-              Open Surprise
-            </motion.div>
+              nextScene();
+            }}
+          >
+            Open Surprise
+          </motion.div>
+
+          {/* Unlock Overlay */}
+          <AnimatePresence>
+            {showUnlockUI && !isUnlocked && (
+              <UnlockOverlay 
+                moment={moment}
+                inputValue={inputValue}
+                setInputValue={setInputValue}
+                isVerifying={isVerifying}
+                error={unlockError}
+                onUnlock={handleUnlock}
+                showHint={showHint}
+                setShowHint={setShowHint}
+                shake={shake}
+                onClose={() => setShowUnlockUI(false)}
+              />
+            )}
+          </AnimatePresence>
 
             {/* Global Music Indicator - Moved to Top Right per User Request */}
             {style.musicMetadata && (
@@ -408,7 +481,7 @@ export default function RevealEngine({ moment, isPreview = false, activeSceneInd
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 1 }}
-                className="absolute top-8 right-8 flex items-center gap-3 px-4 py-2 bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl max-w-[200px] z-[60]"
+                className="absolute top-8 right-8 flex items-center gap-3 px-4 py-2 bg-white/5 backdrop-blur-md border border-white/10 rounded-lg max-w-[200px] z-[60]"
               >
                 {style.musicMetadata.thumbnail && (
                   <img src={style.musicMetadata.thumbnail} className="size-8 rounded-lg border border-white/10" alt="Music" />
@@ -431,13 +504,16 @@ export default function RevealEngine({ moment, isPreview = false, activeSceneInd
             initial={{ opacity: 0, x: 100 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -100 }}
-            className="absolute inset-0 flex items-center justify-center z-20"
+            className={cn(
+              "absolute inset-0 flex items-center justify-center transition-all duration-300",
+              isLightboxOpen ? "z-[70]" : "z-20"
+            )}
           >
             {currentScene.type === "scratch" && (
               <ScratchUtility config={sceneData} onComplete={() => {}} />
             )}
             {currentScene.type === "gallery" && (
-              <GalleryUtility config={sceneData} />
+              <GalleryUtility config={sceneData} onLightboxToggle={setIsLightboxOpen} />
             )}
             {currentScene.type === "composition" && (
               <CompositionUtility config={sceneData} />
@@ -485,7 +561,7 @@ export default function RevealEngine({ moment, isPreview = false, activeSceneInd
                              
                              <button 
                                onClick={() => window.open("/", "_blank")}
-                               className="w-full py-5 bg-primary text-white rounded-2xl font-black uppercase tracking-[0.2em] text-xs shadow-2xl shadow-primary/40 hover:scale-105 active:scale-95 transition-all"
+                               className="w-full py-5 bg-primary text-white rounded-lg font-black uppercase tracking-[0.2em] text-xs shadow-2xl shadow-primary/40 hover:scale-105 active:scale-95 transition-all"
                              >
                                Create your own surprise
                              </button>
@@ -501,7 +577,7 @@ export default function RevealEngine({ moment, isPreview = false, activeSceneInd
                              {moment?.styleConfig?.showReactions === false && (
                                <button 
                                  onClick={() => setCurrentSceneIndex(-1)}
-                                 className="w-full py-5 bg-white/10 text-white border border-white/20 rounded-2xl font-black uppercase tracking-[0.2em] text-xs hover:bg-white/20 active:scale-95 transition-all mb-8"
+                                 className="w-full py-5 bg-white/10 text-white border border-white/20 rounded-lg font-black uppercase tracking-[0.2em] text-xs hover:bg-white/20 active:scale-95 transition-all mb-8"
                                >
                                  Watch Again
                                </button>
@@ -587,6 +663,56 @@ export default function RevealEngine({ moment, isPreview = false, activeSceneInd
       {/* Hidden YouTube Players */}
       <div id="yt-player-global" className="fixed inset-0 pointer-events-none opacity-0 z-[-1]" />
       <div id="yt-player-scene" className="fixed inset-0 pointer-events-none opacity-0 z-[-1]" />
+      
+      {/* Audio Permission Modal */}
+      <AnimatePresence>
+        {isAudioBlocked && !isMuted && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl"
+          >
+            <motion.div 
+              initial={{ scale: 0.9, y: 20, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              exit={{ scale: 0.9, y: 20, opacity: 0 }}
+              className="w-full max-w-sm bg-surface border border-primary/20 rounded-3xl shadow-2xl overflow-hidden pointer-events-auto"
+            >
+              <div className="p-8 text-center space-y-6">
+                <div className="size-20 rounded-3xl bg-primary/10 flex items-center justify-center text-primary mx-auto relative">
+                  <Music2 size={40} />
+                  <div className="absolute -top-2 -right-2 size-8 bg-primary text-white rounded-full flex items-center justify-center shadow-lg animate-bounce">
+                    <Volume2 size={16} />
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <h3 className="text-xl font-black uppercase tracking-tight">Experience with Sound</h3>
+                  <p className="text-[10px] text-text-muted font-bold leading-relaxed uppercase tracking-widest">
+                    The surprise is best with its custom soundtrack. Tap below to enable audio.
+                  </p>
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                  <button 
+                    onClick={() => setIsAudioBlocked(false)}
+                    className="flex-1 py-4 rounded-2xl bg-black/5 dark:bg-white/5 text-[10px] font-black uppercase tracking-widest hover:bg-black/10 dark:hover:bg-white/10 transition-all"
+                  >
+                    Silent Mode
+                  </button>
+                  <button 
+                    onClick={() => startAudioOnInteraction()}
+                    className="flex-2 py-4 px-8 rounded-2xl bg-primary text-white text-[10px] font-black uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2"
+                  >
+                    <Volume2 size={14} /> Enable Sound
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -703,7 +829,143 @@ function ThemeBackground({ themeId, isPreview, moment }: { themeId: string, isPr
       {themeId === "surprise-neon" && (
         <div className="absolute inset-0 shadow-[inset_0_0_100px_rgba(34,211,238,0.1)]" />
       )}
-
     </div>
+  );
+}
+
+function UnlockOverlay({ 
+  moment, 
+  inputValue, 
+  setInputValue, 
+  isVerifying, 
+  error, 
+  onUnlock, 
+  showHint, 
+  setShowHint,
+  shake,
+  onClose
+}: any) {
+  const config = moment?.unlockConfig || {};
+  const isPassword = config.type === "password";
+  
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-6 bg-black/40 backdrop-blur-2xl px-4"
+    >
+      <div className="absolute inset-0" onClick={onClose} />
+      <motion.div
+        initial={{ y: "100%", opacity: 0 }}
+        animate={{ 
+          y: 0, 
+          opacity: 1,
+          x: shake ? [-6, 6, -6, 6, 0] : 0 
+        }}
+        exit={{ y: "100%", opacity: 0 }}
+        transition={{ 
+          type: "spring", 
+          damping: 25, 
+          stiffness: 200,
+          x: { duration: 0.4 }
+        }}
+        className="w-full max-w-md bg-white/10 dark:bg-black/40 backdrop-blur-xl border-t sm:border border-white/20 rounded-t-[2.5rem] sm:rounded-3xl shadow-2xl overflow-hidden pointer-events-auto pb-10 sm:pb-0 relative"
+      >
+        <button 
+          onClick={onClose}
+          className="absolute top-6 right-6 p-2 rounded-full bg-white/5 hover:bg-white/10 text-white/40 hover:text-white transition-colors"
+        >
+          <X size={20} />
+        </button>
+
+        <div className="p-8 sm:p-10 text-center space-y-8">
+          {/* Header */}
+          <div className="space-y-3">
+            <div className="size-16 rounded-2xl bg-primary/20 flex items-center justify-center text-primary mx-auto mb-2 border border-primary/20 ring-4 ring-primary/5">
+              {isPassword ? <Lock size={28} /> : <HelpCircle size={28} />}
+            </div>
+            <h2 className="text-2xl font-black text-white uppercase tracking-tight leading-tight">
+              {isPassword ? "Secure Moment" : "Security Question"}
+            </h2>
+            <p className="text-[10px] text-white/50 font-bold uppercase tracking-[0.2em] leading-relaxed">
+              {isPassword 
+                ? "Enter the secret key to unlock" 
+                : (config.question || "Answer correctly to proceed")}
+            </p>
+          </div>
+
+          {/* Input Area */}
+          <div className="space-y-4">
+            <div className="relative group">
+              <input 
+                type={isPassword ? "password" : "text"}
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && onUnlock()}
+                className={cn(
+                  "w-full h-16 bg-white/5 border-2 rounded-2xl px-6 text-center text-xl font-black text-white outline-none transition-all placeholder:text-white/10",
+                  error 
+                    ? "border-red-500/50 bg-red-500/5 ring-4 ring-red-500/5" 
+                    : "border-white/10 focus:border-primary focus:bg-white/10 focus:ring-4 focus:ring-primary/5"
+                )}
+                placeholder={isPassword ? "••••••" : "Your Answer..."}
+                autoFocus
+              />
+              {isVerifying && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-sm rounded-2xl">
+                  <Loader2 className="animate-spin text-primary" size={24} />
+                </div>
+              )}
+            </div>
+
+            {error && (
+              <motion.p 
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="text-[10px] font-black uppercase tracking-widest text-red-400 flex items-center justify-center gap-2"
+              >
+                <AlertCircle size={12} /> {error}
+              </motion.p>
+            )}
+          </div>
+
+          {/* Actions */}
+          <div className="space-y-6 pt-2">
+            <button 
+              onClick={onUnlock}
+              disabled={isVerifying || !inputValue.trim()}
+              className="w-full h-16 rounded-2xl bg-white text-black font-black uppercase tracking-[0.3em] text-xs shadow-xl shadow-white/5 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-30 disabled:pointer-events-none flex items-center justify-center gap-2"
+            >
+              {isVerifying ? "Verifying..." : "Unlock Surprise"}
+            </button>
+
+            {config.hint && (
+              <div className="pt-2">
+                {!showHint ? (
+                  <button 
+                    onClick={() => setShowHint(true)}
+                    className="text-[9px] font-black text-white/30 hover:text-white/60 uppercase tracking-widest transition-colors"
+                  >
+                    Need a Hint?
+                  </button>
+                ) : (
+                  <motion.div 
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="p-4 rounded-xl bg-white/5 border border-white/10"
+                  >
+                    <p className="text-[9px] font-bold text-primary uppercase tracking-[0.2em] mb-1">Creator's Hint</p>
+                    <p className="text-xs font-medium text-white/70 italic leading-relaxed">
+                      "{config.hint}"
+                    </p>
+                  </motion.div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </motion.div>
+    </motion.div>
   );
 }

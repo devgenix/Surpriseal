@@ -116,9 +116,14 @@ function StackGallery({ media }: { media: any[] }) {
   );
 }
 
-function GridGallery({ media }: { media: any[] }) {
+function GridGallery({ media, onLightboxToggle }: { media: any[], onLightboxToggle?: (open: boolean) => void }) {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [[page, direction], setPage] = useState([0, 0]);
+
+  // Notify parent of lightbox state
+  useEffect(() => {
+    onLightboxToggle?.(selectedIndex !== null);
+  }, [selectedIndex, onLightboxToggle]);
 
   const activeIndex = selectedIndex !== null ? (selectedIndex + page) % media.length : 0;
   const wrappedIndex = activeIndex < 0 ? media.length + activeIndex : activeIndex;
@@ -153,9 +158,9 @@ function GridGallery({ media }: { media: any[] }) {
 
   const variants = {
     enter: (direction: number) => ({
-      x: direction > 0 ? 500 : -500,
+      x: direction > 0 ? '100%' : '-100%',
       opacity: 0,
-      scale: 0.9
+      scale: 0.95
     }),
     center: {
       zIndex: 1,
@@ -165,9 +170,9 @@ function GridGallery({ media }: { media: any[] }) {
     },
     exit: (direction: number) => ({
       zIndex: 0,
-      x: direction < 0 ? 500 : -500,
+      x: direction < 0 ? '100%' : '-100%',
       opacity: 0,
-      scale: 0.9
+      scale: 0.95
     })
   };
 
@@ -193,7 +198,8 @@ function GridGallery({ media }: { media: any[] }) {
               transition={{ delay: (i % 4) * 0.1, duration: 0.6 }}
               style={{ rotate: rotation }}
               className="w-full relative group cursor-zoom-in shadow-2xl border-y md:border-[10px] border-[#f8f8f8] bg-[#f8f8f8] rounded-none md:rounded-sm overflow-hidden"
-              onClick={() => {
+              onClick={(e) => {
+                e.stopPropagation();
                 setSelectedIndex(i);
                 setPage([0, 0]);
               }}
@@ -219,8 +225,7 @@ function GridGallery({ media }: { media: any[] }) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-3xl overflow-hidden"
-            onClick={() => setSelectedIndex(null)}
+            className="absolute inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-3xl overflow-hidden"
           >
             {/* Dynamic Background */}
             <motion.div 
@@ -239,34 +244,34 @@ function GridGallery({ media }: { media: any[] }) {
 
             {/* Close Button Top Right */}
             <button 
-                onClick={() => setSelectedIndex(null)}
-                className="absolute top-4 right-4 sm:top-8 sm:right-8 text-white/50 hover:text-white p-3 rounded-full bg-white/10 hover:bg-white/20 transition-all z-[120]"
+                onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedIndex(null);
+                }}
+                className="absolute top-4 right-4 sm:top-8 sm:right-8 text-white/50 hover:text-white p-3 rounded-full bg-white/10 hover:bg-white/20 transition-all z-[140]"
             >
                 <XIcon size={24} />
             </button>
 
-            {/* Nav Arrows - STRICT Desktop (md and up) */}
+            {/* Nav Arrows - Visible on all devices */}
             {media.length > 1 && (
-              <div className="hidden md:flex absolute inset-x-8 top-1/2 -translate-y-1/2 justify-between items-center z-[110] pointer-events-none">
+              <div className="absolute inset-x-4 sm:inset-x-8 top-1/2 -translate-y-1/2 justify-between items-center z-[130] flex pointer-events-none">
                 <button 
                   onClick={handlePrev} 
-                  className="text-white/40 hover:text-white p-4 rounded-full bg-black/20 hover:bg-black/60 backdrop-blur-md transition-all pointer-events-auto shadow-2xl"
+                  className="text-white/60 hover:text-white p-3 sm:p-4 rounded-full bg-white/5 hover:bg-white/20 backdrop-blur-xl transition-all pointer-events-auto shadow-2xl border border-white/10"
                 >
-                  <ChevronLeft size={32} />
+                  <ChevronLeft size={24} className="sm:size-8" />
                 </button>
                 <button 
                   onClick={handleNext} 
-                  className="text-white/40 hover:text-white p-4 rounded-full bg-black/20 hover:bg-black/60 backdrop-blur-md transition-all pointer-events-auto shadow-2xl"
+                  className="text-white/60 hover:text-white p-3 sm:p-4 rounded-full bg-white/5 hover:bg-white/20 backdrop-blur-xl transition-all pointer-events-auto shadow-2xl border border-white/10"
                 >
-                  <ChevronRight size={32} />
+                  <ChevronRight size={24} className="sm:size-8" />
                 </button>
               </div>
             )}
 
-            <div 
-              className="w-full h-full flex items-center justify-center relative z-[100]"
-              onClick={() => setSelectedIndex(null)}
-            >
+            <div className="w-full h-full relative z-[100]">
                 <AnimatePresence initial={false} custom={direction} mode="popLayout">
                     <motion.div
                         key={page}
@@ -284,12 +289,7 @@ function GridGallery({ media }: { media: any[] }) {
                         dragElastic={0.8}
                         onDragEnd={(e, { offset, velocity }) => {
                             const swipeThreshold = 50;
-                            const dismissThreshold = 80;
-
-                            if (Math.abs(offset.y) > dismissThreshold) {
-                                setSelectedIndex(null);
-                                return;
-                            }
+                            // Vertical swipe to dismiss removed as requested
 
                             if (offset.x < -swipeThreshold) {
                                 handleNext();
@@ -297,18 +297,20 @@ function GridGallery({ media }: { media: any[] }) {
                                 handlePrev();
                             }
                         }}
-                        className="absolute inset-0 flex items-center justify-center p-0 sm:p-12 cursor-pointer active:cursor-grabbing"
+                        className="absolute inset-0 flex items-center justify-center p-4"
                     >
-                        <motion.img
-                            layoutId={page === 0 ? `grid-image-content-${media[selectedIndex].id}` : undefined}
-                            src={media[wrappedIndex].url}
-                            className="max-w-[95%] max-h-[90vh] sm:max-h-[85vh] object-contain shadow-2xl transition-transform active:scale-95"
-                            draggable={false}
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedIndex(null);
-                            }}
-                        />
+                        <motion.div 
+                          layoutId={page === 0 ? `grid-container-${media[selectedIndex].id}` : undefined}
+                          className="relative flex items-center justify-center"
+                          style={{ maxWidth: '90%', maxHeight: '80%', width: 'auto', height: 'auto' }}
+                        >
+                            <motion.img
+                                layoutId={page === 0 ? `grid-image-content-${media[selectedIndex].id}` : undefined}
+                                src={media[wrappedIndex].url}
+                                className="w-auto h-auto max-w-full max-h-full object-contain shadow-2xl select-none rounded-[4px] md:rounded-[8px]"
+                                draggable={false}
+                            />
+                        </motion.div>
                     </motion.div>
                 </AnimatePresence>
             </div>
@@ -367,7 +369,7 @@ function SlideshowGallery({ media }: { media: any[] }) {
   );
 }
 
-export function GalleryUtility({ config }: { config: any }) {
+export function GalleryUtility({ config, onLightboxToggle }: { config: any, onLightboxToggle?: (open: boolean) => void }) {
   const media = config.media || [];
 
   if (media.length === 0) {
@@ -383,7 +385,7 @@ export function GalleryUtility({ config }: { config: any }) {
   }
 
   if (config.layout === "grid") {
-      return <GridGallery media={media} />;
+      return <GridGallery media={media} onLightboxToggle={onLightboxToggle} />;
   }
 
   // Fallback to slideshow for default or slideshow mode
@@ -396,13 +398,13 @@ export function CompositionUtility({ config }: { config: any }) {
     
     const styles: Record<string, string> = {
         none: "bg-transparent shadow-none border-none",
-        glass: "bg-white/10 backdrop-blur-xl border border-white/20 shadow-2xl rounded-[2.5rem]",
-        midnight: "bg-black/40 backdrop-blur-xl border border-white/10 shadow-2xl rounded-[2.5rem] text-white",
+        glass: "bg-white/10 backdrop-blur-xl border border-white/20 shadow-2xl rounded-lg",
+        midnight: "bg-black/40 backdrop-blur-xl border border-white/10 shadow-2xl rounded-lg text-white",
         parchment: "bg-[#f4efe1] border-2 border-[#dcd1b3] shadow-inner rounded-sm relative overflow-hidden text-[#4a3b2a]",
-        golden: "bg-white border-2 border-[#d4af37] shadow-[0_5px_40px_rgba(212,175,55,0.15)] rounded-2xl relative text-black",
-        aurora: "bg-white/5 backdrop-blur-md border border-white/20 shadow-2xl rounded-[3rem] overflow-hidden",
+        golden: "bg-white border-2 border-[#d4af37] shadow-[0_5px_40px_rgba(212,175,55,0.15)] rounded-lg relative text-black",
+        aurora: "bg-white/5 backdrop-blur-md border border-white/20 shadow-2xl rounded-lg overflow-hidden",
         typewriter: "bg-[#fafafa] border border-[#e5e5e5] shadow-lg rounded-none relative text-black font-mono",
-        velvet: "bg-[#4a0404] border-b-4 border-r-4 border-black/40 shadow-2xl rounded-2xl text-[#f5e6d3]"
+        velvet: "bg-[#4a0404] border-b-4 border-r-4 border-black/40 shadow-2xl rounded-lg text-[#f5e6d3]"
     };
 
     // Split content to animate elements individually if possible
@@ -412,7 +414,7 @@ export function CompositionUtility({ config }: { config: any }) {
         .filter(Boolean);
 
     return (
-        <div className="w-full h-full overflow-y-auto pt-24 pb-48 px-4 sm:px-12 scrollbar-none custom-scroll">
+        <div className="w-full h-full overflow-y-auto pt-24 pb-48 px-4 sm:px-8 scrollbar-none custom-scroll">
             <style jsx global>{`
                 .custom-scroll::-webkit-scrollbar { display: none; }
                 .custom-scroll { -ms-overflow-style: none; scrollbar-width: none; }
@@ -445,7 +447,7 @@ export function CompositionUtility({ config }: { config: any }) {
                     />
                 )}
                 {paperStyle === "golden" && (
-                    <div className="absolute inset-0 pointer-events-none border-4 border-[#d4af37]/10 rounded-2xl m-1" />
+                    <div className="absolute inset-0 pointer-events-none border-4 border-[#d4af37]/10 rounded-lg m-1" />
                 )}
                 {paperStyle === "typewriter" && (
                     <div className="absolute inset-x-0 top-0 h-8 bg-black/5 flex items-center px-4 justify-between border-b border-black/10">
