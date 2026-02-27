@@ -927,7 +927,7 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
 
             {/* Content Properties (Edit Area) */}
             <div className={cn(
-              "flex-1 lg:w-[380px] lg:border-l lg:border-border lg:bg-surface lg:shrink-0 p-6 lg:p-6 overflow-y-auto scrollbar-none transition-all",
+              "flex-1 lg:w-1/4 lg:max-w-xs lg:min-w-[260px] lg:border-l lg:border-border lg:bg-surface lg:shrink-0 p-6 lg:p-6 overflow-y-auto scrollbar-none transition-all",
               activeMobileMode === "preview" && "hidden lg:block",
               activeMobileMode === "edit" && "w-full"
             )}>
