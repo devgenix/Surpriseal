@@ -34,6 +34,28 @@ import { ThemeProvider } from '@/context/ThemeContext';
 import TopProgressBar from '@/components/ui/TopProgressBar';
 import { Suspense } from 'react';
 
+import { 
+  Dancing_Script, 
+  Playfair_Display, 
+  Outfit, 
+  Space_Grotesk, 
+  Homemade_Apple, 
+  Cormorant_Garamond 
+} from 'next/font/google'
+
+import { cn } from "@/lib/utils";
+
+const dancingScript = Dancing_Script({ subsets: ['latin'], variable: '--font-dancing-script' })
+const playfairDisplay = Playfair_Display({ subsets: ['latin'], variable: '--font-playfair-display' })
+const outfit = Outfit({ subsets: ['latin'], variable: '--font-outfit' })
+const spaceGrotesk = Space_Grotesk({ subsets: ['latin'], variable: '--font-space-grotesk' })
+const homemadeApple = Homemade_Apple({ 
+  subsets: ['latin'], 
+  variable: '--font-homemade-apple',
+  weight: '400'
+})
+const cormorantGaramond = Cormorant_Garamond({ subsets: ['latin'], variable: '--font-cormorant-garamond' })
+
 export default function RootLayout({
   children,
 }: {
@@ -42,10 +64,17 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
-        <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400..700&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Outfit:wght@100..900&family=Space+Grotesk:wght@300..700&family=Homemade+Apple&family=Cormorant+Garamond:ital,wght@0,300..700;1,300..700&display=swap" rel="stylesheet" />
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" crossOrigin="anonymous" />
       </head>
-      <body className={font.className}>
+      <body className={cn(
+        font.className, 
+        dancingScript.variable,
+        playfairDisplay.variable,
+        outfit.variable,
+        spaceGrotesk.variable,
+        homemadeApple.variable,
+        cormorantGaramond.variable
+      )}>
         <Suspense fallback={null}>
           <TopProgressBar />
         </Suspense>

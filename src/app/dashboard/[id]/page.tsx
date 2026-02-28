@@ -23,8 +23,13 @@ import {
   MessageCircleHeart,
   Play,
   Video,
-  Mic
+  Mic,
+  Send,
+  Mail,
+  QrCode,
+  Printer
 } from "lucide-react";
+import { PrintStudio } from "@/components/dashboard/sharing/PrintStudio";
 import Link from "next/link";
 import { occasions as SHARED_OCCASIONS } from "@/lib/constants/occasions";
 
@@ -38,6 +43,7 @@ export default function MomentDetailPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [copying, setCopying] = useState(false);
   const [reactions, setReactions] = useState<any[]>([]);
+  const [showPrintStudio, setShowPrintStudio] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (val) => {
@@ -276,8 +282,73 @@ export default function MomentDetailPage() {
           </div>
         </div>
 
+        {/* Delivery & Sharing Hub */}
+        <div className="bg-white dark:bg-surface-dark rounded-lg border border-[#f3eae7] dark:border-white/5 overflow-hidden shadow-sm">
+           <div className="p-6 sm:p-8 border-b border-[#f3eae7] dark:border-white/5">
+              <h3 className="text-xs font-black text-[#1b110e] dark:text-white uppercase tracking-widest flex items-center gap-2">
+                <Send size={18} className="text-primary" />
+                Delivery & Sharing
+              </h3>
+           </div>
+           
+           <div className="p-6 sm:p-8 grid grid-cols-1 md:grid-cols-3 gap-6 bg-[#fafafa]/50 dark:bg-black/10">
+              {/* Option 1: Digital Link */}
+              <div className="p-6 rounded-lg bg-white dark:bg-white/5 border border-[#f3eae7] dark:border-white/5 flex flex-col gap-4 shadow-sm hover:shadow-md transition-all group">
+                 <div className="size-12 rounded-lg bg-primary/5 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                    <Share2 size={24} />
+                 </div>
+                 <div>
+                    <h4 className="text-sm font-black uppercase tracking-tight dark:text-white">Copy Digital Link</h4>
+                    <p className="text-[10px] text-text-muted mt-1 font-medium leading-relaxed">Fastest way to share. Simply paste the URL in any chat or social app.</p>
+                 </div>
+                 <button 
+                   onClick={handleShare}
+                   className="mt-2 w-full py-3 rounded-lg bg-primary/10 hover:bg-primary text-primary hover:text-white text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2"
+                 >
+                   {copying ? <CheckCircle2 size={16} /> : <Share2 size={16} />}
+                   {copying ? "Link Copied" : "Copy Moment Link"}
+                 </button>
+              </div>
+
+              {/* Option 2: Email Delivery */}
+              <div className="p-6 rounded-lg bg-white dark:bg-white/5 border border-[#f3eae7] dark:border-white/5 flex flex-col gap-4 shadow-sm relative overflow-hidden group">
+                 <div className="absolute top-3 right-3 px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-tighter bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                    Soon
+                 </div>
+                 <div className="size-12 rounded-lg bg-blue-500/5 flex items-center justify-center text-blue-500 opacity-50">
+                    <Mail size={24} />
+                 </div>
+                 <div className="opacity-50">
+                    <h4 className="text-sm font-black uppercase tracking-tight dark:text-white">Email Delivery</h4>
+                    <p className="text-[10px] text-text-muted mt-1 font-medium leading-relaxed">We'll deliver it directly to their inbox at a time you choose.</p>
+                 </div>
+                 <button className="mt-2 w-full py-3 rounded-lg bg-gray-100 dark:bg-white/5 text-gray-400 text-[10px] font-black uppercase tracking-widest cursor-not-allowed">
+                   Scheduled Sending
+                 </button>
+              </div>
+
+              {/* Option 3: Physical Share */}
+              <div className="p-6 rounded-lg bg-white dark:bg-white/5 border border-primary/20 dark:border-primary/20 flex flex-col gap-4 shadow-[0_10px_30px_-5px_rgba(230,76,25,0.08)] group hover:shadow-[0_15px_35px_-5px_rgba(230,76,25,0.12)] transition-all">
+                 <div className="size-12 rounded-lg bg-primary text-white flex items-center justify-center shadow-lg shadow-primary/25 group-hover:scale-110 transition-transform">
+                    <QrCode size={24} />
+                 </div>
+                 <div>
+                    <h4 className="text-sm font-black uppercase tracking-tight dark:text-white">Physical Share</h4>
+                    <p className="text-[10px] text-text-muted mt-1 font-medium leading-relaxed">Generate a custom QR card to print or share physically. Perfect for gifts.</p>
+                 </div>
+                 <button 
+                   onClick={() => setShowPrintStudio(true)}
+                   className="mt-2 w-full py-3 rounded-lg bg-[#1b110e] dark:bg-white hover:bg-primary dark:hover:bg-primary text-white dark:text-[#1b110e] hover:text-white dark:hover:text-white text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 shadow-lg"
+                 >
+                   <Printer size={16} />
+                   Design QR Card
+                 </button>
+              </div>
+           </div>
+        </div>
+
         {/* Reactions Section */}
-        <div className="bg-white dark:bg-surface-dark rounded-xl border border-[#f3eae7] dark:border-white/5 overflow-hidden shadow-sm">
+        <div className="bg-white dark:bg-surface-dark rounded-lg border border-[#f3eae7] dark:border-white/5 overflow-hidden shadow-sm">
            <div className="p-6 sm:p-8 border-b border-[#f3eae7] dark:border-white/5 flex items-center justify-between">
               <h3 className="text-xs font-black text-[#1b110e] dark:text-white uppercase tracking-widest flex items-center gap-2">
                 <MessageCircleHeart size={18} className="text-pink-500" />
@@ -291,7 +362,7 @@ export default function MomentDetailPage() {
            <div className="p-6 sm:p-8 bg-[#fafafa]/50 dark:bg-black/10">
              {reactions.length === 0 ? (
                <div className="text-center py-16">
-                  <div className="size-20 rounded-[2rem] bg-gradient-to-br from-pink-500/5 to-purple-500/5 border border-pink-500/10 flex items-center justify-center mx-auto mb-6 text-pink-500 shadow-inner">
+                  <div className="size-20 rounded-lg bg-gradient-to-br from-pink-500/5 to-purple-500/5 border border-pink-500/10 flex items-center justify-center mx-auto mb-6 text-pink-500 shadow-inner">
                      <MessageCircleHeart size={28} className="drop-shadow-sm" />
                   </div>
                   <p className="text-lg font-black text-[#1b110e] dark:text-white mb-2 uppercase tracking-tighter">Awaiting the magic</p>
@@ -302,10 +373,10 @@ export default function MomentDetailPage() {
              ) : (
                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                  {reactions.map((reaction) => (
-                   <div key={reaction.id} className="p-6 rounded-2xl border border-[#f3eae7] dark:border-white/5 bg-white dark:bg-white/[0.03] flex flex-col items-start gap-4 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] dark:shadow-none hover:-translate-y-1 transition-transform duration-300">
+                   <div key={reaction.id} className="p-6 rounded-lg border border-[#f3eae7] dark:border-white/5 bg-white dark:bg-white/[0.03] flex flex-col items-start gap-4 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] dark:shadow-none hover:-translate-y-1 transition-transform duration-300">
                      <div className="flex items-center justify-between w-full">
                        <div className="flex items-center gap-3">
-                         <div className="size-10 rounded-xl bg-black/5 dark:bg-black/30 flex items-center justify-center text-xl shadow-inner text-center leading-none">
+                         <div className="size-10 rounded-lg bg-black/5 dark:bg-black/30 flex items-center justify-center text-xl shadow-inner text-center leading-none">
                            {reaction.emoji || "💬"}
                          </div>
                          <div className="flex flex-col">
@@ -322,19 +393,19 @@ export default function MomentDetailPage() {
                      </div>
                      
                      {reaction.type === 'text' && (
-                       <div className="w-full bg-[#f9f5f3] dark:bg-black/20 p-4 rounded-xl border border-black/5 dark:border-white/5">
+                       <div className="w-full bg-[#f9f5f3] dark:bg-black/20 p-4 rounded-lg border border-black/5 dark:border-white/5">
                          <p className="text-sm font-medium text-[#1b110e] dark:text-white leading-relaxed italic">"{reaction.content}"</p>
                        </div>
                      )}
 
                      {reaction.type === 'voice' && (
-                       <div className="w-full bg-[#f9f5f3] dark:bg-black/20 p-2 rounded-xl border border-black/5 dark:border-white/5">
+                       <div className="w-full bg-[#f9f5f3] dark:bg-black/20 p-2 rounded-lg border border-black/5 dark:border-white/5">
                          <audio src={reaction.content} controls className="w-full h-10 outline-none" />
                        </div>
                      )}
 
                      {reaction.type === 'camera' && (
-                       <div className="w-full aspect-[3/4] rounded-xl overflow-hidden bg-black relative shadow-inner ring-1 ring-white/10">
+                       <div className="w-full aspect-[3/4] rounded-lg overflow-hidden bg-black relative shadow-inner ring-1 ring-white/10">
                          <video src={reaction.content} controls className="w-full h-full object-cover" />
                        </div>
                      )}
@@ -375,6 +446,12 @@ export default function MomentDetailPage() {
           </div>
         </div>
       )}
+      {/* Print Studio Modal */}
+      <PrintStudio 
+        isOpen={showPrintStudio} 
+        onClose={() => setShowPrintStudio(false)} 
+        moment={moment} 
+      />
     </div>
   );
 }
