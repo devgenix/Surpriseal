@@ -37,7 +37,8 @@ import {
   Award,
   PenTool,
   Gift,
-  Maximize2
+  Maximize2,
+  Mic
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -59,7 +60,7 @@ import { prepareMomentForEngine, DEFAULT_SCENES } from "../reveal/utilities/Reve
 
 interface Scene {
   id: string;
-  type: "gallery" | "composition";
+  type: "gallery" | "composition" | "video" | "audio";
   config: any;
   music?: string;
 }
@@ -315,6 +316,8 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
     switch (type) {
       case "gallery": return { layout: "grid", mediaIds: [] };
       case "composition": return { text: "", mediaIds: [] };
+      case "video": return { mediaUrl: "", loop: true };
+      case "audio": return { mediaUrl: "", loop: true };
       default: return {};
     }
   };
@@ -635,7 +638,11 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
     if (activeSceneId === "splash") return { title: "Splash Screen", icon: Heart };
     if (activeSceneId === "branding") return { title: "Final Screen", icon: Award };
     const idx = scenes.findIndex(s => s.id === activeSceneId);
-    return { title: `Scene ${idx + 1}`, icon: scenes[idx]?.type === "gallery" ? ImageIcon : Scroll };
+    const scene = scenes[idx];
+    const icon = scene?.type === "gallery" ? ImageIcon : 
+                 scene?.type === "video" ? Play :
+                 scene?.type === "audio" ? Mic : Scroll;
+    return { title: `Scene ${idx + 1}`, icon };
   }, [activeSceneId, scenes]);
 
   return (
@@ -787,7 +794,13 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
                   {index + 1}
                 </div>
                 <div className="flex-1 overflow-hidden">
-                  <p className="text-xs font-bold text-text-main truncate capitalize">{scene.type}</p>
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    {scene.type === "gallery" && <ImageIcon size={10} className="text-primary shrink-0" />}
+                    {scene.type === "video" && <Play size={10} className="text-primary shrink-0" />}
+                    {scene.type === "audio" && <Mic size={10} className="text-primary shrink-0" />}
+                    {scene.type === "composition" && <Scroll size={10} className="text-primary shrink-0" />}
+                    <p className="text-xs font-bold text-text-main truncate capitalize">{scene.type}</p>
+                  </div>
                   <p className="text-[10px] text-text-muted font-bold truncate">Custom Screen</p>
                 </div>
                 <button 
@@ -879,7 +892,10 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
                         activeSceneId === scene.id ? "bg-primary text-white shadow-lg shadow-primary/20" : "bg-black/5 dark:bg-white/5 text-text-main"
                       )}
                     >
-                      {scene.type === "gallery" ? <ImageIcon size={18} /> : <Scroll size={18} />}
+                      {scene.type === "gallery" ? <ImageIcon size={18} /> : 
+                       scene.type === "video" ? <Play size={18} /> :
+                       scene.type === "audio" ? <Mic size={18} /> :
+                       <Scroll size={18} />}
                       <span className="text-xs font-bold uppercase tracking-widest">Scene {index + 1}</span>
                       {activeSceneId === scene.id && <Check size={16} className="ml-auto" />}
                     </button>
@@ -1355,116 +1371,118 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
                       </section>
 
                       {/* Screen Music Override for Custom Scenes */}
-                      <div className="py-8 space-y-4 border-t border-border">
-                        <h3 className="text-[10px] font-black uppercase tracking-widest text-text-muted flex items-center gap-2">
-                          <Music size={12} /> Screen Music
-                        </h3>
-                        <div className="flex p-1 bg-black/5 dark:bg-white/5 rounded-lg">
-                          <button
-                            onClick={() => updateSceneConfig(activeSceneId, { useGlobalMusic: true })}
-                            className={cn("flex-1 py-1.5 text-[10px] font-bold rounded-md transition-all", activeScene.config.useGlobalMusic !== false ? "bg-white shadow-sm text-primary" : "text-text-muted")}
-                          >Global</button>
-                          <button
-                            onClick={() => updateSceneConfig(activeSceneId, { useGlobalMusic: false })}
-                            className={cn("flex-1 py-1.5 text-[10px] font-bold rounded-md transition-all", activeScene.config.useGlobalMusic === false ? "bg-white shadow-sm text-primary" : "text-text-muted")}
-                          >Custom</button>
-                        </div>
-                        
-                        {activeScene.config.useGlobalMusic === false && (
-                          <div className="space-y-3">
-                            {activeScene.config.musicMetadata ? (
-                              <div className="space-y-3">
-                                <div className="p-2.5 rounded-lg bg-primary/5 border border-primary/20 flex items-center gap-2.5 group relative">
-                                    <div className="size-8 rounded-md overflow-hidden shrink-0">
-                                      <img src={activeScene.config.musicMetadata.thumbnail} className="w-full h-full object-cover" />
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                      <p className="text-[9px] font-black truncate">{activeScene.config.musicMetadata.title}</p>
-                                      <p className="text-[8px] text-text-muted font-bold truncate">
-                                        {activeScene.config.musicMetadata.artist}
-                                        {activeScene.config.musicMetadata.duration && ` • ${activeScene.config.musicMetadata.duration}`}
-                                      </p>
-                                    </div>
-                                    <div className="flex gap-1 shrink-0">
-                                      <button 
-                                        onClick={() => {
-                                          updateSceneConfig(activeSceneId, { ytMusicId: null, musicMetadata: null, musicUrl: null });
-                                          if (playingId === activeScene.config.ytMusicId) togglePlay(null);
-                                        }}
-                                        className="p-1.5 hover:bg-red-500/10 hover:text-red-500 rounded-md transition-all text-text-muted"
-                                      >
-                                        <Trash2 size={10} />
-                                      </button>
-                                      <button 
-                                        onClick={() => {
-                                          setIsSettingGlobalMusic(!isSettingGlobalMusic);
-                                          setYtSearchQuery("");
-                                          togglePlay(null);
-                                        }}
-                                        className="p-1.5 hover:bg-primary/10 rounded-md transition-all text-primary"
-                                      >
-                                        <RefreshCcw size={10} />
-                                      </button>
-                                    </div>
-                                </div>
-                                </div>
-                            ) : (
-                              <button 
-                                onClick={() => {
-                                  setIsSettingGlobalMusic(!isSettingGlobalMusic);
-                                  setYtSearchQuery("");
-                                }}
-                                className="w-full py-4 border border-dashed border-border rounded-lg bg-black/[0.01] hover:bg-primary/5 hover:border-primary/50 text-[10px] font-black uppercase tracking-widest text-text-muted transition-all"
-                              >Pick Screen Song</button>
-                            )}
-
-                            {isSettingGlobalMusic && (
-                              <div className="space-y-3 pt-2 animate-in fade-in slide-in-from-top-2">
-                                <div className="relative">
-                                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" size={12} />
-                                  <input 
-                                    autoFocus
-                                    type="text" 
-                                    placeholder="Search screen song..."
-                                    className="w-full h-10 pl-9 pr-3 rounded-lg border border-border bg-white text-[10px] font-bold outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
-                                    value={ytSearchQuery}
-                                    onChange={(e) => setYtSearchQuery(e.target.value)}
-                                  />
-                                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                                    {isSearching ? (
-                                      <Loader2 className="animate-spin text-primary" size={12} />
-                                    ) : (
-                                      <button onClick={() => setIsSettingGlobalMusic(false)}>
-                                        <X size={12} className="text-text-muted hover:text-primary transition-colors" />
-                                      </button>
-                                    )}
-                                  </div>
-                                </div>
-                                {showSearchResults && ytResults.length > 0 && (
-                                  <div className="bg-white border border-border rounded-lg overflow-hidden max-h-48 overflow-y-auto divide-y divide-border shadow-soft">
-                                    {ytResults.map((song) => (
-                                      <div key={song.videoId} onClick={() => {
-                                        setGlobalMusic(song);
-                                        setIsSettingGlobalMusic(false);
-                                        togglePlay(null);
-                                      }} className="p-2 flex items-center gap-2 cursor-pointer hover:bg-primary/5 transition-colors">
-                                        <img src={song.thumbnail} className="size-8 rounded-lg object-cover" />
-                                        <div className="flex-1 min-w-0">
-                                          <p className="text-[9px] font-black truncate">{song.title}</p>
-                                          <p className="text-[8px] text-text-muted font-bold truncate">{song.author}</p>
-                                        </div>
-                                        <button onClick={(e) => { e.stopPropagation(); togglePlay(song.videoId); }} className="size-6 bg-primary/10 text-primary rounded-lg flex items-center justify-center">
-                                          {playingId === song.videoId ? <Pause size={10} fill="currentColor" /> : <Play size={10} fill="currentColor" className="ml-0.5" />}
+                      {activeScene?.type !== "video" && activeScene?.type !== "audio" && (
+                        <div className="py-8 space-y-4 border-t border-border">
+                          <h3 className="text-[10px] font-black uppercase tracking-widest text-text-muted flex items-center gap-2">
+                            <Music size={12} /> Screen Music
+                          </h3>
+                          <div className="flex p-1 bg-black/5 dark:bg-white/5 rounded-lg">
+                            <button
+                              onClick={() => updateSceneConfig(activeSceneId, { useGlobalMusic: true })}
+                              className={cn("flex-1 py-1.5 text-[10px] font-bold rounded-md transition-all", activeScene.config.useGlobalMusic !== false ? "bg-white shadow-sm text-primary" : "text-text-muted")}
+                            >Global</button>
+                            <button
+                              onClick={() => updateSceneConfig(activeSceneId, { useGlobalMusic: false })}
+                              className={cn("flex-1 py-1.5 text-[10px] font-bold rounded-md transition-all", activeScene.config.useGlobalMusic === false ? "bg-white shadow-sm text-primary" : "text-text-muted")}
+                            >Custom</button>
+                          </div>
+                          
+                          {activeScene.config.useGlobalMusic === false && (
+                            <div className="space-y-3">
+                              {activeScene.config.musicMetadata ? (
+                                <div className="space-y-3">
+                                  <div className="p-2.5 rounded-lg bg-primary/5 border border-primary/20 flex items-center gap-2.5 group relative">
+                                      <div className="size-8 rounded-md overflow-hidden shrink-0">
+                                        <img src={activeScene.config.musicMetadata.thumbnail} className="w-full h-full object-cover" />
+                                      </div>
+                                      <div className="flex-1 min-w-0">
+                                        <p className="text-[9px] font-black truncate">{activeScene.config.musicMetadata.title}</p>
+                                        <p className="text-[8px] text-text-muted font-bold truncate">
+                                          {activeScene.config.musicMetadata.artist}
+                                          {activeScene.config.musicMetadata.duration && ` • ${activeScene.config.musicMetadata.duration}`}
+                                        </p>
+                                      </div>
+                                      <div className="flex gap-1 shrink-0">
+                                        <button 
+                                          onClick={() => {
+                                            updateSceneConfig(activeSceneId, { ytMusicId: null, musicMetadata: null, musicUrl: null });
+                                            if (playingId === activeScene.config.ytMusicId) togglePlay(null);
+                                          }}
+                                          className="p-1.5 hover:bg-red-500/10 hover:text-red-500 rounded-md transition-all text-text-muted"
+                                        >
+                                          <Trash2 size={10} />
+                                        </button>
+                                        <button 
+                                          onClick={() => {
+                                            setIsSettingGlobalMusic(!isSettingGlobalMusic);
+                                            setYtSearchQuery("");
+                                            togglePlay(null);
+                                          }}
+                                          className="p-1.5 hover:bg-primary/10 rounded-md transition-all text-primary"
+                                        >
+                                          <RefreshCcw size={10} />
                                         </button>
                                       </div>
-                                    ))}
                                   </div>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
+                                  </div>
+                              ) : (
+                                <button 
+                                  onClick={() => {
+                                    setIsSettingGlobalMusic(!isSettingGlobalMusic);
+                                    setYtSearchQuery("");
+                                  }}
+                                  className="w-full py-4 border border-dashed border-border rounded-lg bg-black/[0.01] hover:bg-primary/5 hover:border-primary/50 text-[10px] font-black uppercase tracking-widest text-text-muted transition-all"
+                                >Pick Screen Song</button>
+                              )}
+  
+                              {isSettingGlobalMusic && (
+                                <div className="space-y-3 pt-2 animate-in fade-in slide-in-from-top-2">
+                                  <div className="relative">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" size={12} />
+                                    <input 
+                                      autoFocus
+                                      type="text" 
+                                      placeholder="Search screen song..."
+                                      className="w-full h-10 pl-9 pr-3 rounded-lg border border-border bg-white text-[10px] font-bold outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                                      value={ytSearchQuery}
+                                      onChange={(e) => setYtSearchQuery(e.target.value)}
+                                    />
+                                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                      {isSearching ? (
+                                        <Loader2 className="animate-spin text-primary" size={12} />
+                                      ) : (
+                                        <button onClick={() => setIsSettingGlobalMusic(false)}>
+                                          <X size={12} className="text-text-muted hover:text-primary transition-colors" />
+                                        </button>
+                                      )}
+                                    </div>
+                                  </div>
+                                  {showSearchResults && ytResults.length > 0 && (
+                                    <div className="bg-white border border-border rounded-lg overflow-hidden max-h-48 overflow-y-auto divide-y divide-border shadow-soft">
+                                      {ytResults.map((song) => (
+                                        <div key={song.videoId} onClick={() => {
+                                          setGlobalMusic(song);
+                                          setIsSettingGlobalMusic(false);
+                                          togglePlay(null);
+                                        }} className="p-2 flex items-center gap-2 cursor-pointer hover:bg-primary/5 transition-colors">
+                                          <img src={song.thumbnail} className="size-8 rounded-lg object-cover" />
+                                          <div className="flex-1 min-w-0">
+                                            <p className="text-[9px] font-black truncate">{song.title}</p>
+                                            <p className="text-[8px] text-text-muted font-bold truncate">{song.author}</p>
+                                          </div>
+                                          <button onClick={(e) => { e.stopPropagation(); togglePlay(song.videoId); }} className="size-6 bg-primary/10 text-primary rounded-lg flex items-center justify-center">
+                                            {playingId === song.videoId ? <Pause size={10} fill="currentColor" /> : <Play size={10} fill="currentColor" className="ml-0.5" />}
+                                          </button>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )}
 
                       {/* Screen Type Selector */}
                       <section className="py-8 space-y-4 border-t border-border">
@@ -1475,6 +1493,8 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
                           options={[
                             { id: "gallery", title: "Memory Gallery", icon: Layout },
                             { id: "composition", title: "Message Scene", icon: Settings },
+                            { id: "video", title: "Video Message", icon: Play },
+                            { id: "audio", title: "Voice / Audio", icon: Mic },
                           ]}
                           value={activeScene?.type || "composition"}
                           onChange={(value) => changeSceneType(activeSceneId, value as Scene["type"])}
@@ -1554,6 +1574,69 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
                             </div>
                           </div>
                         )}
+
+                        {(activeScene.type === "video" || activeScene.type === "audio") && (
+                           <div className="space-y-4">
+                              <div className="p-4 rounded-lg bg-black/[0.02] border border-border space-y-4">
+                                 <div className="flex items-center justify-between">
+                                    <h4 className="text-[10px] font-black uppercase tracking-widest text-text-muted">
+                                       {activeScene.type === "video" ? "Video Resource" : "Audio Resource"}
+                                    </h4>
+                                    <div className="flex items-center gap-2">
+                                       <span className="text-[10px] font-bold text-text-muted">Loop</span>
+                                       <button 
+                                          onClick={() => updateSceneConfig(activeSceneId, { loop: !activeScene.config.loop })}
+                                          className={cn(
+                                             "w-8 h-4 rounded-full transition-colors relative",
+                                             activeScene.config.loop ? "bg-primary" : "bg-black/10"
+                                          )}
+                                       >
+                                          <div className={cn(
+                                             "absolute top-0.5 size-3 bg-white rounded-full transition-all",
+                                             activeScene.config.loop ? "left-4.5" : "left-0.5"
+                                          )} />
+                                       </button>
+                                    </div>
+                                 </div>
+
+                                 {activeScene.config.mediaUrl ? (
+                                    <div className="relative group aspect-video rounded-lg overflow-hidden border border-border bg-black/10">
+                                       {activeScene.type === "video" ? (
+                                          <video src={activeScene.config.mediaUrl} className="w-full h-full object-cover" />
+                                       ) : (
+                                          <div className="w-full h-full flex items-center justify-center text-primary bg-primary/5">
+                                             <Mic size={24} />
+                                          </div>
+                                       )}
+                                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                          <button 
+                                             onClick={() => updateSceneConfig(activeSceneId, { mediaUrl: "" })}
+                                             className="bg-red-500 text-white p-2 rounded-full shadow-lg"
+                                          >
+                                             <Trash2 size={16} />
+                                          </button>
+                                       </div>
+                                    </div>
+                                 ) : (
+                                    <div className="aspect-video rounded-lg border border-dashed border-border bg-black/[0.01] flex flex-col items-center justify-center text-center p-4 gap-2">
+                                       <UploadCloud size={24} className="text-text-muted opacity-50" />
+                                       <p className="text-[9px] font-black text-text-muted uppercase">Set source from library or upload</p>
+                                    </div>
+                                 )}
+
+                                 <div className="flex gap-2">
+                                    <button 
+                                        onClick={() => initiateUpload('library')}
+                                        className="flex-1 py-2 bg-primary/10 text-primary text-[10px] font-black uppercase tracking-widest rounded-lg border border-primary/20"
+                                    >Upload New</button>
+                                    <button 
+                                        onClick={() => mediaLibraryRef.current?.scrollIntoView({ behavior: 'smooth' })}
+                                        className="flex-1 py-2 bg-black/5 text-text-muted text-[10px] font-black uppercase tracking-widest rounded-lg border border-border"
+                                    >From Library</button>
+                                 </div>
+                              </div>
+                           </div>
+                        )}
                       </section>
 
                       {/* Shared Media Library (Manage Assets) */}
@@ -1583,11 +1666,23 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
                               key={m.id} 
                               className={cn(
                                 "aspect-square rounded-lg overflow-hidden border-2 transition-all relative group cursor-pointer",
-                                isMediaSelected(m.id) ? "border-primary shadow-md scale-95" : "border-transparent bg-black/5 hover:border-primary/30"
+                               isMediaSelected(m.id) ? "border-primary shadow-md scale-95" : "border-transparent bg-black/5 hover:border-primary/30"
                               )}
-                              onClick={() => toggleMedia(m.id)}
+                              onClick={() => {
+                                 if (activeScene?.type === "video" && m.type === "video") {
+                                    updateSceneConfig(activeSceneId, { mediaUrl: m.url });
+                                 } else if (activeScene?.type === "audio" && (m.type === "audio" || m.type === "video")) {
+                                    updateSceneConfig(activeSceneId, { mediaUrl: m.url });
+                                 } else {
+                                    toggleMedia(m.id);
+                                 }
+                              }}
                               >
-                                <img src={m.url} className="w-full h-full object-cover" />
+                                {m.type === "video" ? (
+                                   <video src={m.url} className="w-full h-full object-cover" />
+                                ) : (
+                                   <img src={m.url} className="w-full h-full object-cover" />
+                                )}
                                 
                                 {/* Selection Overlay */}
                                 <div className={cn(

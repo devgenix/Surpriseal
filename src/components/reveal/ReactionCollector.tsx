@@ -29,7 +29,7 @@ interface ReactionCollectorProps {
   onWatchAgain?: () => void;
 }
 
-type Mode = "idle" | "text" | "voice" | "camera" | "submitting" | "success";
+type Mode = "idle" | "text" | "voice" | "camera";
 
 export default function ReactionCollector({ momentId, isPreview, onActiveChange, onWatchAgain }: ReactionCollectorProps) {
   const [mode, setMode] = useState<Mode>("idle");
@@ -44,6 +44,9 @@ export default function ReactionCollector({ momentId, isPreview, onActiveChange,
     type: 'permission' | 'generic'; 
     onRetry?: () => void;
   } | null>(null);
+  const [isPublic, setIsPublic] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSent, setIsSent] = useState(false);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -67,7 +70,7 @@ export default function ReactionCollector({ momentId, isPreview, onActiveChange,
 
   useEffect(() => {
     if (onActiveChange) {
-      onActiveChange(mode !== "idle" && mode !== "success");
+      onActiveChange(mode !== "idle");
     }
   }, [mode, onActiveChange]);
 
@@ -164,13 +167,16 @@ export default function ReactionCollector({ momentId, isPreview, onActiveChange,
 
   const handleSubmit = async () => {
     if (!momentId) return;
-    setMode("submitting");
+    setIsSubmitting(true);
 
     if (isPreview) {
       setTimeout(() => {
         stopStreams();
-        setMode("success");
-        setTimeout(() => reset(), 3000);
+        setIsSent(true);
+        setTimeout(() => {
+          reset();
+          setIsSent(false);
+        }, 2000);
       }, 1500);
       return;
     }
@@ -202,6 +208,7 @@ export default function ReactionCollector({ momentId, isPreview, onActiveChange,
         type: mediaBlob ? (mode === "camera" ? "camera" : "voice") : "text",
         content,
         emoji: mode === "text" ? selectedEmoji : null,
+        isPublic,
         createdAt: serverTimestamp(),
         status: "unread"
       };
@@ -210,11 +217,15 @@ export default function ReactionCollector({ momentId, isPreview, onActiveChange,
          await addDoc(collection(db, "reactions"), payload);
       }
       stopStreams();
-      setMode("success");
-      setTimeout(() => reset(), 3000);
+      setIsSent(true);
+      setIsSubmitting(false);
+      setTimeout(() => {
+        reset();
+        setIsSent(false);
+      }, 2000);
     } catch (err) {
       console.error("Reaction submission failed", err);
-      setMode("idle");
+      setIsSubmitting(false);
       const errorMessage = err instanceof Error ? err.message : "Unknown error";
       setError({
         title: "Upload Failed",
@@ -324,12 +335,43 @@ export default function ReactionCollector({ momentId, isPreview, onActiveChange,
               className="w-full h-20 bg-black/20 text-white placeholder:text-white/30 rounded-lg p-3 text-sm resize-none outline-none focus:ring-1 focus:ring-primary/50 transition-all font-medium"
             />
 
+            <div className="flex items-center gap-2 mb-3">
+              <label className="flex items-center gap-2 cursor-pointer group">
+                <input 
+                  type="checkbox" 
+                  checked={isPublic} 
+                  onChange={(e) => setIsPublic(e.target.checked)}
+                  className="size-3 rounded border-white/20 bg-black/40 text-primary focus:ring-primary/50"
+                />
+                <span className="text-[9px] font-bold text-white/50 uppercase tracking-widest group-hover:text-white/80 transition-colors">
+                  Make this reaction public
+                </span>
+              </label>
+            </div>
+
             <button 
               onClick={handleSubmit}
-              disabled={!textMode.trim()}
-              className="w-full mt-3 py-3 rounded-lg font-black uppercase tracking-widest text-[10px] bg-primary text-white disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 active:scale-95 transition-all shadow-lg flex items-center justify-center gap-2"
+              disabled={!textMode.trim() || isSubmitting || isSent}
+              className={cn(
+                "w-full mt-1 py-3 rounded-lg font-black uppercase tracking-widest text-[10px] text-white transition-all shadow-lg flex items-center justify-center gap-2",
+                isSent 
+                  ? "bg-green-500 shadow-green-500/20" 
+                  : "bg-primary disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 active:scale-95"
+              )}
             >
-              <Send size={14} /> Send Note
+              {isSubmitting ? (
+                <>
+                  <Loader2 size={14} className="animate-spin" /> Sending...
+                </>
+              ) : isSent ? (
+                <>
+                  <CheckCircle2 size={14} /> Sent
+                </>
+              ) : (
+                <>
+                  <Send size={14} /> Send Note
+                </>
+              )}
             </button>
           </motion.div>
         )}
@@ -417,53 +459,65 @@ export default function ReactionCollector({ momentId, isPreview, onActiveChange,
                 )}
               </div>
             ) : (
-              <div className="flex gap-2 relative z-10 mt-3">
-                <button 
-                  onClick={() => {
-                    setMediaBlob(null);
-                    setRecordingTime(0);
-                    if (mode === "camera") handleStartCamera();
-                    else handleStartVoice();
-                  }}
-                  className="flex-1 py-3 rounded-lg border border-white/10 text-white font-black uppercase tracking-widest text-[10px] hover:bg-white/5 active:scale-95 transition-all"
-                >
-                  Discard
-                </button>
-                <button 
-                  onClick={handleSubmit}
-                  className="flex-1 py-3 rounded-lg bg-primary text-white font-black uppercase tracking-widest text-[10px] shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2"
-                >
-                  <Send size={14} /> Send
-                </button>
+              <div className="space-y-3 relative z-10 mt-3">
+                <div className="flex items-center gap-2 px-1">
+                  <label className="flex items-center gap-2 cursor-pointer group">
+                    <input 
+                      type="checkbox" 
+                      checked={isPublic} 
+                      onChange={(e) => setIsPublic(e.target.checked)}
+                      className="size-3 rounded border-white/20 bg-black/40 text-primary focus:ring-primary/50"
+                    />
+                    <span className="text-[9px] font-bold text-white/50 uppercase tracking-widest group-hover:text-white/80 transition-colors">
+                      Make this reaction public
+                    </span>
+                  </label>
+                </div>
+                <div className="flex gap-2">
+                  <button 
+                    onClick={() => {
+                      setMediaBlob(null);
+                      setRecordingTime(0);
+                      if (mode === "camera") handleStartCamera();
+                      else handleStartVoice();
+                    }}
+                    disabled={isSubmitting}
+                    className="flex-1 py-3 rounded-lg border border-white/10 text-white font-black uppercase tracking-widest text-[10px] hover:bg-white/5 active:scale-95 transition-all disabled:opacity-50"
+                  >
+                    Discard
+                  </button>
+                  <button 
+                    onClick={handleSubmit}
+                    disabled={isSubmitting || isSent}
+                    className={cn(
+                      "flex-1 py-3 rounded-lg text-white font-black uppercase tracking-widest text-[10px] shadow-lg transition-all flex items-center justify-center gap-2",
+                      isSent 
+                        ? "bg-green-500 shadow-green-500/20" 
+                        : "bg-primary shadow-primary/20 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                    )}
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 size={14} className="animate-spin" /> Sending...
+                      </>
+                    ) : isSent ? (
+                      <>
+                        <CheckCircle2 size={14} /> Sent
+                      </>
+                    ) : (
+                      <>
+                        <Send size={14} /> Send
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             )}
             
           </motion.div>
         )}
 
-        {mode === "submitting" && (
-          <motion.div
-            key="submitting"
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="flex flex-col items-center gap-3 bg-white/10 backdrop-blur-md p-4 rounded-lg border border-white/20 shadow-xl pointer-events-auto"
-          >
-            <Loader2 size={24} className="text-primary animate-spin" />
-            <p className="text-white font-black uppercase tracking-widest text-[10px] animate-pulse">Sending Love...</p>
-          </motion.div>
-        )}
 
-        {mode === "success" && (
-          <motion.div
-            key="success"
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="flex flex-col items-center gap-2 bg-green-500/10 backdrop-blur-md p-4 rounded-lg border border-green-500/30 shadow-xl pointer-events-auto text-center"
-          >
-            <CheckCircle2 size={32} className="text-green-500 mx-auto" />
-            <p className="text-green-100 font-black uppercase tracking-widest text-[10px]">Reaction Sent!</p>
-          </motion.div>
-        )}
 
       </AnimatePresence>
       

@@ -10,7 +10,7 @@ import {
   Loader2, ArrowLeft, ArrowRight, Lock, Save, Trash2, 
   CheckCircle2, Image as ImageIcon, Search, Music2, UploadCloud, 
   Camera, HelpCircle, X, ChevronDown, Check, Play, Pause, Palette,
-  Link as LinkIcon, Copy
+  Link as LinkIcon, Copy, Sparkles
 } from "lucide-react";
 
 import { useCreation } from "@/context/CreationContext";
@@ -57,6 +57,7 @@ export default function CreationSettingsPage() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [isPublic, setIsPublic] = useState(false);
 
   // Custom Link State
   const [urlSlug, setUrlSlug] = useState("");
@@ -107,6 +108,7 @@ export default function CreationSettingsPage() {
         
         // Load Custom Link
         setUrlSlug(data.urlSlug || "");
+        setIsPublic(data.isPublic || false);
         
         // Load Unlock Data
         const unlockConfig = data.unlockConfig || {};
@@ -240,6 +242,11 @@ export default function CreationSettingsPage() {
         updates.urlSlug = debouncedUrlSlug;
         hasChanges = true;
       }
+    }
+
+    if (isPublic !== (localMomentData.isPublic || false)) {
+      updates.isPublic = isPublic;
+      hasChanges = true;
     }
     
     if (unlockType !== (localMomentData.unlockConfig?.type || "none")) {
@@ -548,6 +555,45 @@ export default function CreationSettingsPage() {
                   </div>
                 </div>
               )}
+            </div>
+          </div>
+
+          {/* Section 3: Visibility & Discovery */}
+          <div className="bg-surface border border-border rounded-lg overflow-hidden p-6 space-y-6">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <h2 className="text-xl font-bold flex items-center gap-2 text-text-main">
+                  <Sparkles size={20} className="text-primary" />
+                  Visibility & Discovery
+                </h2>
+                <p className="text-sm text-text-muted">Choose if you want to share your creation with our community.</p>
+              </div>
+            </div>
+
+            <div className="pt-2">
+              <label 
+                className={cn(
+                  "flex items-start gap-4 p-4 rounded-xl border-2 transition-all cursor-pointer",
+                  isPublic 
+                    ? "bg-primary/5 border-primary shadow-sm" 
+                    : "bg-surface border-border hover:border-primary/20"
+                )}
+              >
+                <div className="pt-1">
+                  <input 
+                    type="checkbox"
+                    checked={isPublic}
+                    onChange={(e) => setIsPublic(e.target.checked)}
+                    className="size-5 rounded border-border text-primary focus:ring-primary/20 transition-all cursor-pointer"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-black uppercase tracking-tight text-text-main">Make this Moment Public</p>
+                  <p className="text-[10px] font-bold text-text-muted leading-relaxed uppercase tracking-widest">
+                    Your surprise will be showcased in our Inspiration Gallery. Others can use its layout and theme as a template for their own surprises. <span className="text-primary">(Personal recipient data and secrets remain private)</span>.
+                  </p>
+                </div>
+              </label>
             </div>
           </div>
       </div>

@@ -25,15 +25,17 @@ import {
   Pause,
   Maximize2,
   Minimize2,
+  Expand,
+  Shrink,
   ShieldAlert
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { ScratchUtility, GalleryUtility, CompositionUtility } from "./utilities/RevealUtilities";
+import { ScratchUtility, GalleryUtility, CompositionUtility, VideoUtility, AudioUtility } from "./utilities/RevealUtilities";
 import ReactionCollector from "./ReactionCollector";
 
 interface Scene {
   id: string;
-  type: "scratch" | "gallery" | "composition";
+  type: "scratch" | "gallery" | "composition" | "video" | "audio";
   config: any;
   music?: string;
 }
@@ -112,6 +114,23 @@ export default function RevealEngine({ moment, isPreview = false, activeSceneInd
   const [isMuted, setIsMuted] = useState(true);
   const [isAudioBlocked, setIsAudioBlocked] = useState(false);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+  const [isAutoplay, setIsAutoplay] = useState(false);
+  const [volume, setVolume] = useState(0.8);
+  const [isInternalMediaPlaying, setIsInternalMediaPlaying] = useState(false);
+  const [showVolumeSlider, setShowVolumeSlider] = useState(false);
+  const volumeTimerRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Auto-close volume slider timer
+  useEffect(() => {
+    if (showVolumeSlider) {
+        if (volumeTimerRef.current) clearTimeout(volumeTimerRef.current);
+        volumeTimerRef.current = setTimeout(() => setShowVolumeSlider(false), 2000);
+    }
+    return () => {
+        if (volumeTimerRef.current) clearTimeout(volumeTimerRef.current);
+    }
+  }, [showVolumeSlider]);
+  const autoplayTimerRef = useRef<NodeJS.Timeout | null>(null);
   
   // Audio Refs
   const globalSoundRef = useRef<Howl | null>(null);
@@ -119,8 +138,19 @@ export default function RevealEngine({ moment, isPreview = false, activeSceneInd
   const sceneSoundRef = useRef<Howl | null>(null);
   const sceneYtPlayerRef = useRef<any>(null);
   
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isUIVisible, setIsUIVisible] = useState(true);
   const lastGlobalMusicRef = useRef<string>("");
   const lastSceneMusicRef = useRef<string>("");
+
+  // Sync fullscreen state
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
 
   const [isYtReady, setIsYtReady] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -191,12 +221,16 @@ export default function RevealEngine({ moment, isPreview = false, activeSceneInd
       ? style.splashConfig?.useGlobalMusic !== false 
       : (final || scene?.config?.useGlobalMusic !== false);
 
+    // Silence background music for video/audio playbacks OR when internal media is playing
+    const isMediaScene = scene?.type === "video" || scene?.type === "audio";
+    const shouldSilenceMusic = isMediaScene || isInternalMediaPlaying || isReacting;
+
     return {
       prefersGlobal,
-      useGlobalMusic: prefersGlobal && !isReacting,
-      useSceneMusic: !prefersGlobal && !isReacting
+      useGlobalMusic: prefersGlobal && !shouldSilenceMusic,
+      useSceneMusic: !prefersGlobal && !shouldSilenceMusic
     };
-  }, [scenes, style, isReacting]);
+  }, [scenes, style, isReacting, isInternalMediaPlaying]);
 
   const { useGlobalMusic, useSceneMusic, prefersGlobal } = getMusicState(currentSceneIndex);
 
@@ -237,16 +271,18 @@ export default function RevealEngine({ moment, isPreview = false, activeSceneInd
       // Vol Control & State
       const player = globalYtPlayerRef.current;
       if (typeof player?.setVolume === 'function') {
-        player.setVolume(isMuted ? 0 : (useGlobalMusic ? 50 : 0));
+        const targetVol = isMuted ? 0 : (useGlobalMusic ? Math.round(volume * 100) : 0);
+        player.setVolume(targetVol);
         if (useGlobalMusic && !isPreview && !isMuted) player.playVideo();
         else if (!useGlobalMusic) player.pauseVideo();
       }
     } else if (globalUrl) {
        if (!globalSoundRef.current || lastGlobalMusicRef.current !== globalUrl) {
          if (globalSoundRef.current) globalSoundRef.current.unload();
-         globalSoundRef.current = new Howl({ src: [globalUrl], loop: true, volume: 0.5 });
+         globalSoundRef.current = new Howl({ src: [globalUrl], loop: true, volume: volume });
          lastGlobalMusicRef.current = globalUrl;
        }
+       globalSoundRef.current.volume(volume);
        globalSoundRef.current.mute(isMuted || !useGlobalMusic);
        if (useGlobalMusic && !isPreview && !isMuted) globalSoundRef.current.play();
        else if (!useGlobalMusic) globalSoundRef.current.pause();
@@ -278,17 +314,19 @@ export default function RevealEngine({ moment, isPreview = false, activeSceneInd
       // Vol Control & State
       const player = sceneYtPlayerRef.current;
       if (typeof player?.setVolume === 'function') {
-        player.setVolume(isMuted ? 0 : (useSceneMusic ? 50 : 0));
+        const targetVol = isMuted ? 0 : (useSceneMusic ? Math.round(volume * 100) : 0);
+        player.setVolume(targetVol);
         if (useSceneMusic && !isPreview && !isMuted) player.playVideo();
         else if (!useSceneMusic) player.pauseVideo();
       }
     } else if (sceneUrl) {
        if (!sceneSoundRef.current || lastSceneMusicRef.current !== sceneUrl) {
          if (sceneSoundRef.current) sceneSoundRef.current.unload();
-         sceneSoundRef.current = new Howl({ src: [sceneUrl], loop: true, volume: 0.5 });
+         sceneSoundRef.current = new Howl({ src: [sceneUrl], loop: true, volume: volume });
          if (sceneStart > 0) sceneSoundRef.current.seek(sceneStart);
          lastSceneMusicRef.current = sceneUrl;
        }
+       sceneSoundRef.current.volume(volume);
        sceneSoundRef.current.mute(isMuted || !useSceneMusic);
        if (useSceneMusic && !isPreview && !isMuted) sceneSoundRef.current.play();
        else if (!useSceneMusic) sceneSoundRef.current.pause();
@@ -310,7 +348,7 @@ export default function RevealEngine({ moment, isPreview = false, activeSceneInd
     }, 500);
 
     return () => clearInterval(loopInterval);
-  }, [currentSceneIndex, style, isYtReady, isMuted, isPreview, isReacting, useGlobalMusic, useSceneMusic, globalYtId, sceneYtId, globalUrl, sceneUrl, sceneStart, sceneDuration]);
+  }, [currentSceneIndex, style, isYtReady, isMuted, volume, isPreview, isReacting, useGlobalMusic, useSceneMusic, globalYtId, sceneYtId, globalUrl, sceneUrl, sceneStart, sceneDuration]);
 
   // Audio Interaction Handler
   const startAudioOnInteraction = useCallback((targetIndex?: number) => {
@@ -377,9 +415,9 @@ export default function RevealEngine({ moment, isPreview = false, activeSceneInd
     setIsVerifying(false);
   }, [moment?.unlockConfig, inputValue, startAudioOnInteraction]);
 
-  const nextScene = useCallback(() => {
-    // Proactively request full-screen on mobile when opening the surprise
-    if (typeof window !== "undefined" && window.innerWidth < 1024 && !document.fullscreenElement) {
+  const nextScene = useCallback((isManual = false) => {
+    // Proactively request full-screen on mobile when opening the surprise manually
+    if (isManual && typeof window !== "undefined" && window.innerWidth < 1024 && !document.fullscreenElement) {
       document.documentElement.requestFullscreen().catch(() => {});
     }
 
@@ -392,8 +430,12 @@ export default function RevealEngine({ moment, isPreview = false, activeSceneInd
     if (nextIndex <= scenes.length) {
        startAudioOnInteraction(nextIndex);
        setCurrentSceneIndex(nextIndex);
+       // Stop autoplay when reaching the final screen
+       if (nextIndex === scenes.length) {
+         setIsAutoplay(false);
+       }
     }
-  }, [currentSceneIndex, scenes.length, startAudioOnInteraction, isUnlocked]);
+  }, [currentSceneIndex, scenes.length, startAudioOnInteraction, isUnlocked, setIsAutoplay]);
 
   const prevScene = useCallback(() => {
     const targetIndex = currentSceneIndex - 1;
@@ -404,32 +446,103 @@ export default function RevealEngine({ moment, isPreview = false, activeSceneInd
     }
   }, [currentSceneIndex, startAudioOnInteraction]);
 
+  // Autoplay fallback logic for scenes that don't support onComplete or as a safety net
+  const startAutoplayTimer = useCallback(() => {
+    if (autoplayTimerRef.current) clearTimeout(autoplayTimerRef.current);
+
+    // If on splash, trigger nextScene immediately with a small delay
+    if (currentSceneIndex === -1 && isAutoplay) {
+      autoplayTimerRef.current = setTimeout(() => nextScene(false), 2000);
+      return;
+    }
+
+    if (currentSceneIndex >= scenes.length) return;
+
+    const scene = scenes[currentSceneIndex];
+    if (scene.type === "scratch") {
+      autoplayTimerRef.current = setTimeout(() => {
+        if (isAutoplay) nextScene(false);
+      }, 10000);
+    }
+  }, [currentSceneIndex, scenes, isAutoplay, nextScene]);
+
+  useEffect(() => {
+    if (isAutoplay) {
+      startAutoplayTimer();
+    } else {
+      if (autoplayTimerRef.current) clearTimeout(autoplayTimerRef.current);
+    }
+    return () => {
+      if (autoplayTimerRef.current) clearTimeout(autoplayTimerRef.current);
+    };
+  }, [isAutoplay, currentSceneIndex, startAutoplayTimer]);
+
   // Map media objects for the current scene
   const sceneData = useMemo(() => {
     if (!currentScene) return null;
-    const media = (currentScene.config.mediaIds || []).map((id: string) => 
+    const media = (currentScene.config.mediaIds || []).map((id: string) =>
       moment.media?.find((m: any) => m.id === id)
     ).filter(Boolean);
 
     return {
       ...currentScene.config,
       media,
-      mediaUrl: media[0]?.url, // Convenience for single-media utilities
+      mediaUrl: currentScene.config.mediaUrl || media[0]?.url, // Support both direct URL and media library selection
       recipientName: moment.recipientName
     };
   }, [currentScene, moment]);
 
+  // Determine if we should show the mute button
+  const hasAnyMusic = useMemo(() => {
+    // Check global
+    if (style.ytMusicId || style.musicUrl) return true;
+
+    // Check splash
+    if (style.splashConfig?.ytMusicId || style.splashConfig?.musicUrl) return true;
+
+    // Check all scenes for custom music
+    return (scenes || []).some((s: any) => s.config?.ytMusicId || s.config?.musicUrl);
+  }, [style, scenes]);
+
   return (
-    <div 
+    <div
       className="relative w-full h-full bg-black overflow-hidden font-display select-none"
       onClick={() => startAudioOnInteraction()}
     >
-      
+
       {/* Background Layer */}
       <ThemeBackground themeId={activeThemeId} isPreview={isPreview} moment={moment} />
 
+      {/* Persistent Music Indicator */}
+      <AnimatePresence>
+      {isUIVisible && (useGlobalMusic ? style.musicMetadata : currentScene?.config?.musicMetadata) && (
+        <motion.div
+          key={`music-indicator-${currentSceneIndex}`}
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="absolute top-8 right-8 flex items-center gap-3 px-4 py-2 bg-white/5 backdrop-blur-md border border-white/10 rounded-lg max-w-[200px] z-40 pointer-events-none"
+        >
+          {((useGlobalMusic ? style.musicMetadata : currentScene?.config?.musicMetadata)).thumbnail && (
+            <img
+              src={(useGlobalMusic ? style.musicMetadata : currentScene?.config?.musicMetadata).thumbnail}
+              className="size-8 rounded-lg border border-white/10"
+              alt="Music"
+            />
+          )}
+          <div className="flex-1 min-w-0 text-left">
+            <p className="text-[10px] font-black text-white truncate">
+              {(useGlobalMusic ? style.musicMetadata : currentScene?.config?.musicMetadata).title}
+            </p>
+            <p className="text-[8px] font-bold text-primary uppercase tracking-widest flex items-center gap-1">
+              <Music2 size={8} /> {useGlobalMusic ? "Themesong" : "Scene Music"}
+            </p>
+          </div>
+        </motion.div>
+      )}
+      </AnimatePresence>
+
       <AnimatePresence mode="wait">
-        
+
         {/* Intro Splash */}
         {currentSceneIndex === -1 && (
           <motion.div
@@ -453,13 +566,13 @@ export default function RevealEngine({ moment, isPreview = false, activeSceneInd
             <p className="text-white/60 font-bold uppercase tracking-widest text-[10px]">
               Created by {moment.isAnonymous ? "a thoughtful person" : (moment.senderName || "a thoughtful person")}
             </p>
-            <motion.div 
+            <motion.div
               animate={{ opacity: [0.4, 1, 0.4] }}
               transition={{ repeat: Infinity, duration: 2 }}
               className="mt-12 text-white/40 text-[10px] font-black uppercase tracking-[0.3em] bg-white/5 px-8 py-4 rounded-lg border border-white/10 backdrop-blur-md cursor-pointer hover:bg-white/10 transition-colors"
               onClick={(e) => {
                 e.stopPropagation();
-              nextScene();
+              nextScene(true);
             }}
           >
             Open Surprise
@@ -468,7 +581,7 @@ export default function RevealEngine({ moment, isPreview = false, activeSceneInd
           {/* Unlock Overlay */}
           <AnimatePresence>
             {showUnlockUI && !isUnlocked && (
-              <UnlockOverlay 
+              <UnlockOverlay
                 moment={moment}
                 inputValue={inputValue}
                 setInputValue={setInputValue}
@@ -483,25 +596,7 @@ export default function RevealEngine({ moment, isPreview = false, activeSceneInd
             )}
           </AnimatePresence>
 
-            {/* Global Music Indicator - Moved to Top Right per User Request */}
-            {style.musicMetadata && (
-              <motion.div 
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 1 }}
-                className="absolute top-8 right-8 flex items-center gap-3 px-4 py-2 bg-white/5 backdrop-blur-md border border-white/10 rounded-lg max-w-[200px] z-[60]"
-              >
-                {style.musicMetadata.thumbnail && (
-                  <img src={style.musicMetadata.thumbnail} className="size-8 rounded-lg border border-white/10" alt="Music" />
-                )}
-                <div className="flex-1 min-w-0 text-left">
-                  <p className="text-[10px] font-black text-white truncate">{style.musicMetadata.title}</p>
-                  <p className="text-[8px] font-bold text-primary uppercase tracking-widest flex items-center gap-1">
-                    <Music2 size={8} /> Themesong
-                  </p>
-                </div>
-              </motion.div>
-            )}
+
           </motion.div>
         )}
 
@@ -518,13 +613,49 @@ export default function RevealEngine({ moment, isPreview = false, activeSceneInd
             )}
           >
             {currentScene.type === "scratch" && (
-              <ScratchUtility config={sceneData} onComplete={() => {}} />
+              <ScratchUtility config={sceneData} onComplete={nextScene} />
             )}
             {currentScene.type === "gallery" && (
-              <GalleryUtility config={sceneData} onLightboxToggle={setIsLightboxOpen} />
+              <GalleryUtility
+                config={sceneData}
+                onLightboxToggle={setIsLightboxOpen}
+                isAutoplay={isAutoplay}
+                onComplete={nextScene}
+                globalVolume={volume}
+                isGlobalMuted={isMuted}
+                onMediaPlayStatusChange={setIsInternalMediaPlaying}
+              />
             )}
             {currentScene.type === "composition" && (
-              <CompositionUtility config={sceneData} />
+              <CompositionUtility
+                config={sceneData}
+                isAutoplay={isAutoplay}
+                onComplete={nextScene}
+                globalVolume={volume}
+                isGlobalMuted={isMuted}
+                onMediaPlayStatusChange={setIsInternalMediaPlaying}
+                shouldSilenceMusic={sceneData.media.some((m: any) => m.type === 'video')}
+              />
+            )}
+            {currentScene.type === "video" && (
+              <VideoUtility
+                config={sceneData}
+                isAutoplay={isAutoplay}
+                onComplete={nextScene}
+                globalVolume={volume}
+                isGlobalMuted={isMuted}
+                onMediaPlayStatusChange={setIsInternalMediaPlaying}
+              />
+            )}
+            {currentScene.type === "audio" && (
+              <AudioUtility
+                config={sceneData}
+                isAutoplay={isAutoplay}
+                onComplete={nextScene}
+                globalVolume={volume}
+                isGlobalMuted={isMuted}
+                onMediaPlayStatusChange={setIsInternalMediaPlaying}
+              />
             )}
           </motion.div>
         )}
@@ -532,7 +663,7 @@ export default function RevealEngine({ moment, isPreview = false, activeSceneInd
         {/* Branding/Final End Screen */}
         {currentSceneIndex === scenes.length && (() => {
            const showBranding = moment?.plan !== "premium" && !moment?.paidAddons?.includes("removeBranding") && !moment?.selectedAddons?.includes("removeBranding");
-           
+
            return (
              <motion.div
                key="end-branding"
@@ -540,7 +671,7 @@ export default function RevealEngine({ moment, isPreview = false, activeSceneInd
                animate={{ opacity: 1, scale: 1 }}
                className="absolute inset-0 flex flex-col items-center justify-center z-[100] text-center p-8 bg-black/40 backdrop-blur-md"
              >
-               <motion.div 
+               <motion.div
                  initial={{ opacity: 0, y: 20 }}
                  animate={{ opacity: 1, y: 0 }}
                  className="max-w-md w-full"
@@ -557,7 +688,7 @@ export default function RevealEngine({ moment, isPreview = false, activeSceneInd
                          <div className="size-20 bg-primary/20 rounded-3xl flex items-center justify-center mx-auto mb-8 border border-primary/30">
                            <Gift className="text-primary" size={32} />
                          </div>
-                         
+
                           {showBranding ? (
                            <>
                              <h2 className="text-3xl font-black text-white uppercase tracking-tighter mb-4 leading-tight">
@@ -566,8 +697,8 @@ export default function RevealEngine({ moment, isPreview = false, activeSceneInd
                              <p className="text-white/40 font-bold uppercase tracking-widest text-[10px] mb-12">
                                Elevate your gifting experience 🎁
                              </p>
-                             
-                             <button 
+
+                             <button
                                onClick={() => window.open("/", "_blank")}
                                className="w-full py-5 bg-primary text-white rounded-2xl font-black uppercase tracking-[0.2em] text-xs shadow-2xl shadow-primary/40 hover:scale-105 active:scale-95 transition-all"
                              >
@@ -583,7 +714,7 @@ export default function RevealEngine({ moment, isPreview = false, activeSceneInd
                                Let them know how it made you feel below 👇
                              </p>
                              {moment?.styleConfig?.showReactions === false && (
-                               <button 
+                               <button
                                  onClick={() => setCurrentSceneIndex(-1)}
                                  className="w-full py-5 bg-white/10 text-white border border-white/20 rounded-2xl font-black uppercase tracking-[0.2em] text-xs hover:bg-white/20 active:scale-95 transition-all mb-8"
                                >
@@ -598,10 +729,10 @@ export default function RevealEngine({ moment, isPreview = false, activeSceneInd
 
                   {(!showBranding && moment?.styleConfig?.showReactions !== false) && (
                      <motion.div layout className="animate-in fade-in slide-in-from-bottom-8 duration-700 delay-500 fill-mode-both w-full">
-                       <ReactionCollector 
-                         momentId={moment?.id} 
-                         isPreview={isPreview} 
-                         onActiveChange={setIsReacting} 
+                       <ReactionCollector
+                         momentId={moment?.id}
+                         isPreview={isPreview}
+                         onActiveChange={setIsReacting}
                          onWatchAgain={() => setCurrentSceneIndex(-1)}
                        />
                      </motion.div>
@@ -628,59 +759,169 @@ export default function RevealEngine({ moment, isPreview = false, activeSceneInd
 
       {/* Navigation Controls */}
       {currentSceneIndex >= 0 && currentSceneIndex < scenes.length && (
-        <div className="absolute bottom-10 inset-x-0 flex items-center justify-center gap-6 z-50">
-           <button 
-             onClick={(e) => { e.stopPropagation(); prevScene(); }}
-             className="size-12 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-white/20 transition-all active:scale-90"
-           >
-             <ChevronLeft size={24} />
-           </button>
-           
-           <div className="px-4 py-2 rounded-full bg-white/5 backdrop-blur-sm border border-white/10 text-[10px] font-black text-white/60 uppercase tracking-widest">
-             {currentSceneIndex + 1} / {scenes.length}
-           </div>
+         <div className="absolute bottom-6 sm:bottom-10 inset-x-0 flex items-center justify-center gap-1.5 sm:gap-6 z-50 px-2 sm:px-4">
+            <button
+              onClick={(e) => { e.stopPropagation(); prevScene(); }}
+              disabled={isAutoplay}
+              className={cn(
+                "size-10 sm:size-12 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white transition-all shrink-0",
+                isAutoplay ? "opacity-20 cursor-not-allowed" : "hover:bg-white/20 active:scale-90"
+              )}
+            >
+              <ChevronLeft size={20} className="sm:size-6" />
+            </button>
 
-           {currentSceneIndex < scenes.length - 1 ? (
-             <button 
-               onClick={(e) => { e.stopPropagation(); nextScene(); }}
-               className="size-12 rounded-full bg-primary text-white flex items-center justify-center shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all active:scale-90"
-             >
-               <ChevronRight size={24} />
-             </button>
-           ) : (
-             <button 
-                onClick={(e) => { e.stopPropagation(); nextScene(); }}
-                className="px-6 h-12 rounded-full bg-green-500 text-white font-black uppercase tracking-widest text-xs shadow-lg shadow-green-500/20 active:scale-95 transition-all flex items-center gap-1"
-             >
-               Finish <ChevronRight size={16} />
-             </button>
-           )}
-        </div>
+            <div className="flex h-10 sm:h-12 items-center gap-1 sm:gap-2 px-2 sm:px-3 rounded-full bg-white/5 backdrop-blur-sm border border-white/10 shrink-0">
+               {/* Autoplay Toggle */}
+               <button
+                 onClick={(e) => { e.stopPropagation(); setIsAutoplay(!isAutoplay); }}
+                 className={cn(
+                   "flex items-center gap-2 px-2 sm:px-3 h-7 sm:h-8 rounded-full transition-all text-[9px] sm:text-[10px] font-black uppercase tracking-widest",
+                    isAutoplay ? "bg-primary text-white" : "bg-white/10 text-white/60 hover:text-white"
+                 )}
+               >
+                 {isAutoplay ? <Pause size={10} className="sm:size-3" fill="white" /> : <Play size={10} className="sm:size-3" fill="white" />}
+                 <span className="hidden sm:inline">{isAutoplay ? "Autoplay On" : "Autoplay"}</span>
+               </button>
+
+               <div className="w-[1px] h-3 sm:h-4 bg-white/10 mx-0.5 sm:mx-1" />
+
+               <div className="text-[9px] sm:text-[10px] font-black text-white/60 uppercase tracking-widest px-1 sm:px-2 min-w-[32px] sm:min-w-[40px] text-center">
+                 {currentSceneIndex + 1} / {scenes.length}
+               </div>
+
+                <div className="w-[1px] h-3 sm:h-4 bg-white/10 mx-0.5 sm:mx-1" />
+
+                <button
+                  onClick={(e) => { e.stopPropagation(); setIsUIVisible(!isUIVisible); }}
+                  className="flex items-center justify-center size-7 sm:size-8 rounded-full bg-white/10 text-white/60 hover:text-white hover:bg-white/20 transition-all"
+                  title={isUIVisible ? "Minimize UI" : "Expand UI"}
+                >
+                  {isUIVisible ? <Shrink size={14} className="sm:size-4" /> : <Expand size={14} className="sm:size-4" />}
+                </button>
+            </div>
+
+            <button
+              onClick={(e) => { e.stopPropagation(); nextScene(true); }}
+              disabled={isAutoplay}
+              className={cn(
+                "size-10 sm:size-12 rounded-full text-white flex items-center justify-center shadow-lg transition-all shrink-0",
+                isAutoplay
+                  ? "bg-primary/40 opacity-50 cursor-not-allowed"
+                  : "bg-primary shadow-primary/20 hover:bg-primary/90 active:scale-90"
+              )}
+            >
+              <ChevronRight size={20} className="sm:size-6" />
+            </button>
+         </div>
       )}
 
-      {/* Persistence Controls (Mute, etc) */}
-      <div className="absolute top-8 left-8 flex items-center gap-3 z-[110]">
-        <button 
-          onClick={(e) => { e.stopPropagation(); setIsMuted(!isMuted); }}
-          className="size-10 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-white/20 transition-all shadow-lg"
-          title={isMuted ? "Unmute" : "Mute"}
-        >
-          {isMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}
-        </button>
+      {/* Persistence Controls (Mute, Fullscreen, etc) */}
+      <div className="absolute top-8 left-8 flex flex-col-reverse sm:flex-row items-center sm:items-start gap-3 z-[110]">
+        <AnimatePresence>
+        {isUIVisible && (
+          <>
+        <div className="relative flex flex-col items-center">
+            <motion.div
+                layout
+                initial={false}
+                className="flex flex-col items-center gap-2 p-2 rounded-lg bg-white/10 backdrop-blur-md border border-white/20 text-white shadow-lg transition-all w-[44px] overflow-hidden"
+            >
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsMuted(!isMuted);
+                    if (volumeTimerRef.current) clearTimeout(volumeTimerRef.current);
+                    volumeTimerRef.current = setTimeout(() => setShowVolumeSlider(false), 2000);
+                  }}
+                  className="flex items-center justify-center hover:text-primary transition-colors p-1"
+                  title={isMuted ? "Unmute" : "Mute"}
+                >
+                  {isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
+                </button>
+
+                <div className="w-4 h-[1px] bg-white/20" />
+
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        setShowVolumeSlider(!showVolumeSlider);
+                    }}
+                    className="text-[9px] font-black tracking-tighter hover:text-primary transition-colors text-center -mt-0.5 opacity-80 w-full flex justify-center p-1"
+                >
+                    {Math.round(volume * 100)}%
+                </button>
+
+                <AnimatePresence>
+                    {showVolumeSlider && (
+                        <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 120, opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            onMouseEnter={() => { if (volumeTimerRef.current) clearTimeout(volumeTimerRef.current); }}
+                            onMouseLeave={() => {
+                                volumeTimerRef.current = setTimeout(() => setShowVolumeSlider(false), 2000);
+                            }}
+                            className="flex flex-col items-center py-2 gap-2 w-full"
+                        >
+                            <div className="flex-1 w-1.5 bg-white/10 rounded-full relative group/slider cursor-pointer h-[100px]">
+                                <input
+                                    type="range"
+                                    min="0"
+                                    max="1"
+                                    step="0.01"
+                                    value={volume}
+                                    onChange={(e) => {
+                                        const val = parseFloat(e.target.value);
+                                        setVolume(val);
+                                        if (isMuted && val > 0) setIsMuted(false);
+                                        if (volumeTimerRef.current) clearTimeout(volumeTimerRef.current);
+                                        volumeTimerRef.current = setTimeout(() => setShowVolumeSlider(false), 2000);
+                                    }}
+                                    className="absolute inset-0 opacity-0 cursor-pointer z-10"
+                                    style={{
+                                        WebkitAppearance: 'slider-vertical',
+                                        height: '100px',
+                                        width: '24px',
+                                        left: '-9px'
+                                    }}
+                                />
+                                <motion.div
+                                    className="absolute bottom-0 left-0 w-full bg-primary rounded-full"
+                                    style={{ height: `${volume * 100}%` }}
+                                />
+                                
+                                {/* Slider Thumb Handle */}
+                                <motion.div 
+                                    className="absolute left-1/2 -translate-x-1/2 size-3 bg-white rounded-full shadow-lg border border-primary/20 z-20 pointer-events-none"
+                                    style={{ bottom: `calc(${volume * 100}% - 6px)` }}
+                                />
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </motion.div>
+        </div>
+        
         <button 
           onClick={(e) => { 
-            e.stopPropagation(); 
+            e.stopPropagation();
             if (!document.fullscreenElement) {
-              document.documentElement.requestFullscreen().catch(() => {});
-            } else if (document.exitFullscreen) {
+              document.documentElement.requestFullscreen().catch((err) => {
+                console.error(`Error attempting to enable fullscreen mode: ${err.message}`);
+              });
+            } else {
               document.exitFullscreen();
             }
           }}
-          className="size-10 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-white/20 transition-all shadow-lg lg:hidden"
+          className="size-10 sm:size-12 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white transition-all hover:bg-white/20 active:scale-90 lg:hidden"
           title="Toggle Fullscreen"
         >
-          <Maximize2 size={18} />
+          {isFullscreen ? <Minimize2 size={20} className="sm:size-6" /> : <Maximize2 size={20} className="sm:size-6" />}
         </button>
+          </>
+        )}
+        </AnimatePresence>
       </div>
 
       {/* Hidden YouTube Players */}
