@@ -93,7 +93,7 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
   );
   const [previewDevice, setPreviewDevice] = useState<"mobile" | "desktop">("mobile");
   
-  const [editorTab, setEditorTab] = useState<"content" | "theme" | "audio">("content");
+  const [editorTab, setEditorTab] = useState<"screens" | "content" | "theme" | "audio">("screens");
   
   // Aesthetics Settings State
   const [thumbnailMode, setThumbnailMode] = useState<"upload" | "library">("upload");
@@ -272,10 +272,11 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
 
 
 
+  // We keep the header and footer visible during studio previews
+  // to ensure navigation tools (Edit/Preview toggle) stay accessible.
   useEffect(() => {
-    setIsCinematic(activeMobileMode === "preview");
     return () => setIsCinematic(false);
-  }, [activeMobileMode, setIsCinematic]);
+  }, [setIsCinematic]);
 
   const addScene = () => {
     const newScene: Scene = {
@@ -910,55 +911,24 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
               activeMobileMode === "preview" && "hidden lg:block",
               "pb-safe" // iOS safe area
             )}>
-              {/* Mobile Scene Navigator Pill (Internal Studio Navigation) */}
-              <div className="lg:hidden sticky top-0 z-[35] p-3 bg-card/95 backdrop-blur-md border-b border-border shadow-sm">
-                <button 
-                  onClick={() => setIsScenePickerOpen(true)}
-                  className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl bg-muted/30 border border-border/50 active:scale-[0.98] transition-all"
-                >
-                  <div className="flex items-center gap-3 overflow-hidden">
-                    <div className="size-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
-                      <activeSceneInfo.icon size={16} />
-                    </div>
-                    <div className="flex flex-col items-start leading-none overflow-hidden">
-                      <span className="text-[10px] font-black uppercase tracking-tight text-text-main truncate w-full">
-                        {activeSceneInfo.title}
-                      </span>
-                      <span className="text-[7px] font-bold text-text-muted uppercase tracking-widest mt-0.5">
-                        Current Screen
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="h-4 w-px bg-border/50" />
-                    <ChevronDown size={14} className="text-text-muted/60" />
-                  </div>
-                </button>
-              </div>
-
-              {/* Desktop Only Properties Header */}
-              <div className="hidden lg:flex p-4 border-b border-border items-center justify-between">
-                <h3 className="text-xs font-black uppercase tracking-widest text-text-main">Properties</h3>
-                <Settings size={14} className="text-text-muted" />
-              </div>
-
-              {/* Mobile Only Tab Selector */}
-              <div className="lg:hidden sticky top-0 z-30 flex border-b border-border bg-card/95 backdrop-blur-md">
+              {/* Properties Tab Selector */}
+              <div className="sticky top-0 z-30 flex border-b border-border bg-card/95 backdrop-blur-md">
                 {[
+                  { id: "screens", icon: Layers, label: "Screens", mobileOnly: true },
                   { id: "content", icon: PenTool, label: "Content" },
                   { id: "theme", icon: Palette, label: "Style" },
                   { id: "audio", icon: Music2, label: "Audio" }
-                ].map((t) => (
+                ].filter(t => !t.mobileOnly || (t.mobileOnly && typeof window !== 'undefined' && window.innerWidth < 1024)).map((t) => (
                   <button
                     key={t.id}
                     onClick={() => setEditorTab(t.id as any)}
                     className={cn(
-                      "flex-1 py-4 flex flex-col items-center gap-1 transition-all relative",
-                      editorTab === t.id ? "text-primary" : "text-text-muted"
+                      "flex-1 py-4 lg:py-3.5 flex flex-col lg:flex-row items-center justify-center gap-1.5 transition-all relative group",
+                      editorTab === t.id ? "text-primary" : "text-text-muted hover:text-text-main"
                     )}
                   >
-                    <t.icon size={16} />
-                    <span className="text-[9px] font-black uppercase tracking-widest">{t.label}</span>
+                    <t.icon size={16} className={cn("transition-transform", editorTab === t.id ? "scale-110" : "group-hover:scale-110")} />
+                    <span className="text-[9px] lg:text-[10px] font-black uppercase tracking-widest">{t.label}</span>
                     {editorTab === t.id && (
                       <motion.div layoutId="editorTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
                     )}
@@ -966,17 +936,105 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
                 ))}
               </div>
 
-              <div className="p-6">
-                <div className="flex flex-col gap-8">
+              <div className="p-0">
+                <div className="flex flex-col">
                 <AnimatePresence mode="wait">
+                  {/* CASE 0: SCREENS LIST (Mobile Tab) */}
+                  {editorTab === "screens" && (
+                    <motion.div
+                      key="screens-list"
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: 20 }}
+                      className="p-4 space-y-4"
+                    >
+                      <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-text-muted px-1">Studio Timeline</h3>
+                      
+                      <div className="flex flex-col gap-2">
+                        {/* Splash */}
+                        <button
+                          onClick={() => { setActiveSceneId("splash"); setEditorTab("content"); }}
+                          className={cn(
+                            "flex items-center gap-3 p-4 rounded-xl text-left transition-all border",
+                            activeSceneId === "splash" 
+                              ? "bg-primary/5 border-primary/20 ring-1 ring-primary/20" 
+                              : "bg-muted/5 border-border/50"
+                          )}
+                        >
+                          <div className="size-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-black text-sm">0</div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-black text-text-main uppercase tracking-tight">Splash Screen</p>
+                            <p className="text-[9px] text-text-muted font-bold uppercase tracking-widest">Entry Point</p>
+                          </div>
+                          <ChevronRight size={14} className="text-text-muted/40" />
+                        </button>
+
+                        {/* Custom Scenes */}
+                        {scenes.map((scene, index) => (
+                          <button
+                            key={scene.id}
+                            onClick={() => { setActiveSceneId(scene.id); setEditorTab("content"); }}
+                            className={cn(
+                              "flex items-center gap-3 p-4 rounded-xl text-left transition-all border",
+                              activeSceneId === scene.id 
+                                ? "bg-primary/5 border-primary/20 ring-1 ring-primary/20" 
+                                : "bg-muted/5 border-border/50"
+                            )}
+                          >
+                            <div className="size-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-black text-sm">{index + 1}</div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-xs font-black text-text-main uppercase tracking-tight">{scene.type}</span>
+                                <div className="size-1 rounded-full bg-border" />
+                                <span className="text-[9px] text-text-muted font-bold uppercase tracking-widest">Scene</span>
+                              </div>
+                              <p className="text-[9px] text-text-muted font-medium truncate mt-0.5">Custom creation screen</p>
+                            </div>
+                            <ChevronRight size={14} className="text-text-muted/40" />
+                          </button>
+                        ))}
+
+                        {/* Branding */}
+                        {showBrandingFinal && (
+                          <button
+                            onClick={() => { setActiveSceneId("branding"); setEditorTab("content"); }}
+                            className={cn(
+                              "flex items-center gap-3 p-4 rounded-xl text-left transition-all border",
+                              activeSceneId === "branding" 
+                                ? "bg-primary/5 border-primary/20 ring-1 ring-primary/20" 
+                                : "bg-muted/5 border-border/50"
+                            )}
+                          >
+                            <div className="size-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                              <Award size={18} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-black text-text-main uppercase tracking-tight">Final Screen</p>
+                              <p className="text-[9px] text-text-muted font-bold uppercase tracking-widest">Branding</p>
+                            </div>
+                            <ChevronRight size={14} className="text-text-muted/40" />
+                          </button>
+                        )}
+
+                        <button 
+                          onClick={addScene}
+                          className="w-full py-4 rounded-xl border-2 border-dashed border-border hover:border-primary/40 hover:bg-primary/5 transition-all flex items-center justify-center gap-2 group"
+                        >
+                          <Plus size={16} className="text-text-muted group-hover:text-primary transition-colors" />
+                          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-text-muted group-hover:text-primary transition-colors">Add Screen</span>
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+
                   {/* CASE 1: SPLASH SCREEN SETTINGS */}
-                  {activeSceneId === "splash" && (
+                  {activeSceneId === "splash" && editorTab !== "screens" && (
                     <motion.div
                       key="splash-props"
                       initial={{ opacity: 0, x: 20 }}
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0, x: -20 }}
-                      className="space-y-8"
+                      className="space-y-8 p-6"
                     >
                       {/* Tabbed Rendering for Splash */}
                       <div className="space-y-8 pb-10">
@@ -1181,7 +1239,7 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
                       initial={{ opacity: 0, x: 20 }}
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0, x: -20 }}
-                      className="space-y-8 pb-10"
+                      className="space-y-8 pb-10 p-6"
                     >
                       <div className="space-y-8 pb-10">
                         {editorTab === "content" && (
@@ -1341,7 +1399,7 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
                       initial={{ opacity: 0, x: 20 }}
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0, x: -20 }}
-                      className="pb-10"
+                      className="pb-10 p-6"
                     >
 
                       {editorTab === "theme" && (

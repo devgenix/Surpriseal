@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useMemo } from "react";
 import { useCreation, CreationProvider } from "@/context/CreationContext";
 import { CreationSidebar } from "@/components/layout/CreationSidebar";
 import { usePathname, useRouter } from "next/navigation";
@@ -32,7 +33,6 @@ import { calculateMomentPrice } from "@/lib/pricing-utils";
 import { useCurrency } from "@/context/CurrencyContext";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useMemo } from "react";
 
 const STEPS = [
   { id: "configure", title: "Configure", icon: Settings },
@@ -60,6 +60,36 @@ function CreationLayoutInner({ children }: { children: React.ReactNode }) {
     setIsScenePickerOpen,
     toggleFullScreen
   } = useCreation();
+
+  // Auto-fullscreen on mobile for creation flow
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
+    // Check if on mobile
+    const isMobile = window.innerWidth < 1024 || /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    
+    if (isMobile && !document.fullscreenElement) {
+      const enterFS = () => {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen().catch(() => {
+            // Silently fail if blocked by browser
+          });
+        }
+      };
+      
+      // Attempt once
+      enterFS();
+      
+      // Also bind to first click/touch since browsers require interaction for FS
+      window.addEventListener('click', enterFS, { once: true });
+      window.addEventListener('touchstart', enterFS, { once: true });
+      
+      return () => {
+        window.removeEventListener('click', enterFS);
+        window.removeEventListener('touchstart', enterFS);
+      };
+    }
+  }, []);
 
   const { user, logout } = useAuth();
   const { currency } = useCurrency();
@@ -165,10 +195,10 @@ function CreationLayoutInner({ children }: { children: React.ReactNode }) {
               {isStyleStep ? (
                 <>
                   {/* Left: Fullscreen Toggle */}
-                  <div className="w-12 flex justify-start">
+                  <div className="flex-none flex justify-start">
                     <button 
                       onClick={toggleFullScreen}
-                      className="size-9 flex items-center justify-center rounded-lg bg-muted/30 border border-border text-text-muted transition-all active:scale-95"
+                      className="size-9 flex items-center justify-center rounded-lg bg-muted/30 border border-border text-text-muted transition-all active:scale-95 px-3"
                     >
                       <Maximize2 size={16} />
                     </button>
@@ -191,17 +221,27 @@ function CreationLayoutInner({ children }: { children: React.ReactNode }) {
                   </div>
 
                   {/* Right: Preview/Edit Button */}
-                  <div className="w-12 flex justify-end">
+                  <div className="flex-none flex justify-end">
                     <button 
                       onClick={() => setActiveMobileMode(activeMobileMode === "preview" ? "edit" : "preview")}
                       className={cn(
-                        "size-9 flex items-center justify-center rounded-lg transition-all active:scale-95",
+                        "h-9 px-3 flex items-center justify-center gap-1.5 rounded-lg transition-all active:scale-95",
                         activeMobileMode === "preview" 
                          ? "bg-primary text-white shadow-lg shadow-primary/20" 
                          : "bg-primary/10 text-primary border border-primary/20"
                       )}
                     >
-                      {activeMobileMode === "preview" ? <PenTool size={16} /> : <Play size={16} />}
+                      {activeMobileMode === "preview" ? (
+                        <>
+                          <PenTool size={14} />
+                          <span className="text-[10px] font-black uppercase tracking-tight">Edit</span>
+                        </>
+                      ) : (
+                        <>
+                          <Play size={14} />
+                          <span className="text-[10px] font-black uppercase tracking-tight">Preview</span>
+                        </>
+                      )}
                     </button>
                   </div>
                 </>
