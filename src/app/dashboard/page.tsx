@@ -81,8 +81,8 @@ export default function DashboardPage() {
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
         <div className="flex flex-col gap-2">
-          <h1 className="text-text-main dark:text-white text-3xl md:text-4xl font-extrabold tracking-tight">Your Moments</h1>
-          <p className="text-text-muted dark:text-gray-400 text-base md:text-lg">Manage and track your celebration pages.</p>
+          <h1 className="text-text-main text-3xl md:text-4xl font-extrabold tracking-tight">Your Moments</h1>
+          <p className="text-text-muted text-base md:text-lg">Manage and track your celebration pages.</p>
         </div>
 
         {/* Filter/Sort Controls */}
@@ -117,12 +117,12 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {/* Create New Card - Always First */}
         <Link href="/dashboard/create" className="contents">
-          <button className="group relative flex flex-col items-center justify-center bg-transparent rounded-lg border-2 border-dashed border-primary/20 hover:border-primary/50 dark:border-white/10 dark:hover:border-primary/50 p-6 min-h-[320px] transition-all duration-300">
+          <button className="group relative flex flex-col items-center justify-center bg-transparent rounded-lg border-2 border-dashed border-primary/20 hover:border-primary/50 dark:border-border p-6 min-h-[320px] transition-all duration-300">
             <div className="size-16 rounded-full bg-primary/5 dark:bg-white/5 group-hover:bg-primary/10 flex items-center justify-center mb-4 transition-colors">
               <Plus className="w-8 h-8 text-primary group-hover:scale-110 transition-transform duration-300" />
             </div>
-            <h3 className="text-lg font-bold text-text-main dark:text-white mb-1">Create New</h3>
-            <p className="text-sm text-center text-text-muted dark:text-gray-400 max-w-[200px]">Start a fresh surprise for someone special.</p>
+            <h3 className="text-lg font-bold text-text-main mb-1">Create New</h3>
+            <p className="text-sm text-center text-text-muted max-w-[200px]">Start a fresh surprise for someone special.</p>
           </button>
         </Link>
 

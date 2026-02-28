@@ -646,9 +646,9 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
   }, [activeSceneId, scenes]);
 
   return (
-    <div className="flex-1 w-full flex flex-col h-full overflow-hidden bg-[#f5f5f7] dark:bg-black/40">
+    <div className="flex-1 w-full flex flex-col h-full overflow-hidden bg-background dark:bg-black/40">
       {/* Mobile Header: Mode Switcher & Forced Fullscreen Trigger */}
-      <div className="lg:hidden shrink-0 border-b border-border bg-white/80 dark:bg-black/80 backdrop-blur-xl z-[40]">
+      <div className="lg:hidden shrink-0 border-b border-border bg-card/80 dark:bg-black/80 backdrop-blur-xl z-[40]">
         <div className="p-4">
           <div className="flex items-center gap-2 w-full max-w-sm mx-auto">
             <div className="flex-1 flex items-stretch bg-black/5 dark:bg-white/5 border border-border/50 rounded-lg p-1 overflow-hidden">
@@ -720,7 +720,7 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
       <div className="flex-1 flex overflow-hidden relative">
         {/* Left Sidebar: Timeline (Desktop Only, or hidden on mobile mobile preview) */}
         <div className={cn(
-          "w-64 border-r border-border bg-[#fafafa] dark:bg-black/20 flex flex-col shrink-0 overflow-y-auto z-10",
+          "w-64 border-r border-border bg-card dark:bg-black/20 flex flex-col shrink-0 overflow-y-auto z-10",
           "hidden lg:flex" // Hide on mobile entirely, replaced by bottom rail & sidebar settings
         )}>
           {/* Device Preview Toggle */}
@@ -734,7 +734,7 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
                 onClick={() => setPreviewDevice("mobile")}
                 className={cn(
                   "flex-1 flex justify-center items-center py-1.5 text-[10px] font-bold rounded-md transition-all",
-                  previewDevice === "mobile" ? "bg-white dark:bg-white/10 shadow-sm text-primary" : "text-text-muted hover:text-text-main"
+                  previewDevice === "mobile" ? "bg-background dark:bg-white/10 shadow-sm text-primary" : "text-text-muted hover:text-text-main"
                 )}
               >
                 <Smartphone size={14} className="mr-1" /> Mobile
@@ -743,7 +743,7 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
                 onClick={() => setPreviewDevice("desktop")}
                 className={cn(
                   "flex-1 flex justify-center items-center py-1.5 text-[10px] font-bold rounded-md transition-all",
-                  previewDevice === "desktop" ? "bg-white dark:bg-white/10 shadow-sm text-primary" : "text-text-muted hover:text-text-main"
+                  previewDevice === "desktop" ? "bg-background dark:bg-white/10 shadow-sm text-primary" : "text-text-muted hover:text-text-main"
                 )}
               >
                 <Monitor size={14} className="mr-1" /> Desktop
@@ -786,7 +786,7 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
                 className={cn(
                   "group flex items-center gap-3 p-3 rounded-lg text-left transition-all cursor-pointer",
                   activeSceneId === scene.id 
-                    ? "bg-white dark:bg-white/10 shadow-sm border border-border ring-1 ring-primary/20" 
+                    ? "bg-card dark:bg-white/10 shadow-sm border border-border ring-1 ring-primary/20" 
                     : "hover:bg-black/[0.02]"
                 )}
               >
@@ -920,14 +920,14 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
         </AnimatePresence>
 
         {/* Main Stage */}
-        <div className="flex-1 lg:bg-[#f5f5f7] dark:lg:bg-black/40 overflow-hidden relative flex flex-col lg:flex-row">
+        <div className="flex-1 lg:bg-background dark:lg:bg-black/40 overflow-hidden relative flex flex-col lg:flex-row">
           <div className={cn(
             "flex-1 flex flex-col items-center justify-center p-0 lg:p-8 relative transition-all",
             activeMobileMode === "edit" && "hidden lg:flex"
           )}>
             <div 
               className={cn(
-                "bg-[#fafafa] dark:bg-black/5 flex flex-col overflow-hidden relative transition-all duration-500 ease-in-out",
+                "bg-card dark:bg-black/5 flex flex-col overflow-hidden relative transition-all duration-500 ease-in-out",
                 previewDevice === "mobile" || (typeof window !== 'undefined' && window.innerWidth < 1024)
                   ? "aspect-[9/16] h-full lg:max-h-[700px] w-full lg:max-w-[400px] lg:rounded-[32px] lg:shadow-2xl lg:border lg:border-border" 
                   : "h-full w-full rounded-lg shadow-2xl border border-border"
@@ -1345,11 +1345,11 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
                         <div className="flex p-1 bg-black/5 dark:bg-white/5 rounded-lg">
                           <button
                             onClick={() => updateSceneConfig(activeSceneId, { useGlobalTheme: true })}
-                            className={cn("flex-1 py-1.5 text-[10px] font-bold rounded-md transition-all", activeScene?.config?.useGlobalTheme !== false ? "bg-white shadow-sm text-primary" : "text-text-muted")}
+                            className={cn("flex-1 py-1.5 text-[10px] font-bold rounded-md transition-all", activeScene?.config?.useGlobalTheme !== false ? "bg-background dark:bg-white/10 shadow-sm text-primary" : "text-text-muted")}
                           >Global</button>
                           <button
                             onClick={() => updateSceneConfig(activeSceneId, { useGlobalTheme: false })}
-                            className={cn("flex-1 py-1.5 text-[10px] font-bold rounded-md transition-all", activeScene?.config?.useGlobalTheme === false ? "bg-white shadow-sm text-primary" : "text-text-muted")}
+                            className={cn("flex-1 py-1.5 text-[10px] font-bold rounded-md transition-all", activeScene?.config?.useGlobalTheme === false ? "bg-background dark:bg-white/10 shadow-sm text-primary" : "text-text-muted")}
                           >Custom</button>
                         </div>
                         {activeScene?.config?.useGlobalTheme === false && (

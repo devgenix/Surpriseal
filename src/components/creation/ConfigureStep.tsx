@@ -207,8 +207,8 @@ export default function ConfigureStep({ draftId: initialDraftId }: ConfigureStep
               className={cn(
                 "relative cursor-pointer transition-all duration-300 overflow-hidden group border-2",
                 selectedPlanId === plan.id 
-                  ? "border-primary shadow-xl shadow-primary/5 bg-surface" 
-                  : "border-border hover:border-primary/30 bg-surface/50"
+                  ? "border-primary shadow-xl shadow-primary/5 bg-card" 
+                  : "border-border hover:border-primary/30 bg-card/50"
               )}
               onClick={() => {
                 const isPublished = momentData?.status === "Published";
@@ -259,8 +259,8 @@ export default function ConfigureStep({ draftId: initialDraftId }: ConfigureStep
         <div className={cn(
           "rounded-lg p-6 lg:p-8 transition-all duration-500",
           selectedPlanId === "premium" 
-            ? "bg-surface/50 border-2 border-border opacity-60 pointer-events-none" 
-            : "bg-surface border-2 border-border shadow-sm"
+            ? "bg-muted/30 border-2 border-border opacity-60 pointer-events-none" 
+            : "bg-card border-2 border-border shadow-sm"
         )}>
           <div className="mb-8">
             <h2 className="text-xl md:text-2xl font-bold text-text-main">
@@ -284,7 +284,7 @@ export default function ConfigureStep({ draftId: initialDraftId }: ConfigureStep
                       "p-4 rounded-lg border-2 transition-all flex items-start gap-4",
                       isSelected 
                         ? "border-primary/40 bg-primary/5" 
-                        : "border-border hover:border-primary/20 bg-surface",
+                        : "border-border hover:border-primary/20 bg-card",
                     momentData?.status === "Published" && momentData?.paidAddons?.includes(addon.id)
                       ? "opacity-80 cursor-not-allowed select-none"
                       : "cursor-pointer"

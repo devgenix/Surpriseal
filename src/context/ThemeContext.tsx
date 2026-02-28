@@ -49,10 +49,14 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
 
     const updateResolvedTheme = () => {
-      if (theme === "system") {
-        setResolvedTheme(mediaQuery.matches ? "dark" : "light");
+      const isDark = theme === "system" ? mediaQuery.matches : theme === "dark";
+      setResolvedTheme(isDark ? "dark" : "light");
+      
+      // Toggle class on document root
+      if (isDark) {
+        root.classList.add("dark");
       } else {
-        setResolvedTheme(theme as "light" | "dark");
+        root.classList.remove("dark");
       }
     };
 

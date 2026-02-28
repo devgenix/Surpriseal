@@ -51,7 +51,7 @@ export default function MomentCard({ moment }: { moment: MomentProps }) {
   return (
     <div 
       onClick={() => router.push(`/dashboard/${moment.id}`)}
-      className="group relative flex flex-col bg-white dark:bg-surface-dark rounded-lg border border-[#f3eae7] dark:border-white/5 shadow-sm hover:shadow-md hover:border-primary/20 transition-all duration-300 overflow-hidden cursor-pointer"
+      className="group relative flex flex-col bg-card rounded-lg border border-border shadow-sm hover:shadow-md hover:border-primary/20 transition-all duration-300 overflow-hidden cursor-pointer"
     >
       {/* Card Image/Cover */}
       <div 
@@ -123,20 +123,20 @@ export default function MomentCard({ moment }: { moment: MomentProps }) {
             {occasionIcons[moment.occasion] || <Cake size={10} />}
             {moment.occasion}
           </div>
-          <div className="flex items-center gap-1 text-[10px] font-bold text-[#97604e] dark:text-gray-500">
+          <div className="flex items-center gap-1 text-[10px] font-bold text-text-muted">
             <Calendar size={10} />
             {moment.updatedAt}
           </div>
         </div>
         
-        <h3 className="text-base font-bold text-[#1b110e] dark:text-white leading-tight mb-4 group-hover:text-primary transition-colors line-clamp-1">
+        <h3 className="text-base font-bold text-text-main leading-tight mb-4 group-hover:text-primary transition-colors line-clamp-1">
           {moment.recipient}'s Moment
         </h3>
 
         {/* Footer Stats & Actions */}
-        <div className="mt-auto pt-3 border-t border-[#f3eae7] dark:border-white/5 flex items-center justify-between">
+        <div className="mt-auto pt-3 border-t border-border flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1 text-[#1b110e]/60 dark:text-gray-500" title={`${moment.views} Views`}>
+            <div className="flex items-center gap-1 text-text-main/60" title={`${moment.views} Views`}>
               <Eye size={14} className={isPublished ? "text-primary/70" : "opacity-30"} />
               <span className="text-[11px] font-bold">{isPublished ? moment.views : '--'}</span>
             </div>
@@ -144,21 +144,21 @@ export default function MomentCard({ moment }: { moment: MomentProps }) {
 
           <div className="flex items-center gap-1.5">
             <button 
-              className="p-1.5 rounded-md text-[#97604e] hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all"
+              className="p-1.5 rounded-md text-text-muted hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all"
               onClick={(e) => { e.stopPropagation(); setShowConfirm(true); }}
               title="Delete"
             >
               <Trash2 size={16} />
             </button>
             <button 
-              className="p-1.5 rounded-md text-[#97604e] hover:text-primary hover:bg-primary/5 transition-all text-primary"
+              className="p-1.5 rounded-md text-text-muted hover:text-primary hover:bg-primary/5 transition-all text-primary"
               onClick={(e) => { e.stopPropagation(); window.open(`/view/${moment.urlSlug || moment.id}`, '_blank'); }}
               title="Live Preview"
             >
               <Play size={16} />
             </button>
             <button 
-              className="p-1.5 rounded-md text-[#97604e] hover:text-primary hover:bg-primary/5 transition-all"
+              className="p-1.5 rounded-md text-text-muted hover:text-primary hover:bg-primary/5 transition-all"
               onClick={(e) => { e.stopPropagation(); router.push(`/dashboard/create/${moment.id}?resume=true`); }}
               title="Edit"
             >

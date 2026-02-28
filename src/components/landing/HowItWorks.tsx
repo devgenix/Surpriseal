@@ -31,7 +31,7 @@ export default function HowItWorks() {
   return (
     <section
       id="how-it-works"
-      className="bg-white py-20 border-y border-[#f3eae7]"
+      className="bg-background py-20 border-y border-border"
     >
       <Container>
         {/* Header */}
@@ -39,10 +39,10 @@ export default function HowItWorks() {
           <h2 className="text-base font-semibold text-primary uppercase tracking-wide mb-2">
             Simple Process
           </h2>
-          <h3 className="text-3xl font-bold text-[#1b110e] sm:text-4xl">
+          <h3 className="text-3xl font-bold text-text-main sm:text-4xl">
             How Supriseal Works
           </h3>
-          <p className="mt-4 text-lg text-[#97604e]">
+          <p className="mt-4 text-lg text-text-muted">
             Create a magical experience in just three simple steps. No design skills
             required.
           </p>
@@ -56,7 +56,7 @@ export default function HowItWorks() {
           {steps.map((step, idx) => (
             <div
               key={step.number}
-              className="group relative flex flex-col items-center text-center p-8 rounded-3xl bg-[#fcf9f8] border border-[#f3eae7] transition-all hover:shadow-[0_20px_50px_-15px_rgba(27,17,14,0.1)] hover:border-primary/30 hover:-translate-y-2 z-10"
+              className="group relative flex flex-col items-center text-center p-8 rounded-3xl bg-card border border-border transition-all hover:shadow-[0_20px_50px_-15px_rgba(27,17,14,0.1)] hover:border-primary/30 hover:-translate-y-2 z-10"
             >
               <div
                 className={`mb-8 flex h-48 w-full items-center justify-center rounded-2xl overflow-hidden bg-gradient-to-br ${step.color} shadow-inner group-hover:shadow-lg transition-all duration-500`}
@@ -67,11 +67,11 @@ export default function HowItWorks() {
                   className="w-full h-full object-cover transform transition-transform duration-700 group-hover:scale-110"
                 />
               </div>
-              <div className="absolute top-6 left-6 w-10 h-10 rounded-full bg-white border-4 border-[#fcf9f8] shadow-md flex items-center justify-center text-primary font-black text-sm z-20">
+              <div className="absolute top-6 left-6 w-10 h-10 rounded-full bg-background border-4 border-card shadow-md flex items-center justify-center text-primary font-black text-sm z-20">
                 {step.number}
               </div>
-              <h4 className="text-xl font-bold text-[#1b110e] mb-3 tracking-tight">{step.title}</h4>
-              <p className="text-[#97604e] leading-relaxed font-medium text-sm">{step.description}</p>
+              <h4 className="text-xl font-bold text-text-main mb-3 tracking-tight">{step.title}</h4>
+              <p className="text-text-muted leading-relaxed font-medium text-sm">{step.description}</p>
             </div>
           ))}
         </div>

@@ -3,12 +3,12 @@ import Container from "@/components/ui/Container";
 
 export default function Hero() {
   return (
-    <section className="relative py-12 lg:py-24 bg-[#fcf9f8] lg:min-h-screen overflow-hidden flex items-center">
+    <section className="relative py-12 lg:py-24 bg-background lg:min-h-screen overflow-hidden flex items-center">
       <Container className="relative z-10 mx-auto">
         <div className="grid gap-12 lg:grid-cols-2 lg:gap-8 items-center">
           {/* Left: Copy */}
           <div className="max-w-2xl text-center lg:text-left">
-            <h1 className="text-3xl font-extrabold tracking-tight text-[#1b110e] sm:text-5xl lg:text-7xl mb-6 leading-[1.15] px-2 sm:px-0">
+            <h1 className="text-3xl font-extrabold tracking-tight text-text-main sm:text-5xl lg:text-7xl mb-6 leading-[1.15] px-2 sm:px-0">
               The Most Meaningful Way to{" "}
               <span className="text-primary relative inline-block">
                 Celebrate
@@ -18,7 +18,7 @@ export default function Hero() {
               </span>
             </h1>
 
-            <p className="text-lg sm:text-xl text-[#97604e] mb-8 max-w-lg leading-relaxed mx-auto lg:mx-0 font-medium px-4 sm:px-0">
+            <p className="text-lg sm:text-xl text-text-muted mb-8 max-w-lg leading-relaxed mx-auto lg:mx-0 font-medium px-4 sm:px-0">
               Create a digital journey of memories and surprises they&apos;ll cherish forever. Simple to build, impossible to forget.
             </p>
 
@@ -47,7 +47,7 @@ export default function Hero() {
                 href="/view/example"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center rounded-lg border-2 border-[#e64c19]/30 bg-white px-8 py-4 text-base font-bold text-[#e64c19] transition-all hover:border-primary hover:bg-primary/5"
+                className="inline-flex items-center justify-center rounded-lg border-2 border-[#e64c19]/30 bg-card px-8 py-4 text-base font-bold text-[#e64c19] transition-all hover:border-primary hover:bg-primary/5"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -67,7 +67,7 @@ export default function Hero() {
             </div>
 
             {/* Social proof */}
-            <div className="mt-8 flex items-center justify-center lg:justify-start gap-4 text-sm text-[#97604e]">
+            <div className="mt-8 flex items-center justify-center lg:justify-start gap-4 text-sm text-text-muted">
               <div className="flex -space-x-2">
                 {[
                   "/images/landing/avatars/avatar-1.png",
@@ -76,12 +76,12 @@ export default function Hero() {
                 ].map((src, i) => (
                   <div
                     key={i}
-                    className={`h-10 w-10 rounded-full border-2 border-white shadow-sm overflow-hidden`}
+                    className={`h-10 w-10 rounded-full border-2 border-background shadow-sm overflow-hidden`}
                   >
                     <img src={src} alt={`User ${i + 1}`} className="w-full h-full object-cover" />
                   </div>
                 ))}
-                <div className="h-10 w-10 rounded-full bg-primary/10 border-2 border-white flex items-center justify-center text-[10px] font-bold text-primary">
+                <div className="h-10 w-10 rounded-full bg-primary/10 border-2 border-background flex items-center justify-center text-[10px] font-bold text-primary">
                   +10k
                 </div>
               </div>
@@ -95,8 +95,8 @@ export default function Hero() {
             <div className="absolute inset-0 bg-gradient-to-tr from-primary/10 to-purple-100 rounded-full blur-3xl opacity-60 scale-90 pointer-events-none" />
 
             {/* Card */}
-            <div className="relative w-full aspect-square max-w-[460px] bg-white rounded-2xl shadow-[0_20px_60px_-15px_rgba(27,17,14,0.15)] p-6 rotate-2 hover:rotate-0 transition-transform duration-700 border border-[#f3eae7]">
-              <div className="w-full h-full rounded-xl overflow-hidden bg-[#fcf9f8] relative">
+            <div className="relative w-full aspect-square max-w-[460px] bg-card rounded-2xl shadow-[0_20px_60px_-15px_rgba(27,17,14,0.15)] p-6 rotate-2 hover:rotate-0 transition-transform duration-700 border border-border">
+              <div className="w-full h-full rounded-xl overflow-hidden bg-background relative">
                 {/* Hero Gift Image */}
                 <div className="absolute inset-0">
                   <img 

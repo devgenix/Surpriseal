@@ -28,51 +28,51 @@
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 60 9.1% 97.8%;
 
-    --border: 20 5.9% 90%;
-    --input: 20 5.9% 90%;
+    --border: 20 20% 92%; /* #f3eae7-ish - Subtle Warm Border */
+    --input: 20 20% 88%; /* #e7d6d0-ish */
     --ring: 15 80.4% 50%; /* Match primary */
 
     --radius: 0.75rem;
 
     /* Custom Surpriseal Tokens */
-    --text-main: 20 14.3% 4.1%; /* #1b110e */
-    --text-muted: 25 5.3% 44.7%; /* #97604e */
+    --text-main: 15 25% 6%; /* #1b110e - Dark Brown/Black */
+    --text-muted: 15 35% 45%; /* #97604e - Muted Brown */
     --surface: 0 0% 100%; /* #ffffff */
   }
 
   .dark {
-    --background: 240 10% 3.9%;
+    --background: 15 25% 6%; /* #1b110e - Deep Dark Brown Base */
     --foreground: 0 0% 98%;
 
-    --card: 240 10% 3.9%;
+    --card: 15 25% 8%; /* Slightly lighter than background */
     --card-foreground: 0 0% 98%;
 
-    --popover: 240 10% 3.9%;
+    --popover: 15 25% 8%;
     --popover-foreground: 0 0% 98%;
 
     --primary: 15 80.4% 50%;
     --primary-foreground: 0 0% 98%;
 
-    --secondary: 240 3.7% 15.9%;
+    --secondary: 15 15% 15%;
     --secondary-foreground: 0 0% 98%;
 
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
+    --muted: 15 15% 15%;
+    --muted-foreground: 15 10% 65%;
 
-    --accent: 240 3.7% 15.9%;
+    --accent: 15 15% 20%;
     --accent-foreground: 0 0% 98%;
 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
+    --border: 15 20% 15%; /* Darker warm border */
+    --input: 15 20% 15%;
     --ring: 15 80.4% 50%;
 
     /* Custom Surpriseal Tokens - Dark */
-    --text-main: 0 0% 98%; /* #fafafa */
-    --text-muted: 240 5% 64.9%; /* #a1a1aa */
-    --surface: 240 10% 3.9%; /* #09090b */
+    --text-main: 0 0% 98%; /* White/Off-white font-black titles */
+    --text-muted: 15 10% 65%; /* Muted gray-brownish */
+    --surface: 15 20% 10%; /* Very dark brown card surfaces */
   }
 }
 

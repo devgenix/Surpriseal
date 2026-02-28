@@ -4,7 +4,7 @@ const theme: ThemeConfig = {
   token: {
     fontSize: 16,
     colorPrimary: '#e64c19',
-    colorTextBase: '#1F1F1F',
+    // colorTextBase: '#1F1F1F', // Removed to let dark algorithm handle text color
     borderRadius: 12,
     fontFamily: 'Plus Jakarta Sans, sans-serif',
   },

@@ -103,7 +103,7 @@ function CreationLayoutInner({ children }: { children: React.ReactNode }) {
   const handleBack = () => router.back();
 
   return (
-    <div className="flex h-[100dvh] w-full bg-[#fcf9f8] dark:bg-[#211511] overflow-hidden font-display">
+    <div className="flex h-[100dvh] w-full bg-background overflow-hidden font-display">
       <CreationSidebar
         currentStepId={currentStep.id}
         steps={steps}
@@ -118,7 +118,7 @@ function CreationLayoutInner({ children }: { children: React.ReactNode }) {
 
         {/* ================= HEADER ================= */}
         <header className={cn(
-          "shrink-0 z-40 bg-white/80 dark:bg-[#2a1d19]/80 backdrop-blur-md border-b border-[#e7d6d0] px-4 h-[72px] flex flex-col justify-center transition-all",
+          "shrink-0 z-40 bg-card/80 backdrop-blur-md border-b border-border px-4 h-[72px] flex flex-col justify-center transition-all",
           isCinematic && "hidden lg:flex"
         )}>
           <div className="w-full max-w-4xl mx-auto flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between px-2">
@@ -133,10 +133,10 @@ function CreationLayoutInner({ children }: { children: React.ReactNode }) {
               </button>
 
               <div className="text-center">
-                <p className="text-[10px] uppercase text-[#97604e] font-bold tracking-wider">
+                <p className="text-[10px] uppercase text-text-muted font-bold tracking-wider">
                   Step {currentStepIndex + 1} of {steps.length}
                 </p>
-                <h1 className="text-sm font-bold text-[#1b110e] dark:text-white">
+                <h1 className="text-sm font-bold text-text-main">
                   {currentStep.title}
                 </h1>
               </div>
@@ -153,15 +153,15 @@ function CreationLayoutInner({ children }: { children: React.ReactNode }) {
             <div className="hidden lg:flex items-center gap-4">
               <button
                 onClick={handleBack}
-                className="flex items-center gap-2 text-sm font-semibold text-[#97604e] hover:text-primary transition"
+                className="flex items-center gap-2 text-sm font-semibold text-text-muted hover:text-primary transition"
               >
                 <ArrowLeft size={16} />
                 Back
               </button>
 
-              <div className="h-5 w-px bg-[#e7d6d0]" />
+              <div className="h-5 w-px bg-border" />
 
-              <h1 className="text-sm font-bold uppercase tracking-wide text-[#1b110e] dark:text-white">
+              <h1 className="text-sm font-bold uppercase tracking-wide text-text-main">
                 {currentStep.title}
               </h1>
             </div>
@@ -216,7 +216,7 @@ function CreationLayoutInner({ children }: { children: React.ReactNode }) {
 
         {/* ================= FOOTER ================= */}
         <footer className={cn(
-          "shrink-0 z-40 bg-white/95 dark:bg-[#211511]/95 backdrop-blur-md border-t border-[#e7d6d0] px-4 py-5 transition-all",
+          "shrink-0 z-40 bg-card/95 backdrop-blur-md border-t border-border px-4 py-5 transition-all",
           isCinematic && "hidden lg:block"
         )}>
           <div className="max-w-4xl mx-auto">
@@ -227,14 +227,14 @@ function CreationLayoutInner({ children }: { children: React.ReactNode }) {
               {/* Left: Progress */}
               <div className="flex flex-col w-full max-w-[240px]">
                 <div className="flex justify-between items-center mb-1.5">
-                  <span className="text-[10px] text-[#97604e] uppercase font-extrabold tracking-wider">
+                  <span className="text-[10px] text-text-muted uppercase font-extrabold tracking-wider">
                     Step {currentStepIndex + 1} of {steps.length}
                   </span>
                   <span className="text-[10px] text-primary font-extrabold">
                     {Math.round(progress)}%
                   </span>
                 </div>
-                <div className="h-2 w-full bg-[#f3eae7] dark:bg-[#3a2d29] rounded-full overflow-hidden">
+                <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
                   <div
                     className="h-full bg-primary transition-all duration-500 rounded-full"
                     style={{ width: `${progress}%` }}
@@ -245,12 +245,12 @@ function CreationLayoutInner({ children }: { children: React.ReactNode }) {
               {/* Right: Price + Continue */}
               <div className="flex items-center gap-8">
                 <div className="flex flex-col items-end">
-                  <span className="text-[10px] text-[#97604e] font-bold uppercase tracking-wider">
+                  <span className="text-[10px] text-text-muted font-bold uppercase tracking-wider">
                     {(momentData?.paidAmount || 0) > 0
                       ? "Balance Due"
                       : "Total Price"}
                   </span>
-                  <span className="text-2xl font-black text-[#1b110e] dark:text-white tabular-nums">
+                  <span className="text-2xl font-black text-text-main tabular-nums">
                     {formatPrice(
                       Math.max(
                         0,
@@ -296,18 +296,13 @@ function CreationLayoutInner({ children }: { children: React.ReactNode }) {
 
                 {/* Save Status */}
                 {!isConfigureStep && (
-                  <div className="flex items-center gap-2 text-xs text-[#97604e] font-medium">
+                  <div className="flex items-center gap-2 text-xs text-text-muted font-medium">
                     {saving ? (
                       <>
                         <Loader2 size={14} className="animate-spin" />
                         Saving...
                       </>
-                    ) : saveError ? (
-                      <>
-                        <AlertCircle size={14} />
-                        Error saving
-                      </>
-                    ) : lastSaved ? (
+                    ) : (lastSaved ? (
                       <>
                         <CheckCircle2 size={14} />
                         Saved{" "}
@@ -316,12 +311,12 @@ function CreationLayoutInner({ children }: { children: React.ReactNode }) {
                           minute: "2-digit",
                         })}
                       </>
-                    ) : null}
+                    ) : null)}
                   </div>
                 )}
 
                 {/* Balance Line */}
-                <div className="text-sm font-semibold text-[#1b110e] dark:text-white tabular-nums">
+                <div className="text-sm font-semibold text-text-main tabular-nums">
                   {(momentData?.paidAmount || 0) > 0
                     ? "Balance Due: "
                     : "Total: "}

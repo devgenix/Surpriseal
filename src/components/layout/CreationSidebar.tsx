@@ -77,7 +77,7 @@ export function CreationSidebar({
   return (
     <aside
       className={cn(
-        "fixed inset-y-0 left-0 w-80 bg-surface border-r border-border z-50 transition-transform duration-300 lg:relative lg:translate-x-0 shadow-sm",
+        "fixed inset-y-0 left-0 w-80 bg-card border-r border-border z-50 transition-transform duration-300 lg:relative lg:translate-x-0 shadow-sm",
         sidebarOpen ? "translate-x-0" : "-translate-x-full"
       )}
     >
@@ -146,9 +146,9 @@ export function CreationSidebar({
                     className={cn(
                       "flex items-center gap-4 rounded-md p-4 transition-all w-full text-left",
                       isCurrent
-                        ? "bg-[#fdf1ec] border border-primary/20"
+                        ? "bg-primary/10 border border-primary/20"
                         : isCompleted
-                        ? "bg-black/[0.02] hover:bg-black/[0.05]"
+                        ? "bg-muted/30 hover:bg-muted/50"
                         : "opacity-60 grayscale-[0.2] cursor-not-allowed"
                     )}
                   >
@@ -218,7 +218,7 @@ export function CreationSidebar({
                 </div>
                 <div className="grid gap-1.5 pl-1">
                   {momentData.plan === "premium" ? (
-                    <div className="flex items-center gap-2 text-xs font-medium text-[#1b110e]/70">
+                    <div className="flex items-center gap-2 text-xs font-medium text-text-main/70">
                       <Check size={12} className="text-primary" />
                       <span>All Premium Features</span>
                     </div>
@@ -238,7 +238,7 @@ export function CreationSidebar({
                         return (
                           <div
                             key={id}
-                            className="flex items-center gap-2 text-xs font-medium text-[#1b110e]/70"
+                            className="flex items-center gap-2 text-xs font-medium text-text-main/70"
                           >
                             <Check size={12} className="text-primary" />
                             <span>{addon.title}</span>
