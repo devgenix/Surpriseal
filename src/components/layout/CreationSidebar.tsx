@@ -279,7 +279,7 @@ export function CreationSidebar({
                       duration: 0.18,
                       ease: [0.16, 1, 0.3, 1],
                     }}
-                    className="w-full bg-white dark:bg-[#1b110e] border border-border rounded-md shadow-xl p-3 space-y-2 origin-bottom-right"
+                    className="w-full bg-card border border-border rounded-md shadow-xl p-3 space-y-2 origin-bottom-right"
                   >
                     <div className="px-3 py-2">
                       <p className="text-sm font-bold text-text-main">
@@ -406,7 +406,7 @@ function PopoverItem({
       className={cn(
         "w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-all",
         danger
-          ? "text-red-500 hover:bg-red-50"
+          ? "text-red-500 hover:bg-red-500/10"
           : active
           ? "bg-primary/10 text-primary"
           : "text-text-main hover:bg-primary/5"

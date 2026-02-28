@@ -656,7 +656,7 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
                 onClick={() => setActiveMobileMode("edit")}
                 className={cn(
                   "flex-1 flex justify-center items-center py-2 text-[10px] font-black uppercase tracking-widest rounded-md transition-all",
-                  activeMobileMode === "edit" ? "bg-white dark:bg-white/10 shadow-md text-primary" : "text-text-muted hover:text-text-main hover:bg-black/5 dark:hover:bg-white/5"
+                  activeMobileMode === "edit" ? "bg-background dark:bg-white/10 shadow-md text-primary" : "text-text-muted hover:text-text-main hover:bg-muted/10"
                 )}
               >
                 <PenTool size={14} className="mr-2 shrink-0" /> <span className="truncate">Editor</span>
@@ -668,7 +668,7 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
                 }}
                 className={cn(
                   "flex-1 flex justify-center items-center py-2 text-[10px] font-black uppercase tracking-widest rounded-md transition-all",
-                  activeMobileMode === "preview" ? "bg-white dark:bg-white/10 shadow-md text-primary" : "text-text-muted hover:text-text-main hover:bg-black/5 dark:hover:bg-white/5"
+                  activeMobileMode === "preview" ? "bg-background dark:bg-white/10 shadow-md text-primary" : "text-text-muted hover:text-text-main hover:bg-muted/10"
                 )}
               >
                 <Play size={14} className="mr-2 shrink-0" /> <span className="truncate">Preview</span>
@@ -677,7 +677,7 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
             
             <button 
               onClick={toggleFullScreen}
-              className="size-[42px] shrink-0 flex items-center justify-center rounded-lg bg-black/5 dark:bg-white/5 border border-border/50 text-text-muted hover:text-text-main hover:bg-black/10 dark:hover:bg-white/10 transition-all active:scale-95"
+              className="size-[42px] shrink-0 flex items-center justify-center rounded-lg bg-muted/30 border border-border text-text-muted hover:text-text-main hover:bg-muted/50 transition-all active:scale-95"
             >
               <Maximize2 size={16} />
             </button>
@@ -687,10 +687,10 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
         {/* Mobile Scene Switcher Row (Compact) */}
         {activeMobileMode === "edit" && (
           <div className="px-4 pb-4 animate-in fade-in slide-in-from-top-2">
-            <div className="flex items-stretch max-w-sm mx-auto bg-black/5 dark:bg-white/5 border border-border/50 rounded-lg overflow-hidden">
+            <div className="flex items-stretch max-w-sm mx-auto bg-muted/30 border border-border rounded-lg overflow-hidden">
               <button 
                 onClick={() => setIsScenePickerOpen(true)}
-                className="flex-1 flex items-center justify-between px-4 py-3 text-left hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+                className="flex-1 flex items-center justify-between px-4 py-3 text-left hover:bg-muted/10 transition-colors"
               >
                 <div className="flex items-center gap-3 overflow-hidden">
                   <div className="shrink-0 size-6 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
@@ -729,12 +729,12 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
               <Monitor size={12} />
               Preview Mode
             </h2>
-            <div className="flex p-1 bg-black/5 dark:bg-white/5 rounded-lg">
+            <div className="flex p-1 bg-muted/30 rounded-lg">
               <button
                 onClick={() => setPreviewDevice("mobile")}
                 className={cn(
                   "flex-1 flex justify-center items-center py-1.5 text-[10px] font-bold rounded-md transition-all",
-                  previewDevice === "mobile" ? "bg-background dark:bg-white/10 shadow-sm text-primary" : "text-text-muted hover:text-text-main"
+                  previewDevice === "mobile" ? "bg-background dark:bg-card shadow-sm text-primary" : "text-text-muted hover:text-text-main"
                 )}
               >
                 <Smartphone size={14} className="mr-1" /> Mobile
@@ -743,7 +743,7 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
                 onClick={() => setPreviewDevice("desktop")}
                 className={cn(
                   "flex-1 flex justify-center items-center py-1.5 text-[10px] font-bold rounded-md transition-all",
-                  previewDevice === "desktop" ? "bg-background dark:bg-white/10 shadow-sm text-primary" : "text-text-muted hover:text-text-main"
+                  previewDevice === "desktop" ? "bg-background dark:bg-card shadow-sm text-primary" : "text-text-muted hover:text-text-main"
                 )}
               >
                 <Monitor size={14} className="mr-1" /> Desktop
@@ -768,8 +768,8 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
               className={cn(
                 "group flex items-center gap-3 p-3 rounded-lg text-left transition-all cursor-pointer",
                 activeSceneId === "splash" 
-                  ? "bg-white dark:bg-white/10 shadow-sm border border-border ring-1 ring-primary/20" 
-                  : "hover:bg-black/[0.02]"
+                  ? "bg-card dark:bg-card shadow-sm border border-border ring-1 ring-primary/20" 
+                  : "hover:bg-muted/10"
               )}
             >
               <div className="size-8 rounded-md bg-primary/10 text-primary flex items-center justify-center font-black text-xs">0</div>
@@ -786,8 +786,8 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
                 className={cn(
                   "group flex items-center gap-3 p-3 rounded-lg text-left transition-all cursor-pointer",
                   activeSceneId === scene.id 
-                    ? "bg-card dark:bg-white/10 shadow-sm border border-border ring-1 ring-primary/20" 
-                    : "hover:bg-black/[0.02]"
+                    ? "bg-card dark:bg-card shadow-sm border border-border ring-1 ring-primary/20" 
+                    : "hover:bg-muted/10"
                 )}
               >
                 <div className="size-8 rounded-md bg-primary/10 text-primary flex items-center justify-center font-black text-xs">
@@ -818,8 +818,8 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
               className={cn(
                 "group flex items-center gap-3 p-3 rounded-lg text-left transition-all cursor-pointer",
                 activeSceneId === "branding" 
-                  ? "bg-white dark:bg-white/10 shadow-sm border border-border ring-1 ring-primary/20" 
-                  : "hover:bg-black/[0.02]"
+                  ? "bg-card dark:bg-card shadow-sm border border-border ring-1 ring-primary/20" 
+                  : "hover:bg-muted/10"
               )}
             >
               <div className="size-8 rounded-md bg-primary/10 text-primary flex items-center justify-center font-black text-xs">{scenes.length + 1}</div>
@@ -833,7 +833,7 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
               onClick={addScene}
               className="group flex items-center gap-3 p-3 rounded-lg border border-dashed border-border hover:border-primary/50 hover:bg-primary/5 text-left transition-all cursor-pointer text-text-muted hover:text-primary mt-1"
             >
-              <div className="size-8 rounded-md bg-black/5 dark:bg-white/5 group-hover:bg-primary/10 flex items-center justify-center transition-colors">
+              <div className="size-8 rounded-md bg-muted/30 group-hover:bg-primary/10 flex items-center justify-center transition-colors">
                 <Plus size={16} />
               </div>
               <div className="flex-1 overflow-hidden">
@@ -859,9 +859,9 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
                 initial={{ y: "100%" }} 
                 animate={{ y: 0 }} 
                 exit={{ y: "100%" }}
-                className="relative w-full max-w-sm bg-white dark:bg-zinc-900 rounded-[2.5rem] shadow-2xl overflow-hidden border border-white/10 p-6 pb-safe"
+                className="relative w-full max-w-sm bg-card rounded-[2.5rem] shadow-2xl overflow-hidden border border-border/50 p-6 pb-safe"
               >
-                <div className="w-12 h-1.5 bg-black/10 dark:bg-white/10 rounded-full mx-auto mb-6" />
+                <div className="w-12 h-1.5 bg-muted rounded-full mx-auto mb-6" />
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-text-muted">Jump to Screen</h3>
                   <button onClick={() => setIsScenePickerOpen(false)} className="text-text-muted hover:text-text-main p-1">
@@ -874,7 +874,7 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
                     onClick={() => { setActiveSceneId("splash"); setIsScenePickerOpen(false); }}
                     className={cn(
                       "w-full flex items-center gap-4 p-4 rounded-lg transition-all",
-                      activeSceneId === "splash" ? "bg-primary text-white shadow-lg shadow-primary/20" : "bg-black/5 dark:bg-white/5 text-text-main"
+                      activeSceneId === "splash" ? "bg-primary text-white shadow-lg shadow-primary/20" : "bg-muted/50 text-text-main"
                     )}
                   >
                     <Heart size={18} />
@@ -889,7 +889,7 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
                       onClick={() => { setActiveSceneId(scene.id); setIsScenePickerOpen(false); }}
                       className={cn(
                         "w-full flex items-center gap-4 p-4 rounded-lg transition-all",
-                        activeSceneId === scene.id ? "bg-primary text-white shadow-lg shadow-primary/20" : "bg-black/5 dark:bg-white/5 text-text-main"
+                        activeSceneId === scene.id ? "bg-primary text-white shadow-lg shadow-primary/20" : "bg-muted/50 text-text-main"
                       )}
                     >
                       {scene.type === "gallery" ? <ImageIcon size={18} /> : 
@@ -906,7 +906,7 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
                     onClick={() => { setActiveSceneId("branding"); setIsScenePickerOpen(false); }}
                     className={cn(
                       "w-full flex items-center gap-4 p-4 rounded-lg transition-all",
-                      activeSceneId === "branding" ? "bg-primary text-white shadow-lg shadow-primary/20" : "bg-black/5 dark:bg-white/5 text-text-main"
+                      activeSceneId === "branding" ? "bg-primary text-white shadow-lg shadow-primary/20" : "bg-muted/50 text-text-main"
                     )}
                   >
                     <Award size={18} />
@@ -927,7 +927,7 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
           )}>
             <div 
               className={cn(
-                "bg-card dark:bg-black/5 flex flex-col overflow-hidden relative transition-all duration-500 ease-in-out",
+                "bg-card dark:bg-muted/50 flex flex-col overflow-hidden relative transition-all duration-500 ease-in-out",
                 previewDevice === "mobile" || (typeof window !== 'undefined' && window.innerWidth < 1024)
                   ? "aspect-[9/16] h-full lg:max-h-[700px] w-full lg:max-w-[400px] lg:rounded-[32px] lg:shadow-2xl lg:border lg:border-border" 
                   : "h-full w-full rounded-lg shadow-2xl border border-border"
@@ -949,7 +949,7 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
 
             {/* Content Properties (Edit Area) */}
             <div className={cn(
-              "flex-1 lg:w-1/4 lg:max-w-xs lg:min-w-[260px] lg:border-l lg:border-border lg:bg-surface lg:shrink-0 p-6 lg:p-6 overflow-y-auto scrollbar-none transition-all",
+              "flex-1 lg:w-1/4 lg:max-w-xs lg:min-w-[260px] lg:border-l lg:border-border lg:bg-card lg:shrink-0 p-6 lg:p-6 overflow-y-auto scrollbar-none transition-all",
               activeMobileMode === "preview" && "hidden lg:block",
               activeMobileMode === "edit" && "w-full"
             )}>
@@ -992,10 +992,10 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
                         </h3>
                         <div className="flex flex-col gap-3">
                            {momentData?.imageUrl ? (
-                             <div className="relative group aspect-video rounded-lg overflow-hidden border border-border bg-black/5">
+                             <div className="relative group aspect-video rounded-lg overflow-hidden border border-border bg-muted/30">
                                <img src={momentData.imageUrl} className="w-full h-full object-cover" />
                                <div className="absolute inset-0 bg-black/20 flex flex-col items-center justify-center p-2">
-                                 <div className="bg-white/90 backdrop-blur-sm rounded-full px-3 py-1 flex items-center gap-1.5 shadow-lg border border-white/20">
+                                 <div className="bg-card/90 backdrop-blur-sm rounded-full px-3 py-1 flex items-center gap-1.5 shadow-lg border border-border">
                                    <div className="size-1.5 rounded-full bg-green-500 animate-pulse" />
                                    <p className="text-[8px] font-black text-black uppercase tracking-widest">Active Cover</p>
                                  </div>
@@ -1008,7 +1008,7 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
                                 </button>
                               </div>
                            ) : (
-                             <div className="aspect-video rounded-lg border border-dashed border-border bg-black/[0.02] flex items-center justify-center text-center p-4">
+                             <div className="aspect-video rounded-lg border border-dashed border-border bg-muted/30 flex items-center justify-center text-center p-4">
                                <p className="text-[9px] font-bold text-text-muted leading-relaxed uppercase">No cover image set.<br/>Recipients see this first.</p>
                              </div>
                            )}
@@ -1028,13 +1028,13 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
                                onClick={() => setThumbnailMode(thumbnailMode === 'library' ? 'upload' : 'library')}
                                className={cn(
                                  "flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all border",
-                                 thumbnailMode === 'library' ? "bg-primary text-white border-primary shadow-lg shadow-primary/20" : "bg-black/5 text-text-muted border-border"
+                                 thumbnailMode === 'library' ? "bg-primary text-white border-primary shadow-lg shadow-primary/20" : "bg-muted/30 text-text-muted border-border"
                                )}
                              >Library</button>
                            </div>
 
                            {thumbnailMode === 'library' && (
-                              <div className="flex gap-2 p-2 bg-black/[0.02] rounded-lg border border-border overflow-x-auto animate-in fade-in slide-in-from-top-2 scrollbar-none">
+                              <div className="flex gap-2 p-2 bg-muted/30 rounded-lg border border-border overflow-x-auto animate-in fade-in slide-in-from-top-2 scrollbar-none">
                                 {momentData?.media?.map((m: any) => (
                                   <button
                                     key={m.id}
@@ -1055,7 +1055,7 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
                         </div>
 
                         {momentData?.selectedAddons?.includes("extraMedia") && momentData.plan !== "premium" && !momentData.paidAddons?.includes("extraMedia") && (
-                          <div className="p-4 rounded-lg bg-black/[0.02] dark:bg-white/[0.02] border border-border space-y-3">
+                          <div className="p-4 rounded-lg bg-muted/30 border border-border space-y-3">
                             <div className="flex items-center gap-2 text-text-muted">
                               <Lock size={14} />
                               <h4 className="text-[10px] font-black uppercase tracking-widest">Extra Slots Active</h4>
@@ -1071,7 +1071,7 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
                                   toggleAddon("extraMedia");
                                 }
                               }}
-                              className="w-full py-2 bg-black/5 hover:bg-black/10 text-text-muted text-[9px] font-black uppercase tracking-widest rounded-md transition-all active:scale-95"
+                              className="w-full py-2 bg-muted/30 hover:bg-muted/50 text-text-muted text-[9px] font-black uppercase tracking-widest rounded-md transition-all active:scale-95"
                             >
                               Remove Extra Slots
                             </button>
@@ -1129,7 +1129,7 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
                                 setIsSettingGlobalMusic(!isSettingGlobalMusic);
                                 setYtSearchQuery("");
                               }}
-                              className="w-full py-4 border border-dashed border-border rounded-lg bg-black/[0.01] hover:bg-primary/5 hover:border-primary/50 text-[10px] font-black uppercase tracking-widest text-text-muted transition-all"
+                              className="w-full py-4 border border-dashed border-border rounded-lg bg-muted/30 hover:bg-primary/5 hover:border-primary/50 text-[10px] font-black uppercase tracking-widest text-text-muted transition-all"
                             >
                                Set Theme Song
                             </button>
@@ -1143,7 +1143,7 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
                                   autoFocus
                                   type="text" 
                                   placeholder="Search theme song..."
-                                  className="w-full h-10 pl-9 pr-3 rounded-lg border border-border bg-white text-[10px] font-bold outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                                  className="w-full h-10 pl-9 pr-3 rounded-lg border border-border bg-background text-[10px] font-bold outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
                                   value={ytSearchQuery}
                                   onChange={(e) => setYtSearchQuery(e.target.value)}
                                 />
@@ -1160,7 +1160,7 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
                                 </div>
                               </div>
                               {showSearchResults && ytResults.length > 0 && (
-                                <div className="bg-white border border-border rounded-lg overflow-hidden max-h-48 overflow-y-auto divide-y divide-border shadow-soft">
+                                <div className="bg-card border border-border rounded-lg overflow-hidden max-h-48 overflow-y-auto divide-y divide-border shadow-soft">
                                   {ytResults.map((song) => (
                                     <div key={song.videoId} onClick={() => {
                                       setGlobalMusic(song);
@@ -1169,7 +1169,7 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
                                     }} className="p-2 flex items-center gap-2 cursor-pointer hover:bg-primary/5 transition-colors">
                                       <img src={song.thumbnail} className="size-8 rounded-lg object-cover" />
                                       <div className="flex-1 min-w-0">
-                                        <p className="text-[9px] font-black truncate">{song.title}</p>
+                                        <p className="text-[9px] font-black text-text-main truncate">{song.title}</p>
                                         <p className="text-[8px] text-text-muted font-bold truncate">{song.author}</p>
                                       </div>
                                       <button onClick={(e) => { e.stopPropagation(); togglePlay(song.videoId); }} className="size-6 bg-primary/10 text-primary rounded-lg flex items-center justify-center">
@@ -1211,8 +1211,8 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
                         </div>
                       ) : (
                         <div className="space-y-6">
-                           <div className="p-6 rounded-lg bg-black/[0.02] border border-border space-y-4">
-                              <div className="size-12 bg-black/5 rounded-lg flex items-center justify-center text-text-muted">
+                           <div className="p-6 rounded-lg bg-muted/30 border border-border space-y-4">
+                              <div className="size-12 bg-muted/50 rounded-lg flex items-center justify-center text-text-muted">
                                 <Gift size={24} />
                               </div>
                               <div className="space-y-2">
@@ -1251,7 +1251,7 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
                               "w-full py-4 border-2 rounded-lg flex items-center justify-center gap-2 transition-all group",
                               momentData?.status === "Published" && momentData?.paidAddons?.includes("removeBranding")
                                 ? "bg-primary/5 border-border text-text-muted cursor-not-allowed"
-                                : "border-red-500/20 hover:border-red-500 hover:bg-red-50/50 text-red-500"
+                                : "border-red-500/20 hover:border-red-500 hover:bg-red-500/10 text-red-500"
                             )}
                           >
                             {momentData?.status === "Published" && momentData?.paidAddons?.includes("removeBranding") ? (
@@ -1293,13 +1293,13 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
                                "w-full relative overflow-hidden group border-2 rounded-lg transition-all duration-300 flex items-center justify-between p-4",
                                style.showReactions !== false
                                  ? "bg-pink-500/5 border-pink-500 shadow-[0_0_30px_rgba(236,72,153,0.1)] hover:bg-pink-500/10"
-                                 : "bg-surface border-border hover:border-text-muted/30 hover:bg-black/[0.02]"
+                                 : "bg-surface border-border hover:border-text-muted/30 hover:bg-muted/30"
                              )}
                            >
                              <div className="flex items-center gap-4 relative z-10">
                                <div className={cn(
                                  "size-10 rounded-full flex items-center justify-center transition-all duration-500",
-                                 style.showReactions !== false ? "bg-pink-500 text-white scale-110" : "bg-black/5 text-text-muted"
+                                 style.showReactions !== false ? "bg-pink-500 text-white scale-110" : "bg-muted/30 text-text-muted"
                                )}>
                                  <Heart size={18} className={cn(style.showReactions !== false && "animate-pulse")} fill={style.showReactions !== false ? "currentColor" : "none"} />
                                </div>
@@ -1342,14 +1342,14 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
                           <h3 className="text-[10px] font-black uppercase tracking-widest text-text-muted flex items-center gap-2">
                           <Palette size={12} /> Screen Style
                         </h3>
-                        <div className="flex p-1 bg-black/5 dark:bg-white/5 rounded-lg">
+                        <div className="flex p-1 bg-muted/30 rounded-lg">
                           <button
                             onClick={() => updateSceneConfig(activeSceneId, { useGlobalTheme: true })}
-                            className={cn("flex-1 py-1.5 text-[10px] font-bold rounded-md transition-all", activeScene?.config?.useGlobalTheme !== false ? "bg-background dark:bg-white/10 shadow-sm text-primary" : "text-text-muted")}
+                            className={cn("flex-1 py-1.5 text-[10px] font-bold rounded-md transition-all", activeScene?.config?.useGlobalTheme !== false ? "bg-background shadow-sm text-primary" : "text-text-muted")}
                           >Global</button>
                           <button
                             onClick={() => updateSceneConfig(activeSceneId, { useGlobalTheme: false })}
-                            className={cn("flex-1 py-1.5 text-[10px] font-bold rounded-md transition-all", activeScene?.config?.useGlobalTheme === false ? "bg-background dark:bg-white/10 shadow-sm text-primary" : "text-text-muted")}
+                            className={cn("flex-1 py-1.5 text-[10px] font-bold rounded-md transition-all", activeScene?.config?.useGlobalTheme === false ? "bg-background shadow-sm text-primary" : "text-text-muted")}
                           >Custom</button>
                         </div>
                         {activeScene?.config?.useGlobalTheme === false && (
@@ -1376,14 +1376,14 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
                           <h3 className="text-[10px] font-black uppercase tracking-widest text-text-muted flex items-center gap-2">
                             <Music size={12} /> Screen Music
                           </h3>
-                          <div className="flex p-1 bg-black/5 dark:bg-white/5 rounded-lg">
+                          <div className="flex p-1 bg-muted/30 rounded-lg">
                             <button
                               onClick={() => updateSceneConfig(activeSceneId, { useGlobalMusic: true })}
-                              className={cn("flex-1 py-1.5 text-[10px] font-bold rounded-md transition-all", activeScene.config.useGlobalMusic !== false ? "bg-white shadow-sm text-primary" : "text-text-muted")}
+                              className={cn("flex-1 py-1.5 text-[10px] font-bold rounded-md transition-all", activeScene.config.useGlobalMusic !== false ? "bg-background shadow-sm text-primary" : "text-text-muted")}
                             >Global</button>
                             <button
                               onClick={() => updateSceneConfig(activeSceneId, { useGlobalMusic: false })}
-                              className={cn("flex-1 py-1.5 text-[10px] font-bold rounded-md transition-all", activeScene.config.useGlobalMusic === false ? "bg-white shadow-sm text-primary" : "text-text-muted")}
+                              className={cn("flex-1 py-1.5 text-[10px] font-bold rounded-md transition-all", activeScene.config.useGlobalMusic === false ? "bg-background shadow-sm text-primary" : "text-text-muted")}
                             >Custom</button>
                           </div>
                           
@@ -1431,7 +1431,7 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
                                     setIsSettingGlobalMusic(!isSettingGlobalMusic);
                                     setYtSearchQuery("");
                                   }}
-                                  className="w-full py-4 border border-dashed border-border rounded-lg bg-black/[0.01] hover:bg-primary/5 hover:border-primary/50 text-[10px] font-black uppercase tracking-widest text-text-muted transition-all"
+                                  className="w-full py-4 border border-dashed border-border rounded-lg bg-muted/30 hover:bg-primary/5 hover:border-primary/50 text-[10px] font-black uppercase tracking-widest text-text-muted transition-all"
                                 >Pick Screen Song</button>
                               )}
   
@@ -1443,7 +1443,7 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
                                       autoFocus
                                       type="text" 
                                       placeholder="Search screen song..."
-                                      className="w-full h-10 pl-9 pr-3 rounded-lg border border-border bg-white text-[10px] font-bold outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                                      className="w-full h-10 pl-9 pr-3 rounded-lg border border-border bg-background text-text-main text-[10px] font-bold outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
                                       value={ytSearchQuery}
                                       onChange={(e) => setYtSearchQuery(e.target.value)}
                                     />
@@ -1458,7 +1458,7 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
                                     </div>
                                   </div>
                                   {showSearchResults && ytResults.length > 0 && (
-                                    <div className="bg-white border border-border rounded-lg overflow-hidden max-h-48 overflow-y-auto divide-y divide-border shadow-soft">
+                                    <div className="bg-card border border-border rounded-lg overflow-hidden max-h-48 overflow-y-auto divide-y divide-border shadow-soft">
                                       {ytResults.map((song) => (
                                         <div key={song.videoId} onClick={() => {
                                           setGlobalMusic(song);
@@ -1467,7 +1467,7 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
                                         }} className="p-2 flex items-center gap-2 cursor-pointer hover:bg-primary/5 transition-colors">
                                           <img src={song.thumbnail} className="size-8 rounded-lg object-cover" />
                                           <div className="flex-1 min-w-0">
-                                            <p className="text-[9px] font-black truncate">{song.title}</p>
+                                            <p className="text-[9px] font-black text-text-main truncate">{song.title}</p>
                                             <p className="text-[8px] text-text-muted font-bold truncate">{song.author}</p>
                                           </div>
                                           <button onClick={(e) => { e.stopPropagation(); togglePlay(song.videoId); }} className="size-6 bg-primary/10 text-primary rounded-lg flex items-center justify-center">
@@ -1566,7 +1566,7 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
                                   ))}
                                   <button 
                                     onClick={() => mediaLibraryRef.current?.scrollIntoView({ behavior: 'smooth' })}
-                                    className="aspect-square rounded-lg border border-dashed border-border bg-black/[0.01] hover:bg-primary/5 hover:border-primary/50 flex items-center justify-center text-text-muted transition-all"
+                                    className="aspect-square rounded-lg border border-dashed border-border bg-muted/30 hover:bg-primary/5 hover:border-primary/50 flex items-center justify-center text-text-muted transition-all"
                                   >
                                       <Plus size={14} />
                                   </button>
@@ -1577,7 +1577,7 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
 
                         {(activeScene.type === "video" || activeScene.type === "audio") && (
                            <div className="space-y-4">
-                              <div className="p-4 rounded-lg bg-black/[0.02] border border-border space-y-4">
+                              <div className="p-4 rounded-lg bg-muted/30 border border-border space-y-4">
                                  <div className="flex items-center justify-between">
                                     <h4 className="text-[10px] font-black uppercase tracking-widest text-text-muted">
                                        {activeScene.type === "video" ? "Video Resource" : "Audio Resource"}
@@ -1588,7 +1588,7 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
                                           onClick={() => updateSceneConfig(activeSceneId, { loop: !activeScene.config.loop })}
                                           className={cn(
                                              "w-8 h-4 rounded-full transition-colors relative",
-                                             activeScene.config.loop ? "bg-primary" : "bg-black/10"
+                                             activeScene.config.loop ? "bg-primary" : "bg-muted"
                                           )}
                                        >
                                           <div className={cn(
@@ -1724,7 +1724,7 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
                             ))}
 
                             {(!momentData?.media || momentData.media.length === 0) && (
-                              <div className="col-span-3 py-10 flex flex-col items-center justify-center gap-2 border border-dashed border-border rounded-lg bg-black/[0.01]">
+                              <div className="col-span-3 py-10 flex flex-col items-center justify-center gap-2 border border-dashed border-border rounded-lg bg-muted/10">
                                 <div className="size-10 rounded-full bg-black/5 flex items-center justify-center text-text-muted/30">
                                   <ImageIcon size={20} />
                                 </div>
@@ -1762,7 +1762,7 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
                                     toggleAddon("extraMedia");
                                   }
                                 }}
-                                className="w-full py-2 bg-black/5 hover:bg-black/10 text-text-muted text-[9px] font-black uppercase tracking-widest rounded-md transition-all active:scale-95"
+                                className="w-full py-2 bg-muted/30 hover:bg-muted/50 text-text-muted text-[9px] font-black uppercase tracking-widest rounded-md transition-all active:scale-95"
                               >
                                 Remove Extra Slots
                               </button>
@@ -1945,7 +1945,7 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="relative w-full max-w-sm bg-white dark:bg-zinc-900 rounded-lg overflow-hidden shadow-2xl border border-white/10"
+              className="relative w-full max-w-sm bg-card rounded-lg overflow-hidden shadow-2xl border border-border"
             >
               <div className="p-8 text-center space-y-6">
                 <div className="size-16 rounded-lg bg-orange-500/10 flex items-center justify-center mx-auto text-orange-500">
@@ -1973,7 +1973,7 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
                   )}
                   <button 
                     onClick={() => setShowLimitModal(false)}
-                    className="w-full py-4 bg-black/5 dark:bg-white/5 text-text-muted text-[10px] font-black uppercase tracking-[0.2em] rounded-lg hover:bg-black/10 transition-all"
+                    className="w-full py-4 bg-muted/30 text-text-muted text-[10px] font-black uppercase tracking-[0.2em] rounded-lg hover:bg-muted/50 transition-all"
                   >
                     Maybe Later
                   </button>
@@ -1997,7 +1997,7 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="relative w-full max-w-sm bg-white dark:bg-zinc-900 rounded-[32px] overflow-hidden shadow-2xl border border-white/10"
+              className="relative w-full max-w-sm bg-card rounded-[32px] overflow-hidden shadow-2xl border border-border"
             >
               <div className="p-8 text-center space-y-6">
                 <div className="size-16 rounded-lg bg-red-500/10 flex items-center justify-center mx-auto text-red-500">
@@ -2039,7 +2039,7 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="relative w-full max-w-sm bg-white dark:bg-zinc-900 rounded-lg overflow-hidden shadow-2xl border border-white/10"
+              className="relative w-full max-w-sm bg-card rounded-lg overflow-hidden shadow-2xl border border-border"
             >
               <div className="p-8 text-center space-y-6">
                 <div className="size-20 rounded-lg bg-red-500/10 flex items-center justify-center mx-auto text-red-500 relative overflow-hidden">
@@ -2074,7 +2074,7 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
                   <button 
                     disabled={isDeleting}
                     onClick={() => setAssetToDelete(null)}
-                    className="w-full py-4 bg-black/5 dark:bg-white/5 text-text-muted text-[10px] font-black uppercase tracking-[0.2em] rounded-lg hover:bg-black/10 transition-all disabled:opacity-50"
+                    className="w-full py-4 bg-muted/30 text-text-muted text-[10px] font-black uppercase tracking-[0.2em] rounded-lg hover:bg-muted/50 transition-all disabled:opacity-50"
                   >
                     Cancel
                   </button>

@@ -127,7 +127,7 @@ function CreationLayoutInner({ children }: { children: React.ReactNode }) {
             <div className="flex items-center justify-between w-full lg:hidden">
               <button
                 onClick={handleBack}
-                className="p-2 text-[#97604e] hover:text-primary transition"
+                className="p-2 text-text-muted hover:text-primary transition"
               >
                 <ArrowLeft size={20} />
               </button>
@@ -170,7 +170,7 @@ function CreationLayoutInner({ children }: { children: React.ReactNode }) {
             <div className="hidden lg:flex items-center gap-6">
 
               {!isConfigureStep && (
-                <div className="flex items-center gap-2 text-xs text-[#97604e]">
+                <div className="flex items-center gap-2 text-xs text-text-muted">
                   {saving ? (
                     <>
                       <Loader2 size={14} className="animate-spin" />

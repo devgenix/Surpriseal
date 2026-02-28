@@ -123,12 +123,12 @@ const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>(({
 
   return (
     <div className={cn(
-        "flex flex-col rounded-lg border border-border bg-white dark:bg-black/40 overflow-hidden transition-all duration-200 shadow-sm",
+        "flex flex-col rounded-lg border border-border bg-card overflow-hidden transition-all duration-200 shadow-sm",
         isFocused ? "ring-4 ring-primary/5 border-primary/50" : "",
         isModal ? "h-full flex-1" : ""
     )}>
       {/* Toolbar */}
-      <div className="flex-shrink-0 flex flex-wrap items-center p-1.5 bg-black/[0.02] dark:bg-white/[0.02] border-b border-border gap-1">
+      <div className="flex-shrink-0 flex flex-wrap items-center p-1.5 bg-muted/30 border-b border-border gap-1">
         <div className="flex items-center gap-0.5 mr-1">
             <ToolbarButton onClick={() => format('bold')} icon={<Bold size={14} />} title="Bold" />
             <ToolbarButton onClick={() => format('italic')} icon={<Italic size={14} />} title="Italic" />
@@ -154,7 +154,7 @@ const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>(({
         <div className="w-px h-4 bg-border/60 mx-1" />
         
         <button 
-           className="relative group size-8 flex items-center justify-center hover:bg-black/5 dark:hover:bg-white/10 rounded-md transition-colors"
+           className="relative group size-8 flex items-center justify-center hover:bg-muted/50 rounded-md transition-colors"
            title="Text Color"
         >
             <Palette size={14} className="text-primary" />
@@ -241,7 +241,7 @@ function ToolbarButton({ onClick, icon, title, active, className }: any) {
       onClick={(e) => { e.preventDefault(); onClick(); }}
       className={cn(
         "size-8 flex items-center justify-center rounded-md transition-colors",
-        active ? "bg-primary/10 text-primary" : "hover:bg-black/5 dark:hover:bg-white/10 text-text-muted",
+        active ? "bg-primary/10 text-primary" : "hover:bg-muted/50 text-text-muted",
         className
       )}
       title={title}
@@ -256,10 +256,10 @@ function ToolbarSelect({ options, onChange, defaultValue }: any) {
         <select 
             defaultValue={defaultValue}
             onChange={(e) => onChange(e.target.value)}
-            className="bg-transparent text-[9px] font-black uppercase tracking-widest outline-none border-none py-1.5 px-2 cursor-pointer hover:bg-black/5 dark:hover:bg-white/10 rounded-md transition-colors"
+            className="bg-transparent text-[9px] font-black uppercase tracking-widest outline-none border-none py-1.5 px-2 cursor-pointer hover:bg-muted/50 rounded-md transition-colors"
         >
             {options.map((opt: any) => (
-                <option key={opt.value} value={opt.value} className="text-black">{opt.label}</option>
+                <option key={opt.value} value={opt.value} className="bg-card text-text-main">{opt.label}</option>
             ))}
         </select>
     );
