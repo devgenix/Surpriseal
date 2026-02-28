@@ -73,16 +73,26 @@ interface RevealStudioProps {
 }
 
 export default function RevealStudio({ draftId, onSave, onContinue }: RevealStudioProps) {
-  const { momentData, setCanContinue, setOnSave, setOnContinue, setIsCinematic } = useCreation();
+  const { 
+    momentData, 
+    setCanContinue, 
+    setOnSave, 
+    setOnContinue, 
+    setIsCinematic,
+    activeSceneId,
+    setActiveSceneId,
+    activeMobileMode,
+    setActiveMobileMode,
+    isScenePickerOpen,
+    setIsScenePickerOpen,
+    toggleFullScreen
+  } = useCreation();
   
   const [scenes, setScenes] = useState<Scene[]>(
     momentData?.styleConfig?.scenes || DEFAULT_SCENES
   );
-  const [activeSceneId, setActiveSceneId] = useState<string>("splash");
   const [previewDevice, setPreviewDevice] = useState<"mobile" | "desktop">("mobile");
   
-  const [activeMobileMode, setActiveMobileMode] = useState<"edit" | "preview">("edit");
-  const [isScenePickerOpen, setIsScenePickerOpen] = useState(false);
   const [editorTab, setEditorTab] = useState<"content" | "theme" | "audio">("content");
   
   // Aesthetics Settings State
@@ -628,113 +638,25 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
     }
   }), [momentData, scenes]);
 
-  const toggleFullScreen = () => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().catch(() => {});
-    } else if (document.exitFullscreen) {
-      document.exitFullscreen();
-    }
-  };
-
   const activeSceneInfo = useMemo(() => {
     if (activeSceneId === "splash") return { title: "Splash Screen", icon: Heart };
     if (activeSceneId === "branding") return { title: "Final Screen", icon: Award };
     const idx = scenes.findIndex(s => s.id === activeSceneId);
     const scene = scenes[idx];
+    const typeLabel = scene?.type === "gallery" ? "Memory Gallery" : 
+                     scene?.type === "video" ? "Video Message" : 
+                     scene?.type === "audio" ? "Voice Note" : "Message Note";
     const icon = scene?.type === "gallery" ? ImageIcon : 
                  scene?.type === "video" ? Play :
                  scene?.type === "audio" ? Mic : Scroll;
-    return { title: `Scene ${idx + 1}`, icon };
+    return { title: idx >= 0 ? `Step ${idx + 1}: ${typeLabel}` : "Studio", icon };
   }, [activeSceneId, scenes]);
+
 
   return (
     <>
     <div className="flex-1 w-full flex flex-col h-full overflow-hidden bg-background dark:bg-black/40">
-      {/* Mobile Header: Simple Brand & Actions */}
-      <div className="lg:hidden shrink-0 border-b border-border bg-card/80 backdrop-blur-xl z-[40] px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="size-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
-            <Heart size={16} />
-          </div>
-          <div>
-            <h1 className="text-xs font-black uppercase tracking-tighter leading-none">Studio</h1>
-            <p className="text-[8px] font-bold text-text-muted uppercase tracking-widest mt-0.5">Mobile Editor</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-           <button 
-             onClick={() => setActiveMobileMode(activeMobileMode === "preview" ? "edit" : "preview")}
-             className={cn(
-               "px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all active:scale-95 flex items-center gap-2",
-               activeMobileMode === "preview" 
-                ? "bg-primary text-white shadow-lg shadow-primary/20" 
-                : "bg-muted/30 text-text-muted hover:text-text-main"
-             )}
-           >
-             {activeMobileMode === "preview" ? <PenTool size={12} /> : <Play size={12} />}
-             {activeMobileMode === "preview" ? "Edit" : "Preview"}
-           </button>
-           <button 
-             onClick={toggleFullScreen}
-             className="size-9 flex items-center justify-center rounded-lg bg-muted/30 border border-border text-text-muted transition-all active:scale-95"
-           >
-             <Maximize2 size={14} />
-           </button>
-        </div>
-      </div>
 
-      {/* Mobile Scene Navigator (Horizontal Rail) */}
-      <div className="lg:hidden shrink-0 bg-card border-b border-border overflow-x-auto no-scrollbar py-3 px-4 flex items-center gap-3">
-        {/* Splash */}
-        <button
-          onClick={() => setActiveSceneId("splash")}
-          className={cn(
-            "shrink-0 p-3 rounded-xl border-2 transition-all flex flex-col items-center gap-1 min-w-[70px]",
-            activeSceneId === "splash" ? "border-primary bg-primary/5 shadow-sm" : "border-border/50 opacity-60"
-          )}
-        >
-          <Heart size={14} className={activeSceneId === "splash" ? "text-primary" : "text-text-muted"} />
-          <span className="text-[8px] font-black uppercase tracking-widest">Splash</span>
-        </button>
-
-        {scenes.map((scene, index) => (
-          <button
-            key={scene.id}
-            onClick={() => setActiveSceneId(scene.id)}
-            className={cn(
-              "shrink-0 p-3 rounded-xl border-2 transition-all flex flex-col items-center gap-1 min-w-[70px]",
-              activeSceneId === scene.id ? "border-primary bg-primary/5 shadow-sm" : "border-border/50 opacity-60"
-            )}
-          >
-            {scene.type === "gallery" ? <ImageIcon size={14} /> : 
-             scene.type === "video" ? <Play size={14} /> :
-             scene.type === "audio" ? <Mic size={14} /> :
-             <Scroll size={14} />}
-            <span className="text-[8px] font-black uppercase tracking-widest">Step {index + 1}</span>
-          </button>
-        ))}
-
-        {/* Final */}
-        <button
-          onClick={() => setActiveSceneId("branding")}
-          className={cn(
-            "shrink-0 p-3 rounded-xl border-2 transition-all flex flex-col items-center gap-1 min-w-[70px]",
-            activeSceneId === "branding" ? "border-primary bg-primary/5 shadow-sm" : "border-border/50 opacity-60"
-          )}
-        >
-          <Award size={14} className={activeSceneId === "branding" ? "text-primary" : "text-text-muted"} />
-          <span className="text-[8px] font-black uppercase tracking-widest">Final</span>
-        </button>
-
-        {/* Add New */}
-        <button
-          onClick={addScene}
-          className="shrink-0 p-3 rounded-xl border-2 border-dashed border-border flex flex-col items-center gap-1 min-w-[70px] text-text-muted hover:border-primary/50 hover:bg-primary/5 transition-all"
-        >
-          <Plus size={14} />
-          <span className="text-[8px] font-black uppercase tracking-widest text-[#97604e]">Add New</span>
-        </button>
-      </div>
 
       <div className="flex-1 flex overflow-hidden relative">
         {/* Left Sidebar: Timeline (Desktop Only, or hidden on mobile mobile preview) */}
@@ -932,6 +854,17 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
                     <span className="text-xs font-bold uppercase tracking-widest">Final Screen</span>
                     {activeSceneId === "branding" && <Check size={16} className="ml-auto" />}
                   </button>
+
+                  {/* Add New Screen Option */}
+                  <button 
+                    onClick={() => { addScene(); setIsScenePickerOpen(false); }}
+                    className="w-full flex items-center gap-4 p-4 rounded-xl bg-primary/5 text-primary border-2 border-dashed border-primary/20 hover:border-primary/40 hover:bg-primary/10 transition-all active:scale-[0.98] mt-4 group"
+                  >
+                    <div className="size-5 flex items-center justify-center rounded-full bg-primary/10 group-hover:bg-primary group-hover:text-white transition-colors">
+                      <Plus size={14} />
+                    </div>
+                    <span className="text-xs font-black uppercase tracking-widest">Add New Screen</span>
+                  </button>
                 </div>
               </motion.div>
             </div>
@@ -942,7 +875,7 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
         <div className="flex-1 lg:bg-background dark:lg:bg-black/40 overflow-hidden relative flex flex-col lg:flex-row">
           <div className={cn(
             "flex-1 flex flex-col items-center justify-center p-0 lg:p-8 relative transition-all",
-            "h-[40%] lg:h-full shrink-0", // Fixed 40% height on mobile for preview
+            "h-1/2 lg:h-full shrink-0", // Balanced 50/50 height on mobile for preview
             activeMobileMode === "preview" && "h-full" // Full height if specifically in preview mode
           )}>
             <div 
@@ -973,10 +906,36 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
             {/* Content Properties (Edit Area) */}
             <div className={cn(
               "flex-1 lg:w-1/4 lg:max-w-xs lg:min-w-[260px] lg:border-l lg:border-border lg:bg-card lg:shrink-0 overflow-y-auto scrollbar-none transition-all",
-              "h-[60%] lg:h-full", // Take bottom 60% on mobile
+              "h-1/2 lg:h-full relative", // Take other half on mobile
               activeMobileMode === "preview" && "hidden lg:block",
               "pb-safe" // iOS safe area
             )}>
+              {/* Mobile Scene Navigator Pill (Internal Studio Navigation) */}
+              <div className="lg:hidden sticky top-0 z-[35] p-3 bg-card/95 backdrop-blur-md border-b border-border shadow-sm">
+                <button 
+                  onClick={() => setIsScenePickerOpen(true)}
+                  className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl bg-muted/30 border border-border/50 active:scale-[0.98] transition-all"
+                >
+                  <div className="flex items-center gap-3 overflow-hidden">
+                    <div className="size-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                      <activeSceneInfo.icon size={16} />
+                    </div>
+                    <div className="flex flex-col items-start leading-none overflow-hidden">
+                      <span className="text-[10px] font-black uppercase tracking-tight text-text-main truncate w-full">
+                        {activeSceneInfo.title}
+                      </span>
+                      <span className="text-[7px] font-bold text-text-muted uppercase tracking-widest mt-0.5">
+                        Current Screen
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="h-4 w-px bg-border/50" />
+                    <ChevronDown size={14} className="text-text-muted/60" />
+                  </div>
+                </button>
+              </div>
+
               {/* Desktop Only Properties Header */}
               <div className="hidden lg:flex p-4 border-b border-border items-center justify-between">
                 <h3 className="text-xs font-black uppercase tracking-widest text-text-main">Properties</h3>

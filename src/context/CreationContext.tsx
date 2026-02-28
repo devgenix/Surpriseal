@@ -26,6 +26,15 @@ interface CreationContextType {
   completeStep: (stepId: string) => void;
   isCinematic: boolean;
   setIsCinematic: Dispatch<SetStateAction<boolean>>;
+
+  // Studio Header States
+  activeSceneId: string;
+  setActiveSceneId: Dispatch<SetStateAction<string>>;
+  activeMobileMode: "preview" | "edit";
+  setActiveMobileMode: Dispatch<SetStateAction<"preview" | "edit">>;
+  isScenePickerOpen: boolean;
+  setIsScenePickerOpen: Dispatch<SetStateAction<boolean>>;
+  toggleFullScreen: () => void;
 }
 
 const CreationContext = createContext<CreationContextType | undefined>(undefined);
@@ -42,6 +51,19 @@ export function CreationProvider({ children }: { children: ReactNode }) {
   const [onSave, setOnSave] = useState<(() => Promise<void>) | null>(null);
   const [onContinue, setOnContinue] = useState<(() => Promise<void>) | null>(null);
   const [isCinematic, setIsCinematic] = useState(false);
+
+  // Studio Header States
+  const [activeSceneId, setActiveSceneId] = useState("splash");
+  const [activeMobileMode, setActiveMobileMode] = useState<"preview" | "edit">("edit");
+  const [isScenePickerOpen, setIsScenePickerOpen] = useState(false);
+
+  const toggleFullScreen = useCallback(() => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    } else if (document.exitFullscreen) {
+      document.exitFullscreen();
+    }
+  }, []);
 
   const completeStep = useCallback((stepId: string) => {
     setMomentData((prev: any) => {
@@ -64,11 +86,17 @@ export function CreationProvider({ children }: { children: ReactNode }) {
     onSave, setOnSave,
     onContinue, setOnContinue,
     completeStep,
-    isCinematic, setIsCinematic
+    isCinematic, setIsCinematic,
+    activeSceneId, setActiveSceneId,
+    activeMobileMode, setActiveMobileMode,
+    isScenePickerOpen, setIsScenePickerOpen,
+    toggleFullScreen
   }), [
     momentData, sidebarOpen, saving, saveError, 
     lastSaved, canContinue, onSave, onContinue,
-    completeStep, isCinematic
+    completeStep, isCinematic,
+    activeSceneId, activeMobileMode, isScenePickerOpen,
+    toggleFullScreen
   ]);
 
   return (

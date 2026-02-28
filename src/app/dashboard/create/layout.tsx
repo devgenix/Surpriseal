@@ -17,12 +17,22 @@ import {
   AlertCircle,
   Sparkles,
   Sliders,
+  Maximize2,
+  ChevronDown,
+  PenTool,
+  Play,
+  Heart,
+  Award,
+  Image as ImageIcon,
+  Mic,
+  Scroll
 } from "lucide-react";
 import { formatPrice } from "@/lib/currency";
 import { calculateMomentPrice } from "@/lib/pricing-utils";
 import { useCurrency } from "@/context/CurrencyContext";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useMemo } from "react";
 
 const STEPS = [
   { id: "configure", title: "Configure", icon: Settings },
@@ -44,6 +54,11 @@ function CreationLayoutInner({ children }: { children: React.ReactNode }) {
     onSave,
     onContinue,
     isCinematic,
+    activeSceneId,
+    activeMobileMode,
+    setActiveMobileMode,
+    setIsScenePickerOpen,
+    toggleFullScreen
   } = useCreation();
 
   const { user, logout } = useAuth();
@@ -98,6 +113,28 @@ function CreationLayoutInner({ children }: { children: React.ReactNode }) {
   const progress =
     ((currentStepIndex + 1) / steps.length) * 100;
 
+  const isStyleStep = currentStep.id === "style";
+
+  const activeSceneInfo = useMemo(() => {
+    if (!isStyleStep) return null;
+    if (activeSceneId === "splash") return { title: "Splash Screen", icon: Heart };
+    if (activeSceneId === "branding") return { title: "Final Screen", icon: Award };
+    
+    const scenes = momentData?.styleConfig?.scenes || [];
+    const idx = scenes.findIndex((s: any) => s.id === activeSceneId);
+    if (idx === -1) return { title: "Studio", icon: Sparkles };
+
+    const scene = scenes[idx];
+    const typeLabel = scene?.type === "gallery" ? "Memory Gallery" : 
+                     scene?.type === "video" ? "Video Message" : 
+                     scene?.type === "audio" ? "Voice Note" : "Message Note";
+    const icon = scene?.type === "gallery" ? ImageIcon : 
+                 scene?.type === "video" ? Play :
+                 scene?.type === "audio" ? Mic : Scroll;
+    
+    return { title: `Step ${idx + 1}: ${typeLabel}`, icon };
+  }, [isStyleStep, activeSceneId, momentData?.styleConfig?.scenes]);
+
   const isConfigureStep = currentStep.id === "configure";
 
   const handleBack = () => router.back();
@@ -125,28 +162,75 @@ function CreationLayoutInner({ children }: { children: React.ReactNode }) {
 
             {/* MOBILE ROW */}
             <div className="flex items-center justify-between w-full lg:hidden">
-              <button
-                onClick={handleBack}
-                className="p-2 text-text-muted hover:text-primary transition"
-              >
-                <ArrowLeft size={20} />
-              </button>
+              {isStyleStep ? (
+                <>
+                  {/* Left: Fullscreen Toggle */}
+                  <div className="w-12 flex justify-start">
+                    <button 
+                      onClick={toggleFullScreen}
+                      className="size-9 flex items-center justify-center rounded-lg bg-muted/30 border border-border text-text-muted transition-all active:scale-95"
+                    >
+                      <Maximize2 size={16} />
+                    </button>
+                  </div>
 
-              <div className="text-center">
-                <p className="text-[10px] uppercase text-text-muted font-bold tracking-wider">
-                  Step {currentStepIndex + 1} of {steps.length}
-                </p>
-                <h1 className="text-sm font-bold text-text-main">
-                  {currentStep.title}
-                </h1>
-              </div>
+                  {/* Middle: Global Step Info & Menu Trigger */}
+                  <div className="flex-1 flex justify-center px-1">
+                    <button 
+                      onClick={() => setSidebarOpen(true)}
+                      className="flex flex-col items-center leading-none active:scale-95 transition-all"
+                    >
+                      <p className="text-[9px] uppercase text-text-muted font-bold tracking-wider">
+                        Step {currentStepIndex + 1} of {steps.length}
+                      </p>
+                      <h1 className="text-sm font-bold text-text-main flex items-center gap-1">
+                        {currentStep.title}
+                        <ChevronDown size={12} className="text-text-muted/60" />
+                      </h1>
+                    </button>
+                  </div>
 
-              <button
-                onClick={() => setSidebarOpen(true)}
-                className="p-2 text-primary"
-              >
-                <Menu size={20} />
-              </button>
+                  {/* Right: Preview/Edit Button */}
+                  <div className="w-12 flex justify-end">
+                    <button 
+                      onClick={() => setActiveMobileMode(activeMobileMode === "preview" ? "edit" : "preview")}
+                      className={cn(
+                        "size-9 flex items-center justify-center rounded-lg transition-all active:scale-95",
+                        activeMobileMode === "preview" 
+                         ? "bg-primary text-white shadow-lg shadow-primary/20" 
+                         : "bg-primary/10 text-primary border border-primary/20"
+                      )}
+                    >
+                      {activeMobileMode === "preview" ? <PenTool size={16} /> : <Play size={16} />}
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={handleBack}
+                    className="p-2 text-text-muted hover:text-primary transition"
+                  >
+                    <ArrowLeft size={20} />
+                  </button>
+
+                  <div className="text-center">
+                    <p className="text-[10px] uppercase text-text-muted font-bold tracking-wider">
+                      Step {currentStepIndex + 1} of {steps.length}
+                    </p>
+                    <h1 className="text-sm font-bold text-text-main">
+                      {currentStep.title}
+                    </h1>
+                  </div>
+
+                  <button
+                    onClick={() => setSidebarOpen(true)}
+                    className="p-2 text-primary"
+                  >
+                    <Menu size={20} />
+                  </button>
+                </>
+              )}
             </div>
 
             {/* DESKTOP LEFT: Back + Title */}
