@@ -77,7 +77,7 @@ export function CreationSidebar({
   return (
     <aside
       className={cn(
-        "fixed inset-y-0 left-0 w-80 bg-card border-r border-border z-50 transition-transform duration-300 lg:relative lg:translate-x-0 shadow-sm",
+        "fixed inset-y-0 left-0 w-80 bg-card border-r border-border z-[100] transition-transform duration-300 lg:relative lg:translate-x-0 shadow-sm",
         sidebarOpen ? "translate-x-0" : "-translate-x-full"
       )}
     >

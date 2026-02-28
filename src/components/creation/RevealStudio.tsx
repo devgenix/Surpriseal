@@ -87,6 +87,14 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
     setIsScenePickerOpen,
     toggleFullScreen
   } = useCreation();
+
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 1024);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
   
   const [scenes, setScenes] = useState<Scene[]>(
     momentData?.styleConfig?.scenes || DEFAULT_SCENES
@@ -890,17 +898,19 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
                   : "h-full w-full rounded-lg shadow-2xl border border-border"
               )}
             >
-              <RevealEngine 
-                moment={previewMoment} 
-                isPreview={true} 
-                activeSceneIndex={
-                  activeSceneId === "splash" 
-                    ? -1 
-                    : activeSceneId === "branding" 
-                      ? scenes.length 
-                      : scenes.findIndex(s => s.id === activeSceneId)
-                } 
-              />
+              {(!isMobile || activeMobileMode === "edit") && (
+                <RevealEngine 
+                  moment={previewMoment} 
+                  isPreview={true} 
+                  activeSceneIndex={
+                    activeSceneId === "splash" 
+                      ? -1 
+                      : activeSceneId === "branding" 
+                        ? scenes.length 
+                        : scenes.findIndex(s => s.id === activeSceneId)
+                  } 
+                />
+              )}
             </div>
           </div>
 

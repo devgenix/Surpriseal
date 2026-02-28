@@ -5,6 +5,8 @@ import { useCreation, CreationProvider } from "@/context/CreationContext";
 import { CreationSidebar } from "@/components/layout/CreationSidebar";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
+import RevealEngine from "@/components/reveal/RevealEngine";
+import { prepareMomentForEngine } from "@/components/reveal/utilities/RevealEngineUtils";
 import {
   Settings,
   PersonStanding,
@@ -165,6 +167,14 @@ function CreationLayoutInner({ children }: { children: React.ReactNode }) {
     return { title: `Step ${idx + 1}: ${typeLabel}`, icon };
   }, [isStyleStep, activeSceneId, momentData?.styleConfig?.scenes]);
 
+  const activeSceneIndex = useMemo(() => {
+    if (!activeSceneId || activeSceneId === "splash") return -1;
+    const scenes = momentData?.styleConfig?.scenes || [];
+    if (activeSceneId === "branding") return scenes.length;
+    const idx = scenes.findIndex((s: any) => s.id === activeSceneId);
+    return idx === -1 ? -1 : idx;
+  }, [activeSceneId, momentData?.styleConfig?.scenes]);
+
   const isConfigureStep = currentStep.id === "configure";
 
   const handleBack = () => router.back();
@@ -184,93 +194,66 @@ function CreationLayoutInner({ children }: { children: React.ReactNode }) {
       <main className="flex-1 flex flex-col h-full overflow-hidden relative">
 
         {/* ================= HEADER ================= */}
-        <header className={cn(
-          "shrink-0 z-40 bg-card/80 backdrop-blur-md border-b border-border px-4 h-[72px] flex flex-col justify-center transition-all",
-          isCinematic && "hidden lg:flex"
-        )}>
+        <header
+          style={{ '--header-h': '72px' } as React.CSSProperties}
+          className={cn(
+            "shrink-0 z-[70] bg-card/80 backdrop-blur-md border-b border-border px-4 h-[72px] flex flex-col justify-center transition-all",
+            isCinematic && "hidden lg:flex"
+          )}>
           <div className="w-full max-w-4xl mx-auto flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between px-2">
 
             {/* MOBILE ROW */}
             <div className="flex items-center justify-between w-full lg:hidden">
-              {isStyleStep ? (
-                <>
-                  {/* Left: Fullscreen Toggle */}
-                  <div className="flex-none flex justify-start">
-                    <button 
-                      onClick={toggleFullScreen}
-                      className="size-9 flex items-center justify-center rounded-lg bg-muted/30 border border-border text-text-muted transition-all active:scale-95 px-3"
-                    >
-                      <Maximize2 size={16} />
-                    </button>
-                  </div>
+              {/* Left: Fullscreen Toggle */}
+              <div className="flex-none flex justify-start">
+                <button 
+                  onClick={toggleFullScreen}
+                  className="size-9 flex items-center justify-center rounded-lg bg-muted/30 border border-border text-text-muted transition-all active:scale-95 px-3"
+                >
+                  <Maximize2 size={16} />
+                </button>
+              </div>
 
-                  {/* Middle: Global Step Info & Menu Trigger */}
-                  <div className="flex-1 flex justify-center px-1">
-                    <button 
-                      onClick={() => setSidebarOpen(true)}
-                      className="flex flex-col items-center leading-none active:scale-95 transition-all"
-                    >
-                      <p className="text-[9px] uppercase text-text-muted font-bold tracking-wider">
-                        Step {currentStepIndex + 1} of {steps.length}
-                      </p>
-                      <h1 className="text-sm font-bold text-text-main flex items-center gap-1">
-                        {currentStep.title}
-                        <ChevronDown size={12} className="text-text-muted/60" />
-                      </h1>
-                    </button>
-                  </div>
+              {/* Middle: Global Step Info & Menu Trigger */}
+              <div className="flex-1 flex justify-center px-1">
+                <button 
+                  onClick={() => setSidebarOpen(true)}
+                  className="flex flex-col items-center leading-none active:scale-95 transition-all"
+                >
+                  <p className="text-[9px] uppercase text-text-muted font-bold tracking-wider">
+                    Step {currentStepIndex + 1} of {steps.length}
+                  </p>
+                  <h1 className="text-sm font-bold text-text-main flex items-center gap-1 leading-none">
+                    {currentStep.title}
+                    <ChevronDown size={12} className="text-text-muted/60" />
+                  </h1>
+                </button>
+              </div>
 
-                  {/* Right: Preview/Edit Button */}
-                  <div className="flex-none flex justify-end">
-                    <button 
-                      onClick={() => setActiveMobileMode(activeMobileMode === "preview" ? "edit" : "preview")}
-                      className={cn(
-                        "h-9 px-3 flex items-center justify-center gap-1.5 rounded-lg transition-all active:scale-95",
-                        activeMobileMode === "preview" 
-                         ? "bg-primary text-white shadow-lg shadow-primary/20" 
-                         : "bg-primary/10 text-primary border border-primary/20"
-                      )}
-                    >
-                      {activeMobileMode === "preview" ? (
-                        <>
-                          <PenTool size={14} />
-                          <span className="text-[10px] font-black uppercase tracking-tight">Edit</span>
-                        </>
-                      ) : (
-                        <>
-                          <Play size={14} />
-                          <span className="text-[10px] font-black uppercase tracking-tight">Preview</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <button
-                    onClick={handleBack}
-                    className="p-2 text-text-muted hover:text-primary transition"
-                  >
-                    <ArrowLeft size={20} />
-                  </button>
-
-                  <div className="text-center">
-                    <p className="text-[10px] uppercase text-text-muted font-bold tracking-wider">
-                      Step {currentStepIndex + 1} of {steps.length}
-                    </p>
-                    <h1 className="text-sm font-bold text-text-main">
-                      {currentStep.title}
-                    </h1>
-                  </div>
-
-                  <button
-                    onClick={() => setSidebarOpen(true)}
-                    className="p-2 text-primary"
-                  >
-                    <Menu size={20} />
-                  </button>
-                </>
-              )}
+              {/* Right: Preview/Edit Button */}
+              <div className="flex-none flex justify-end">
+                <button 
+                  onClick={() => setActiveMobileMode(activeMobileMode === "preview" ? "edit" : "preview")}
+                  className={cn(
+                    "h-9 px-3 flex items-center justify-center gap-1.5 rounded-lg transition-all active:scale-95",
+                    activeMobileMode === "preview" 
+                      ? "bg-primary text-white shadow-lg shadow-primary/20" 
+                      : "bg-primary/10 text-primary border border-primary/20"
+                  )}
+                >
+                  {activeMobileMode === "preview" ? (
+                    <>
+                      <PenTool size={14} />
+                      <span className="text-[10px] font-black uppercase tracking-tight">Edit</span>
+                    </>
+                  ) : (
+                    <>
+                      <Play size={14} />
+                      <span className="text-[10px] font-black uppercase tracking-tight">Preview</span>
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
 
             {/* DESKTOP LEFT: Back + Title */}
@@ -334,15 +317,32 @@ function CreationLayoutInner({ children }: { children: React.ReactNode }) {
         </header>
 
         {/* ================= CONTENT ================= */}
-        <div className="flex-1 overflow-y-auto scroll-smooth">
+        <div className="flex-1 overflow-y-auto scroll-smooth relative">
           {children}
         </div>
 
+        {/* ================= MOBILE PREVIEW OVERLAY ================= */}
+        {/* Fixed so it never scrolls — sits above content, below header/footer */}
+        {activeMobileMode === 'preview' && (
+          <div
+            className="lg:hidden fixed left-0 right-0 z-[60] bg-black"
+            style={{ top: 'var(--header-h, 72px)', bottom: 'var(--footer-h, 88px)' }}
+          >
+            <RevealEngine 
+              moment={prepareMomentForEngine(momentData)} 
+              isPreview={true} 
+              activeSceneIndex={activeSceneIndex}
+            />
+          </div>
+        )}
+
         {/* ================= FOOTER ================= */}
-        <footer className={cn(
-          "shrink-0 z-40 bg-card/95 backdrop-blur-md border-t border-border px-4 py-5 transition-all",
-          isCinematic && "hidden lg:block"
-        )}>
+        <footer
+          style={{ '--footer-h': '88px' } as React.CSSProperties}
+          className={cn(
+            "shrink-0 z-[70] bg-card/95 backdrop-blur-md border-t border-border px-4 py-5 transition-all",
+            isCinematic && "hidden lg:block"
+          )}>
           <div className="max-w-4xl mx-auto">
 
             {/* ================= DESKTOP LAYOUT ================= */}
