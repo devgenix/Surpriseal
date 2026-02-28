@@ -111,10 +111,10 @@ export default function RevealEngine({ moment, isPreview = false, activeSceneInd
   const [inputValue, setInputValue] = useState("");
   const [showHint, setShowHint] = useState(false);
   const [shake, setShake] = useState(false);
-  const [isMuted, setIsMuted] = useState(true);
+  const [isMuted, setIsMuted] = useState(moment?.styleConfig?.autoplayConfig?.muteOnStart !== false);
   const [isAudioBlocked, setIsAudioBlocked] = useState(false);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
-  const [isAutoplay, setIsAutoplay] = useState(false);
+  const [isAutoplay, setIsAutoplay] = useState(isPreview ? false : (moment?.styleConfig?.autoplayConfig?.enabled === true));
   const [volume, setVolume] = useState(0.8);
   const [isInternalMediaPlaying, setIsInternalMediaPlaying] = useState(false);
   const [showVolumeSlider, setShowVolumeSlider] = useState(false);
@@ -430,6 +430,12 @@ export default function RevealEngine({ moment, isPreview = false, activeSceneInd
     if (nextIndex <= scenes.length) {
        startAudioOnInteraction(nextIndex);
        setCurrentSceneIndex(nextIndex);
+       
+       // Auto-minimize UI when moving past splash screen
+       if (currentSceneIndex === -1) {
+         setIsUIVisible(false);
+       }
+
        // Stop autoplay when reaching the final screen
        if (nextIndex === scenes.length) {
          setIsAutoplay(false);
@@ -450,19 +456,19 @@ export default function RevealEngine({ moment, isPreview = false, activeSceneInd
   const startAutoplayTimer = useCallback(() => {
     if (autoplayTimerRef.current) clearTimeout(autoplayTimerRef.current);
 
-    // If on splash, trigger nextScene immediately with a small delay
+    // If on splash, trigger nextScene with user-defined speed
     if (currentSceneIndex === -1 && isAutoplay) {
-      autoplayTimerRef.current = setTimeout(() => nextScene(false), 2000);
+      autoplayTimerRef.current = setTimeout(() => nextScene(false), moment?.styleConfig?.autoplayConfig?.speed || 4000);
       return;
     }
 
     if (currentSceneIndex >= scenes.length) return;
 
     const scene = scenes[currentSceneIndex];
-    if (scene.type === "scratch") {
+    if (scene.type === "scratch" || scene.type === "composition" || scene.type === "gallery") {
       autoplayTimerRef.current = setTimeout(() => {
         if (isAutoplay) nextScene(false);
-      }, 10000);
+      }, moment?.styleConfig?.autoplayConfig?.speed || 4000);
     }
   }, [currentSceneIndex, scenes, isAutoplay, nextScene]);
 

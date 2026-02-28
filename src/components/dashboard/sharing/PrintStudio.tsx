@@ -246,13 +246,13 @@ export function PrintStudio({ isOpen, onClose, moment }: PrintStudioProps) {
                   </div>
 
                   <div className="space-y-4 w-full">
-                    <p className="text-[10px] sm:text-xs font-semibold leading-relaxed max-w-[200px] mx-auto opacity-70 italic line-clamp-2">
+                    <p className="text-[10px] sm:text-xs font-semibold leading-relaxed max-w-[200px] mx-auto opacity-70 italic line-clamp-2 uppercase">
                       {customText}
                     </p>
                     
-                    <div className="pt-4 border-t border-current/10 w-full hidden sm:block">
-                       <p className="text-[8px] font-bold uppercase tracking-widest opacity-40 mb-1">Backup Link</p>
-                       <p className="text-[9px] font-black tracking-tight">{momentUrl.replace(/^https?:\/\//, '')}</p>
+                    <div className="pt-4 border-t border-current/10 w-full">
+                       <p className="text-[8px] font-bold uppercase tracking-widest opacity-40 mb-1">Direct Link</p>
+                       <p className="text-[9px] font-bold tracking-tight opacity-70 select-all">{momentUrl.replace(/^https?:\/\//, '')}</p>
                     </div>
                   </div>
                </div>

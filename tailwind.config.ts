@@ -89,6 +89,8 @@ const config = {
       fontFamily: {
         sans: ["var(--font-plus-jakarta-sans)", "sans-serif"],
         display: ["var(--font-plus-jakarta-sans)", "sans-serif"],
+        cursive: ["var(--font-dancing-script)", "cursive"],
+        handwriting: ["var(--font-homemade-apple)", "cursive"],
       },
       boxShadow: {
         'soft': '0 4px 20px -2px rgba(230, 76, 25, 0.08)',

@@ -839,7 +839,7 @@ export function CompositionUtility({ config, isAutoplay, onComplete, onMediaPlay
                         initial={{ opacity: 0, y: 30 }}
                         animate={{ opacity: 1, y: 0 }}
                         className={cn(
-                            "w-full max-w-2xl p-6 flex flex-col gap-8 transition-all duration-1000 h-auto min-h-[50vh] flex-shrink-0 pointer-events-auto",
+                            "w-full max-w-2xl p-6 pt-12 pb-32 flex flex-col gap-8 transition-all duration-1000 h-auto min-h-[50vh] flex-shrink-0 pointer-events-auto relative",
                             styles[paperStyle],
                             paperStyle === "aurora" ? "aurora-bg" : ""
                         )}
@@ -847,7 +847,11 @@ export function CompositionUtility({ config, isAutoplay, onComplete, onMediaPlay
                         {/* Style Specific Overlays */}
                         {paperStyle === "parchment" && (
                             <div className="absolute inset-0 opacity-[0.03] pointer-events-none mix-blend-multiply" 
-                                style={{ backgroundImage: 'url(https://www.transparenttextures.com/patterns/natural-paper.png)' }} 
+                                style={{ 
+                                    backgroundImage: 'radial-gradient(#dcd1b3 0.5px, transparent 0.5px), radial-gradient(#dcd1b3 0.5px, #f4efe1 0.5px)',
+                                    backgroundSize: '20px 20px',
+                                    backgroundPosition: '0 0, 10px 10px'
+                                }} 
                             />
                         )}
                         {paperStyle === "golden" && (
@@ -902,12 +906,12 @@ export function CompositionUtility({ config, isAutoplay, onComplete, onMediaPlay
                         {/* Signature / End Ornament */}
                         <motion.div 
                             initial={{ opacity: 0 }}
-                            whileInView={{ opacity: 0.3 }}
-                            className="mt-12 flex items-center justify-center"
+                            whileInView={{ opacity: 0.4 }}
+                            className="mt-6 flex items-center justify-center"
                         >
-                            <div className="h-px w-12 bg-current opacity-30" />
-                            <span className="mx-4 text-xs tracking-[0.5em] font-black uppercase">End of Note</span>
-                            <div className="h-px w-12 bg-current opacity-30" />
+                            <div className="h-px w-12 bg-current opacity-20" />
+                            <span className="mx-4 text-xl font-cursive lowercase">End of Note</span>
+                            <div className="h-px w-12 bg-current opacity-20" />
                         </motion.div>
                     </motion.div>
                 </div>
