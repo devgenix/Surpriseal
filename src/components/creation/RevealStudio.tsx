@@ -1384,28 +1384,6 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
                       exit={{ opacity: 0, x: -20 }}
                       className="pb-10"
                     >
-                      {/* Mobile specific tab selector for custom scene */}
-                      <div className="flex gap-1 mb-8 p-1 bg-muted/30 rounded-lg lg:hidden">
-                        {[
-                          { id: 'content', label: 'Content', icon: Layout },
-                          { id: 'theme', label: 'Style', icon: Palette },
-                          { id: 'audio', label: 'Audio', icon: Music }
-                        ].map((tab) => (
-                          <button
-                            key={tab.id}
-                            onClick={() => setEditorTab(tab.id as any)}
-                            className={cn(
-                              "flex-1 flex items-center justify-center gap-2 py-2 rounded-md transition-all",
-                              editorTab === tab.id 
-                                ? "bg-background text-primary shadow-sm ring-1 ring-border" 
-                                : "text-text-muted hover:text-text-main"
-                            )}
-                          >
-                            <tab.icon size={12} />
-                            <span className="text-[10px] font-black uppercase tracking-widest">{tab.label}</span>
-                          </button>
-                        ))}
-                      </div>
 
                       {editorTab === "theme" && (
                         <section className="space-y-4 animate-in fade-in slide-in-from-bottom-2">
