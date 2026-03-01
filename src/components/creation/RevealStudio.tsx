@@ -1005,6 +1005,25 @@ export default function RevealStudio({ draftId, onSave, onContinue }: RevealStud
                         ))}
 
 
+                        {/* Branding / Final Screen — always shown, has configurable content */}
+                        <button
+                          onClick={() => { setActiveSceneId("branding"); setEditorTab("content"); }}
+                          className={cn(
+                            "flex items-center gap-3 p-4 rounded-xl text-left transition-all border",
+                            activeSceneId === "branding" 
+                              ? "bg-primary/5 border-primary/20 ring-1 ring-primary/20" 
+                              : "bg-muted/5 border-border/50"
+                          )}
+                        >
+                          <div className="size-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                            <Award size={18} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-black text-text-main uppercase tracking-tight">Final Screen</p>
+                            <p className="text-[9px] text-text-muted font-bold uppercase tracking-widest">Branding &amp; Reactions</p>
+                          </div>
+                          <ChevronRight size={14} className="text-text-muted/40" />
+                        </button>
 
                         <button 
                           onClick={addScene}
